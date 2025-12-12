@@ -90,16 +90,24 @@ export class SweeperService implements OnModuleInit {
   }
 
   private async reemitEvent(event: EventRecord): Promise<void> {
+    // Reconstruct Kafka message from DB record
+    // Note: Some fields may be approximated since original Kafka message data
+    // might differ from what was stored in DB
+    const payload = event.payload as Record<string, unknown>;
     const message: RawEventMessage = {
-      id: event.id,
       projectId: event.projectId,
-      eventType: event.eventType,
-      userId: event.userId ?? undefined,
-      payload: event.payload as Record<string, unknown>,
+      userId: event.userId || 'unknown',
+      event: event.eventType,
+      properties: payload,
+      timestamp: (payload.timestamp as string) || event.createdAt.toISOString(),
+      receivedAt: (payload.receivedAt as string) || event.createdAt.toISOString(),
     };
 
     // Re-emit to Kafka
-    this.kafkaClient.emit('raw-events', JSON.stringify(message));
+    this.kafkaClient.emit('events.raw', {
+      key: event.projectId,
+      value: message,
+    });
 
     this.logger.debug(`Re-emitted event ${event.id} to Kafka`);
   }

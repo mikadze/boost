@@ -53,7 +53,7 @@ export class EventHandlerRegistry implements OnModuleInit {
    * Dispatch event to appropriate handler
    */
   async dispatch(event: RawEventMessage): Promise<void> {
-    const handler = this.getHandler(event.eventType);
+    const handler = this.getHandler(event.event);
     await handler.handle(event);
   }
 

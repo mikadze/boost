@@ -14,7 +14,7 @@ export class UserEventHandler implements EventHandler {
   }
 
   async handle(event: RawEventMessage): Promise<void> {
-    this.logger.debug(`Processing user event: ${event.eventType}`);
+    this.logger.debug(`Processing user event: ${event.event}`);
 
     // TODO: Implement user-specific logic
     // Examples: user profile updates, welcome emails, engagement tracking

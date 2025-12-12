@@ -12,29 +12,49 @@ export class WorkerService {
     private readonly handlerRegistry: EventHandlerRegistry,
   ) {}
 
+  /**
+   * Process an event from Kafka
+   * The API sends events directly to Kafka without DB writes,
+   * so the worker is responsible for persistence
+   */
   async processEvent(rawEvent: RawEventMessage): Promise<void> {
+    let eventId: string | undefined;
+
     try {
       this.logger.log(
-        `Processing event: ${rawEvent.id} (${rawEvent.eventType})`,
+        `Processing event: ${rawEvent.event} for project ${rawEvent.projectId}`,
       );
+
+      // First, persist the event to database
+      const result = await this.eventRepository.create({
+        projectId: rawEvent.projectId,
+        eventType: rawEvent.event,
+        userId: rawEvent.userId,
+        payload: {
+          ...rawEvent.properties,
+          timestamp: rawEvent.timestamp,
+          receivedAt: rawEvent.receivedAt,
+        },
+      });
+      eventId = result.id;
 
       // Dispatch to appropriate handler via Strategy pattern
       await this.handlerRegistry.dispatch(rawEvent);
 
       // Update event status to processed via repository
-      await this.eventRepository.markAsProcessed(rawEvent.id);
+      await this.eventRepository.markAsProcessed(eventId);
 
-      this.logger.log(`Event ${rawEvent.id} processed successfully`);
+      this.logger.log(`Event ${eventId} processed successfully`);
     } catch (error) {
-      this.logger.error(`Error processing event ${rawEvent.id}:`, error);
+      this.logger.error(`Error processing event:`, error);
 
-      // Update event status to failed with error details via repository
-      // Note: We don't re-throw here to prevent Kafka from retrying
-      // since we've already marked the event as failed in the database
-      await this.eventRepository.markAsFailed(
-        rawEvent.id,
-        error instanceof Error ? error.message : String(error),
-      );
+      // If we have an event ID, mark it as failed
+      if (eventId) {
+        await this.eventRepository.markAsFailed(
+          eventId,
+          error instanceof Error ? error.message : String(error),
+        );
+      }
     }
   }
 }

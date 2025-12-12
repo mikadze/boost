@@ -16,7 +16,7 @@ export class WorkerController {
 
   @EventPattern('events.raw')
   async handleEvent(@Payload() data: KafkaMessage<RawEventMessage>) {
-    this.logger.debug(`Received event: ${data.value.id}`);
+    this.logger.debug(`Received event: ${data.value.event} for project ${data.value.projectId}`);
     await this.workerService.processEvent(data.value);
   }
 }

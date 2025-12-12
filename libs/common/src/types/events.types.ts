@@ -1,13 +1,15 @@
 /**
  * Typed Kafka message for raw events
  * Shared between API (producer) and Worker (consumer)
+ * Format aligned with Issue #3 Events Ingestion spec
  */
 export interface RawEventMessage {
-  id: string;
   projectId: string;
-  eventType: string;
-  userId?: string;
-  payload: Record<string, unknown>;
+  userId: string;
+  event: string;
+  properties: Record<string, unknown>;
+  timestamp: string;
+  receivedAt: string;
 }
 
 /**

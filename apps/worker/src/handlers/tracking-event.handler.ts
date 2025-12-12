@@ -14,7 +14,7 @@ export class TrackingEventHandler implements EventHandler {
   }
 
   async handle(event: RawEventMessage): Promise<void> {
-    this.logger.debug(`Processing tracking event: ${event.eventType}`);
+    this.logger.debug(`Processing tracking event: ${event.event}`);
 
     // TODO: Implement tracking-specific logic
     // Examples: analytics aggregation, session tracking, funnel analysis

@@ -17,6 +17,10 @@ const baseSchema = z.object({
 
   // Cache TTL in milliseconds
   CACHE_TTL_MS: z.coerce.number().default(60000),
+
+  // Better-Auth - human authentication
+  BETTER_AUTH_SECRET: z.string().min(32),
+  BETTER_AUTH_URL: z.string().url(),
 });
 
 // Development schema - allows localhost defaults
@@ -31,6 +35,8 @@ const developmentSchema = z.object({
   KAFKA_CLIENT_ID: z.string().optional(),
   REDIS_URL: z.string().default('redis://localhost:6379'),
   CACHE_TTL_MS: z.coerce.number().default(60000),
+  BETTER_AUTH_SECRET: z.string().min(32).default('development-secret-key-min-32-chars!!'),
+  BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'),
 });
 
 // Production schema - strict validation, no localhost allowed
@@ -51,6 +57,10 @@ const productionSchema = z.object({
     message: 'REDIS_URL must not use localhost in production',
   }),
   CACHE_TTL_MS: z.coerce.number().default(60000),
+  BETTER_AUTH_SECRET: z.string().min(32),
+  BETTER_AUTH_URL: z.string().url().refine((val) => !val.includes('localhost'), {
+    message: 'BETTER_AUTH_URL must not use localhost in production',
+  }),
 });
 
 export type AppConfig = z.infer<typeof baseSchema>;
