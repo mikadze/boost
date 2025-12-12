@@ -7,10 +7,23 @@
 export { GamifyProvider, type GamifyProviderProps, type GamifyContextValue } from './context.js';
 
 // Hooks
-export { useGamify, useTrack, useIdentify } from './hooks.js';
+export { useGamify, useTrack, useIdentify, useSession, useLoyalty } from './hooks.js';
 
 // Components
 export { GamifyPageView, GamifyTrackClick, type GamifyPageViewProps, type GamifyTrackClickProps } from './components.js';
 
 // Re-export core types for convenience
-export type { GamifyConfig, GamifyEvent, UserTraits } from '@gamify/core';
+export type {
+  GamifyConfig,
+  GamifyEvent,
+  UserTraits,
+  // Session types
+  CartItem,
+  SessionResponse,
+  AppliedEffect,
+  // Loyalty types
+  LoyaltyProfile,
+  LoyaltyTier,
+  LoyaltyTransaction,
+  LoyaltyHistoryResponse,
+} from '@gamify/core';

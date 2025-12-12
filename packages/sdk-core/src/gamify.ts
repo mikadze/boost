@@ -1,7 +1,9 @@
-import type { GamifyConfig, GamifyEvent, UserTraits, StorageAdapter } from './types.js';
+import type { GamifyConfig, GamifyEvent, UserTraits, StorageAdapter, CartItem } from './types.js';
 import { createStorage } from './storage/index.js';
 import { EventQueue } from './queue/index.js';
 import { HttpClient } from './network/index.js';
+import { SessionManager } from './session/index.js';
+import { LoyaltyManager } from './loyalty/index.js';
 
 const DEFAULT_ENDPOINT = 'https://api.gamify.io';
 const DEFAULT_FLUSH_INTERVAL = 10000; // 10 seconds
@@ -26,6 +28,8 @@ export class Gamify {
   private readonly storage: StorageAdapter;
   private readonly queue: EventQueue;
   private readonly client: HttpClient;
+  private readonly _session: SessionManager;
+  private readonly _loyalty: LoyaltyManager;
   private flushTimer: ReturnType<typeof setInterval> | null = null;
   private anonymousId: string;
   private userId: string | null = null;
@@ -53,6 +57,10 @@ export class Gamify {
       this.config.apiKey,
       this.config.debug
     );
+
+    // Initialize Session and Loyalty managers
+    this._session = new SessionManager(this.config, this.client, this.storage);
+    this._loyalty = new LoyaltyManager(this.config, this.client, this.storage);
 
     // Load or generate anonymous ID
     const storedAnonymousId = this.storage.get<string>(ANONYMOUS_ID_KEY);
@@ -260,5 +268,61 @@ export class Gamify {
       const events = pending.map((item) => item.event);
       this.client.sendBeacon(events);
     }
+  }
+
+  // ============================================
+  // Session Module (Issue #14)
+  // ============================================
+
+  /**
+   * Get the session manager
+   */
+  get session(): SessionManager {
+    return this._session;
+  }
+
+  /**
+   * Convenience method: Update cart and get discounts
+   */
+  async updateCart(
+    items: CartItem[],
+    coupons?: string[],
+    currency?: string,
+  ) {
+    if (!this.userId) {
+      throw new Error('[Gamify] User must be identified before updating cart');
+    }
+    return this._session.updateCart(this.userId, items, coupons, currency);
+  }
+
+  // ============================================
+  // Loyalty Module (Issue #15)
+  // ============================================
+
+  /**
+   * Get the loyalty manager
+   */
+  get loyalty(): LoyaltyManager {
+    return this._loyalty;
+  }
+
+  /**
+   * Convenience method: Get loyalty profile for current user
+   */
+  async getLoyaltyProfile() {
+    if (!this.userId) {
+      throw new Error('[Gamify] User must be identified before getting loyalty profile');
+    }
+    return this._loyalty.getProfile(this.userId);
+  }
+
+  /**
+   * Convenience method: Get loyalty history for current user
+   */
+  async getLoyaltyHistory(limit?: number, offset?: number) {
+    if (!this.userId) {
+      throw new Error('[Gamify] User must be identified before getting loyalty history');
+    }
+    return this._loyalty.getHistory(this.userId, limit, offset);
   }
 }

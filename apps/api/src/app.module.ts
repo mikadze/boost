@@ -19,6 +19,14 @@ import { AppService } from './app.service';
 import { HealthModule } from './health/health.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { ProjectsModule } from './projects/projects.module';
+// Issue #13: Rule Engine
+import { AttributesModule } from './attributes/attributes.module';
+import { CampaignsModule } from './campaigns/campaigns.module';
+// Issue #14: Promotion Toolkit
+import { SessionsModule } from './sessions/sessions.module';
+import { CouponsModule } from './coupons/coupons.module';
+// Issue #15: Loyalty
+import { LoyaltyModule } from './loyalty/loyalty.module';
 
 @Module({
   imports: [
@@ -58,6 +66,14 @@ import { ProjectsModule } from './projects/projects.module';
     HealthModule,
     OrganizationsModule,
     ProjectsModule,
+    // Issue #13: Rule Engine
+    AttributesModule,
+    CampaignsModule,
+    // Issue #14: Promotion Toolkit
+    SessionsModule,
+    CouponsModule,
+    // Issue #15: Loyalty
+    LoyaltyModule,
   ],
   controllers: [AppController, EventsController, AuthController, BetterAuthController],
   providers: [AppService, EventsService],

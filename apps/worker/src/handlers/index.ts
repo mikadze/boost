@@ -3,3 +3,4 @@ export * from './event-handler.registry';
 export * from './tracking-event.handler';
 export * from './user-event.handler';
 export * from './default-event.handler';
+export * from './rule-engine-event.handler';
