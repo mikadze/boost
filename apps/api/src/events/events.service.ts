@@ -1,14 +1,20 @@
-import {
-  Injectable,
-  Inject,
-  InternalServerErrorException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import { lastValueFrom, timeout, catchError } from 'rxjs';
-import { EventRepository } from '@boost/database';
-import { RawEventMessage } from '@boost/common';
-import { CreateEventDto } from '../dto/create-event.dto';
+import { lastValueFrom, timeout, catchError, throwError } from 'rxjs';
+import { TrackEventDto } from './dto/track-event.dto';
+
+/**
+ * Kafka message structure for raw events
+ * This is the message format sent to the events.raw topic
+ */
+export interface RawEventKafkaMessage {
+  projectId: string;
+  userId: string;
+  event: string;
+  properties: Record<string, unknown>;
+  timestamp: string;
+  receivedAt: string;
+}
 
 @Injectable()
 export class EventsService {
@@ -17,65 +23,52 @@ export class EventsService {
   constructor(
     @Inject('KAFKA_SERVICE')
     private kafkaClient: ClientKafka,
-    private readonly eventRepository: EventRepository,
   ) {}
 
-  async createEvent(projectId: string, createEventDto: CreateEventDto) {
-    // Store event in database first via repository
-    const { id: eventId } = await this.eventRepository.create({
-      projectId,
-      eventType: createEventDto.eventType,
-      userId: createEventDto.userId,
-      payload: createEventDto.payload,
-    });
+  /**
+   * Track an event - Kafka only, no DB writes
+   * High-throughput design for <50ms response time
+   */
+  async trackEvent(projectId: string, dto: TrackEventDto): Promise<void> {
+    const receivedAt = new Date().toISOString();
 
-    // Build typed Kafka message
-    const kafkaMessage: RawEventMessage = {
-      id: eventId,
+    // Build Kafka message
+    const message: RawEventKafkaMessage = {
       projectId,
-      eventType: createEventDto.eventType,
-      userId: createEventDto.userId,
-      payload: createEventDto.payload,
+      userId: dto.userId,
+      event: dto.event,
+      properties: dto.traits || {},
+      timestamp: dto.timestamp || receivedAt,
+      receivedAt,
     };
 
-    try {
-      // Send to Kafka with projectId as key for ordering
-      // Await the emit to ensure message is sent before returning success
-      await lastValueFrom(
-        this.kafkaClient
-          .emit('events.raw', {
-            key: projectId,
-            value: kafkaMessage,
-          })
-          .pipe(
-            timeout(5000), // 5 second timeout for Kafka
-            catchError((err) => {
-              this.logger.error(`Kafka emit failed for event ${eventId}:`, err);
-              throw err;
-            }),
-          ),
-      );
-    } catch (error) {
-      // Mark event as failed if Kafka emit fails
-      await this.eventRepository.markAsFailed(
-        eventId,
-        `Kafka emit failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
+    // Fire-and-forget to Kafka with short timeout
+    // The worker will handle persistence and processing
+    await lastValueFrom(
+      this.kafkaClient
+        .emit('events.raw', {
+          key: projectId, // Partition key ensures ordering per project
+          value: message,
+        })
+        .pipe(
+          timeout(3000), // 3 second timeout for fast failure
+          catchError((err) => {
+            this.logger.error(`Kafka emit failed:`, err);
+            return throwError(() => err);
+          }),
+        ),
+    );
 
-      throw new InternalServerErrorException(
-        'Failed to queue event for processing',
-      );
-    }
-
-    return { id: eventId };
+    this.logger.debug(`Event queued for project ${projectId}: ${dto.event}`);
   }
 
   async onModuleInit() {
-    // Wait for Kafka client to be ready
     await this.kafkaClient.connect();
+    this.logger.log('Kafka client connected');
   }
 
   async onModuleDestroy() {
     await this.kafkaClient.close();
+    this.logger.log('Kafka client disconnected');
   }
 }

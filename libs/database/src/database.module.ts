@@ -4,6 +4,7 @@ import { Pool } from 'pg';
 import * as schema from './schema';
 import { ApiKeyRepository } from './repositories/api-key.repository';
 import { EventRepository } from './repositories/event.repository';
+import { ProjectRepository } from './repositories/project.repository';
 
 let pool: Pool;
 
@@ -36,7 +37,8 @@ export function getDrizzleClient() {
     },
     ApiKeyRepository,
     EventRepository,
+    ProjectRepository,
   ],
-  exports: ['DRIZZLE_CONNECTION', 'DB_POOL', ApiKeyRepository, EventRepository],
+  exports: ['DRIZZLE_CONNECTION', 'DB_POOL', ApiKeyRepository, EventRepository, ProjectRepository],
 })
 export class DatabaseModule {}

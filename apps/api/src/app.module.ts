@@ -5,6 +5,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { DatabaseModule, initializePool } from '@boost/database';
 import {
   AuthModule,
+  BetterAuthModule,
   AppConfigModule,
   AppConfig,
   CorrelationIdMiddleware,
@@ -12,6 +13,7 @@ import {
 import { EventsController } from './events/events.controller';
 import { EventsService } from './events/events.service';
 import { AuthController } from './auth/auth.controller';
+import { BetterAuthController } from './better-auth/better-auth.controller';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './health/health.module';
@@ -46,9 +48,10 @@ import { HealthModule } from './health/health.module';
     ]),
     DatabaseModule,
     AuthModule,
+    BetterAuthModule,
     HealthModule,
   ],
-  controllers: [AppController, EventsController, AuthController],
+  controllers: [AppController, EventsController, AuthController, BetterAuthController],
   providers: [AppService, EventsService],
 })
 export class AppModule implements NestModule {

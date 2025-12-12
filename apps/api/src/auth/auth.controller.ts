@@ -7,21 +7,61 @@ import {
   Param,
   UseGuards,
   NotFoundException,
+  ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
-import { ApiKeyGuard, ApiKeyService, CurrentProjectId } from '@boost/common';
+import {
+  SessionGuard,
+  ApiKeyService,
+  CurrentOrganizationId,
+} from '@boost/common';
+import { ProjectRepository } from '@boost/database';
 
+/**
+ * API Key Management Controller
+ * Protected by SessionGuard (human authentication)
+ * Used by dashboard to manage API keys for projects
+ */
 @Controller('auth/api-keys')
-@UseGuards(ApiKeyGuard)
+@UseGuards(SessionGuard)
 export class AuthController {
-  constructor(private apiKeyService: ApiKeyService) {}
+  constructor(
+    private apiKeyService: ApiKeyService,
+    private projectRepository: ProjectRepository,
+  ) {}
+
+  /**
+   * Verify that a project belongs to the user's organization
+   */
+  private async verifyProjectAccess(
+    projectId: string,
+    organizationId: string,
+  ): Promise<void> {
+    const project = await this.projectRepository.findByIdAndOrganization(
+      projectId,
+      organizationId,
+    );
+    if (!project) {
+      throw new ForbiddenException(
+        'Project not found or does not belong to your organization',
+      );
+    }
+  }
 
   @Post()
   async createKey(
-    @CurrentProjectId() projectId: string,
-    @Body() body: { scopes?: string[] },
+    @CurrentOrganizationId() organizationId: string,
+    @Body() body: { projectId: string; scopes?: string[] },
   ) {
+    if (!body.projectId) {
+      throw new BadRequestException('projectId is required');
+    }
+
+    // Verify the user has access to this project via their organization
+    await this.verifyProjectAccess(body.projectId, organizationId);
+
     const rawKey = await this.apiKeyService.createKey(
-      projectId,
+      body.projectId,
       body.scopes || [],
     );
     return {
@@ -31,16 +71,26 @@ export class AuthController {
     };
   }
 
-  @Get()
-  async listKeys(@CurrentProjectId() projectId: string) {
+  @Get(':projectId')
+  async listKeys(
+    @Param('projectId') projectId: string,
+    @CurrentOrganizationId() organizationId: string,
+  ) {
+    // Verify the user has access to this project via their organization
+    await this.verifyProjectAccess(projectId, organizationId);
+
     return this.apiKeyService.listKeys(projectId);
   }
 
-  @Delete(':id')
+  @Delete(':projectId/:keyId')
   async revokeKey(
-    @Param('id') keyId: string,
-    @CurrentProjectId() projectId: string,
+    @Param('projectId') projectId: string,
+    @Param('keyId') keyId: string,
+    @CurrentOrganizationId() organizationId: string,
   ) {
+    // Verify the user has access to this project via their organization
+    await this.verifyProjectAccess(projectId, organizationId);
+
     const deleted = await this.apiKeyService.revokeKey(keyId, projectId);
     if (!deleted) {
       throw new NotFoundException('API Key not found or not owned by this project');

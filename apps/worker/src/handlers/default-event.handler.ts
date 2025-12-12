@@ -18,7 +18,7 @@ export class DefaultEventHandler implements EventHandler {
   }
 
   async handle(event: RawEventMessage): Promise<void> {
-    this.logger.debug(`Processing generic event: ${event.eventType}`);
+    this.logger.debug(`Processing generic event: ${event.event}`);
 
     // Generic event processing - store and acknowledge
   }
