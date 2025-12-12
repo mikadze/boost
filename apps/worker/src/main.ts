@@ -1,8 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
+import { AppConfig, validateConfig } from '@boost/common';
 
 async function bootstrap() {
+  // Validate config at startup to fail fast
+  const config = validateConfig(process.env);
+
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {
@@ -10,7 +15,7 @@ async function bootstrap() {
       options: {
         client: {
           clientId: 'worker-consumer',
-          brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
+          brokers: [config.KAFKA_BROKER],
         },
         consumer: {
           groupId: 'boost-worker-group',
@@ -21,7 +26,7 @@ async function bootstrap() {
   );
 
   await app.listen();
-  console.log('✅ Boost Worker listening for Kafka events');
+  console.log('Boost Worker listening for Kafka events');
 }
 
 bootstrap().catch((err) => {

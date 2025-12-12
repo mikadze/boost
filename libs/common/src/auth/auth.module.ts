@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
-import { ApiKeyService } from './auth/api-key.service';
-import { ApiKeyGuard } from './guards/api-key.guard';
+import { ApiKeyService } from './api-key.service';
+import { ApiKeyGuard } from '../guards/api-key.guard';
 
 @Module({
   imports: [CacheModule.register()],

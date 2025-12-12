@@ -2,12 +2,13 @@
   "extends": "../../packages/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
     "baseUrl": ".",
+    "module": "commonjs",
+    "moduleResolution": "node",
     "paths": {
       "@boost/*": ["../../libs/*/src"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "../../libs/*/src"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }

@@ -2,12 +2,12 @@ import { IsString, IsUUID, IsOptional, IsObject } from 'class-validator';
 
 export class CreateEventDto {
   @IsString()
-  eventType: string;
+  eventType!: string;
 
   @IsOptional()
   @IsUUID()
   userId?: string;
 
   @IsObject()
-  payload: Record<string, any>;
+  payload!: Record<string, unknown>;
 }

@@ -1,4 +1,13 @@
-import { Controller, Post, Get, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  NotFoundException,
+} from '@nestjs/common';
 import { ApiKeyGuard, ApiKeyService, CurrentProjectId } from '@boost/common';
 
 @Controller('auth/api-keys')
@@ -32,7 +41,10 @@ export class AuthController {
     @Param('id') keyId: string,
     @CurrentProjectId() projectId: string,
   ) {
-    await this.apiKeyService.revokeKey(keyId);
+    const deleted = await this.apiKeyService.revokeKey(keyId, projectId);
+    if (!deleted) {
+      throw new NotFoundException('API Key not found or not owned by this project');
+    }
     return { message: 'API Key revoked successfully' };
   }
 }
