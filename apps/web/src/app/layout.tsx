@@ -1,13 +1,10 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import { Providers } from '@/components/providers';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
-
 export const metadata: Metadata = {
-  title: 'Boost - Developer Onboarding',
-  description: 'Create your organization, projects, and API keys',
+  title: 'Boost - Loyalty Engine for Modern Apps',
+  description: 'Build engaging customer experiences with real-time event tracking, powerful promotions, and intelligent loyalty programs.',
 };
 
 export default function RootLayout({
@@ -17,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className="font-sans">
         <Providers>{children}</Providers>
       </body>
     </html>
