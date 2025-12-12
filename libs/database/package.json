@@ -11,8 +11,9 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "eslint \"src/**/*.ts\" --fix",
-    "db:generate": "drizzle-kit generate:pg",
-    "db:migrate": "node -r ts-node/register -r dotenv/config ./src/migrate.ts"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.20",

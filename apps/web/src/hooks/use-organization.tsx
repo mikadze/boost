@@ -91,7 +91,9 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     if (organizations.length > 0 && !currentOrg) {
-      const saved = localStorage.getItem('currentOrgId');
+      const saved = typeof window !== 'undefined'
+        ? localStorage.getItem('currentOrgId')
+        : null;
       const org = saved
         ? organizations.find((o) => o.id === saved) ?? organizations[0]
         : organizations[0];
@@ -101,7 +103,9 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
 
   const setCurrentOrg = useCallback((org: Organization) => {
     setCurrentOrgState(org);
-    localStorage.setItem('currentOrgId', org.id);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('currentOrgId', org.id);
+    }
   }, []);
 
   const createOrgMutation = useMutation({

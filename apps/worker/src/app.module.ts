@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { DatabaseModule, initializePool } from '@boost/database';
+import { DatabaseModule } from '@boost/database';
 import { AppConfigModule, AppConfig } from '@boost/common';
 import { WorkerController } from './worker.controller';
 import { WorkerService } from './worker.service';
@@ -36,7 +36,11 @@ import { SweeperService } from './sweeper';
         }),
       },
     ]),
-    DatabaseModule,
+    DatabaseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<AppConfig>) =>
+        config.get('DATABASE_URL', { infer: true })!,
+    }),
   ],
   controllers: [WorkerController],
   providers: [
@@ -59,9 +63,4 @@ import { SweeperService } from './sweeper';
     SweeperService,
   ],
 })
-export class AppModule {
-  constructor(private config: ConfigService<AppConfig>) {
-    // Initialize database pool on app startup using validated config
-    initializePool(config.get('DATABASE_URL', { infer: true })!);
-  }
-}
+export class AppModule {}

@@ -57,10 +57,13 @@ A high-performance, scalable data ingestion platform built with NestJS, Drizzle 
    npm run build
 
    # Start API (port 3000)
-   npm run dev --workspace=@boost/api
+   npm run start:dev --workspace=@boost/api
 
    # Start Worker (in another terminal)
-   npm run dev --workspace=@boost/worker
+   npm run start:dev --workspace=@boost/worker
+
+   # Start web (in another terminal)
+   npm run dev --workspace=@boost/web
    ```
 
 ## API Endpoints

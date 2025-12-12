@@ -21,6 +21,7 @@ const baseSchema = z.object({
   // Better-Auth - human authentication
   BETTER_AUTH_SECRET: z.string().min(32),
   BETTER_AUTH_URL: z.string().url(),
+  TRUSTED_ORIGINS: z.string().transform((val) => val.split(',').map((s) => s.trim())),
 });
 
 // Development schema - allows localhost defaults
@@ -31,12 +32,16 @@ const developmentSchema = z.object({
     .string()
     .url()
     .default('postgresql://postgres:postgres@localhost:5432/boost'),
-  KAFKA_BROKER: z.string().default('localhost:9092'),
+  KAFKA_BROKER: z.string().default('localhost:9093'),
   KAFKA_CLIENT_ID: z.string().optional(),
   REDIS_URL: z.string().default('redis://localhost:6379'),
   CACHE_TTL_MS: z.coerce.number().default(60000),
   BETTER_AUTH_SECRET: z.string().min(32).default('development-secret-key-min-32-chars!!'),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'),
+  TRUSTED_ORIGINS: z
+    .string()
+    .default('http://localhost:3000,http://localhost:3001,http://localhost:3002')
+    .transform((val) => val.split(',').map((s) => s.trim())),
 });
 
 // Production schema - strict validation, no localhost allowed
@@ -61,6 +66,7 @@ const productionSchema = z.object({
   BETTER_AUTH_URL: z.string().url().refine((val) => !val.includes('localhost'), {
     message: 'BETTER_AUTH_URL must not use localhost in production',
   }),
+  TRUSTED_ORIGINS: z.string().transform((val) => val.split(',').map((s) => s.trim())),
 });
 
 export type AppConfig = z.infer<typeof baseSchema>;

@@ -1,8 +1,8 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { organization } from 'better-auth/plugins';
-import { getDrizzleClient } from '@boost/database';
 import * as schema from '@boost/database';
+import { randomUUID } from 'crypto';
 
 /**
  * Better-Auth Configuration
@@ -15,18 +15,19 @@ let authInstance: ReturnType<typeof betterAuth> | null = null;
 export interface BetterAuthConfig {
   secret: string;
   baseURL: string;
+  db: unknown; // Drizzle client instance
+  trustedOrigins?: string[];
 }
 
 /**
  * Initialize or get the Better-Auth instance
- * Lazy initialization to ensure database is ready
+ * Receives the database client from the module to ensure proper initialization order
  */
 export function getBetterAuth(config: BetterAuthConfig) {
   if (!authInstance) {
-    const db = getDrizzleClient();
-
     authInstance = betterAuth({
-      database: drizzleAdapter(db, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      database: drizzleAdapter(config.db as any, {
         provider: 'pg',
         schema: {
           user: schema.users,
@@ -40,6 +41,7 @@ export function getBetterAuth(config: BetterAuthConfig) {
       }),
       secret: config.secret,
       baseURL: config.baseURL,
+      trustedOrigins: config.trustedOrigins,
       emailAndPassword: {
         enabled: true,
         requireEmailVerification: false, // Can enable later with email service
@@ -55,6 +57,11 @@ export function getBetterAuth(config: BetterAuthConfig) {
           allowUserToCreateOrganization: true,
         }),
       ],
+      advanced: {
+        database: {
+          generateId: () => randomUUID(),
+        },
+      },
     });
   }
 

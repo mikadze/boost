@@ -1,6 +1,6 @@
 import { Module, Global } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { getBetterAuth, BetterAuthConfig } from './better-auth';
+import { getBetterAuth } from './better-auth';
 import { AppConfig } from '../config/config.schema';
 
 export const BETTER_AUTH = 'BETTER_AUTH';
@@ -10,13 +10,14 @@ export const BETTER_AUTH = 'BETTER_AUTH';
   providers: [
     {
       provide: BETTER_AUTH,
-      inject: [ConfigService],
-      useFactory: (config: ConfigService<AppConfig>) => {
-        const authConfig: BetterAuthConfig = {
+      inject: [ConfigService, 'DRIZZLE_CONNECTION'],
+      useFactory: (config: ConfigService<AppConfig>, db: unknown) => {
+        return getBetterAuth({
           secret: config.get('BETTER_AUTH_SECRET', { infer: true })!,
           baseURL: config.get('BETTER_AUTH_URL', { infer: true })!,
-        };
-        return getBetterAuth(authConfig);
+          trustedOrigins: config.get('TRUSTED_ORIGINS', { infer: true })!,
+          db,
+        });
       },
     },
   ],

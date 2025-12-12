@@ -2,7 +2,7 @@ import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { DatabaseModule, initializePool } from '@boost/database';
+import { DatabaseModule } from '@boost/database';
 import {
   AuthModule,
   BetterAuthModule,
@@ -17,6 +17,8 @@ import { BetterAuthController } from './better-auth/better-auth.controller';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './health/health.module';
+import { OrganizationsModule } from './organizations/organizations.module';
+import { ProjectsModule } from './projects/projects.module';
 
 @Module({
   imports: [
@@ -46,22 +48,22 @@ import { HealthModule } from './health/health.module';
         }),
       },
     ]),
-    DatabaseModule,
+    DatabaseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<AppConfig>) =>
+        config.get('DATABASE_URL', { infer: true })!,
+    }),
     AuthModule,
     BetterAuthModule,
     HealthModule,
+    OrganizationsModule,
+    ProjectsModule,
   ],
   controllers: [AppController, EventsController, AuthController, BetterAuthController],
   providers: [AppService, EventsService],
 })
 export class AppModule implements NestModule {
-  constructor(private config: ConfigService<AppConfig>) {
-    // Initialize database pool on app startup using validated config
-    initializePool(config.get('DATABASE_URL', { infer: true })!);
-  }
-
   configure(consumer: MiddlewareConsumer) {
-    // Apply correlation ID middleware to all routes
     consumer.apply(CorrelationIdMiddleware).forRoutes('*');
   }
 }
