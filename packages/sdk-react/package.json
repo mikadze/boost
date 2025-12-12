@@ -1,0 +1,53 @@
+{
+  "name": "@gamify/react",
+  "version": "0.1.0",
+  "description": "React SDK for Gamify event tracking",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@gamify/core": "*"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "5.9.2"
+  },
+  "sideEffects": false,
+  "license": "MIT",
+  "keywords": [
+    "analytics",
+    "tracking",
+    "events",
+    "sdk",
+    "react"
+  ]
+}
