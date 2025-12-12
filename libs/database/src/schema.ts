@@ -37,7 +37,7 @@ export const projects = pgTable('project', {
   orgFk: foreignKey({
     columns: [t.organizationId],
     foreignColumns: [organizations.id],
-  }),
+  }).onDelete('cascade'),
 }));
 
 // API Keys table - for ingest authentication
@@ -58,7 +58,7 @@ export const apiKeys = pgTable('apiKey', {
   projectFk: foreignKey({
     columns: [t.projectId],
     foreignColumns: [projects.id],
-  }),
+  }).onDelete('cascade'),
   // Critical for O(1) lookups during authentication
   hashIdx: uniqueIndex('api_key_hash_idx').on(t.keyHash),
   projectIdx: index('api_key_project_idx').on(t.projectId),
@@ -78,7 +78,7 @@ export const endUsers = pgTable('endUser', {
   projectFk: foreignKey({
     columns: [t.projectId],
     foreignColumns: [projects.id],
-  }),
+  }).onDelete('cascade'),
   // Composite unique index: (projectId, externalId)
   uniqueUserIdx: uniqueIndex('end_user_external_id_idx').on(t.projectId, t.externalId),
   projectIdx: index('end_user_project_idx').on(t.projectId),
@@ -104,11 +104,11 @@ export const events = pgTable('event', {
   projectFk: foreignKey({
     columns: [t.projectId],
     foreignColumns: [projects.id],
-  }),
+  }).onDelete('cascade'),
   userFk: foreignKey({
     columns: [t.userId],
     foreignColumns: [endUsers.id],
-  }),
+  }).onDelete('set null'),
   projectIdx: index('event_project_idx').on(t.projectId),
   userIdx: index('event_user_idx').on(t.userId),
   statusIdx: index('event_status_idx').on(t.status),

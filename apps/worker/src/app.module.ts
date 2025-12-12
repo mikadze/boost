@@ -1,26 +1,31 @@
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { DatabaseModule, initializePool } from '@boost/database';
-import { AuthModule } from '@boost/common';
+import { AuthModule, AppConfigModule, AppConfig } from '@boost/common';
 import { WorkerController } from './worker.controller';
 import { WorkerService } from './worker.service';
 
 @Module({
   imports: [
-    ClientsModule.register([
+    AppConfigModule,
+    ClientsModule.registerAsync([
       {
         name: 'KAFKA_SERVICE',
-        transport: Transport.KAFKA,
-        options: {
-          client: {
-            clientId: 'worker-consumer',
-            brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService<AppConfig>) => ({
+          transport: Transport.KAFKA,
+          options: {
+            client: {
+              clientId: 'worker-consumer',
+              brokers: [config.get('KAFKA_BROKER', { infer: true })!],
+            },
+            consumer: {
+              groupId: 'boost-worker-group',
+              allowAutoTopicCreation: true,
+            },
           },
-          consumer: {
-            groupId: 'boost-worker-group',
-            allowAutoTopicCreation: true,
-          },
-        },
+        }),
       },
     ]),
     DatabaseModule,
@@ -30,11 +35,8 @@ import { WorkerService } from './worker.service';
   providers: [WorkerService],
 })
 export class AppModule {
-  constructor() {
-    // Initialize database pool on app startup
-    const dbUrl =
-      process.env.DATABASE_URL ||
-      'postgresql://postgres:postgres@localhost:5432/boost';
-    initializePool(dbUrl);
+  constructor(private config: ConfigService<AppConfig>) {
+    // Initialize database pool on app startup using validated config
+    initializePool(config.get('DATABASE_URL', { infer: true })!);
   }
 }

@@ -27,6 +27,12 @@ out/
 build
 dist
 
+# Compiled library outputs
+libs/**/*.js
+libs/**/*.d.ts
+libs/**/*.d.ts.map
+libs/**/*.js.map
+
 
 # Debug
 npm-debug.log*

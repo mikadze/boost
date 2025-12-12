@@ -61,12 +61,24 @@ export class ApiKeyService {
 
   /**
    * Revoke an API key by its ID
+   * Requires projectId to verify ownership before deletion
+   * Returns true if key was deleted, false if not found or not owned by project
    */
-  async revokeKey(keyId: string): Promise<void> {
+  async revokeKey(keyId: string, projectId: string): Promise<boolean> {
     const db = getDrizzleClient();
-    // In this case, we'd soft-delete or actually delete
-    // For now, we'll just delete it
+
+    // Verify ownership before deletion - prevents unauthorized key revocation
+    const existingKey = await db.query.apiKeys.findFirst({
+      where: eq(apiKeys.id, keyId),
+      columns: { projectId: true },
+    });
+
+    if (!existingKey || existingKey.projectId !== projectId) {
+      return false;
+    }
+
     await db.delete(apiKeys).where(eq(apiKeys.id, keyId));
+    return true;
   }
 
   /**

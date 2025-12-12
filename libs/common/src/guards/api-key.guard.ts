@@ -30,8 +30,12 @@ export class ApiKeyGuard implements CanActivate {
       throw new UnauthorizedException('Missing x-api-key header');
     }
 
-    // L1: Check Redis cache
-    const cacheKey = `apikey:${rawKey}`;
+    // Hash the key once - used for both cache lookup and DB operations
+    // SECURITY: Never store raw API key in cache keys to prevent exposure via Redis
+    const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+
+    // L1: Check Redis cache using hash (not raw key)
+    const cacheKey = `apikey:${keyHash}`;
     const cachedProjectId = await this.cacheManager.get<string>(cacheKey);
 
     if (cachedProjectId) {
@@ -47,13 +51,12 @@ export class ApiKeyGuard implements CanActivate {
     }
 
     // Update last used timestamp (fire-and-forget)
-    const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
     this.apiKeyService.updateLastUsed(keyHash).catch((err) => {
       console.error('Failed to update last used timestamp:', err);
     });
 
-    // Cache the projectId (TTL 60 seconds)
-    await this.cacheManager.set(cacheKey, result.projectId, 60000); // 60 seconds in ms
+    // Cache the projectId using hash as key (TTL 60 seconds)
+    await this.cacheManager.set(cacheKey, result.projectId, 60000);
 
     // Attach to request
     request.projectId = result.projectId;
