@@ -2,6 +2,8 @@ import { Module, Global } from '@nestjs/common';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from './schema';
+import { ApiKeyRepository } from './repositories/api-key.repository';
+import { EventRepository } from './repositories/event.repository';
 
 let pool: Pool;
 
@@ -32,7 +34,9 @@ export function getDrizzleClient() {
       provide: 'DB_POOL',
       useFactory: () => pool,
     },
+    ApiKeyRepository,
+    EventRepository,
   ],
-  exports: ['DRIZZLE_CONNECTION', 'DB_POOL'],
+  exports: ['DRIZZLE_CONNECTION', 'DB_POOL', ApiKeyRepository, EventRepository],
 })
 export class DatabaseModule {}

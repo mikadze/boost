@@ -170,3 +170,6 @@ export type NewEndUser = typeof endUsers.$inferInsert;
 
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
+
+// Event status type for type-safe status handling
+export type EventStatus = 'pending' | 'processed' | 'failed';

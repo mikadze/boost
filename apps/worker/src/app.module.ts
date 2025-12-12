@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { DatabaseModule, initializePool } from '@boost/database';
-import { AuthModule, AppConfigModule, AppConfig } from '@boost/common';
+import { AppConfigModule, AppConfig } from '@boost/common';
 import { WorkerController } from './worker.controller';
 import { WorkerService } from './worker.service';
 
@@ -29,7 +29,6 @@ import { WorkerService } from './worker.service';
       },
     ]),
     DatabaseModule,
-    AuthModule,
   ],
   controllers: [WorkerController],
   providers: [WorkerService],
