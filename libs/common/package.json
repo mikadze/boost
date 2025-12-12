@@ -1,0 +1,32 @@
+{
+  "name": "@boost/common",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Boost Common - Shared DTOs, Guards, Interceptors",
+  "author": "Boost Team",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint \"src/**/*.ts\" --fix"
+  },
+  "dependencies": {
+    "@nestjs/cache-manager": "^3.0.1",
+    "@nestjs/common": "^10.4.20",
+    "@nestjs/core": "^10.4.20",
+    "cache-manager": "^5.5.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "ioredis": "^5.4.1",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.9.2",
+    "@typescript-eslint/parser": "^8.9.2",
+    "eslint": "^9.14.0",
+    "typescript": "^5.9.2"
+  }
+}

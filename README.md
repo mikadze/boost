@@ -1,135 +1,256 @@
-# Turborepo starter
+# Boost - Data Ingestion Platform
 
-This Turborepo starter is maintained by the Turborepo core team.
+A high-performance, scalable data ingestion platform built with NestJS, Drizzle ORM, and Kafka.
 
-## Using this example
+## Architecture
 
-Run the following command:
-
-```sh
-npx create-turbo@latest
+```
+/
+├── apps/
+│   ├── api/          # NestJS HTTP Gateway (Public API)
+│   └── worker/       # NestJS Microservice (Kafka Consumer)
+├── libs/
+│   ├── database/     # Drizzle ORM Schema & Connection Module
+│   └── common/       # Shared DTOs, Guards, Auth, Decorators
+├── docker-compose.yml # Infrastructure (Postgres, Redis, Kafka)
+└── package.json      # Turborepo Workspace Configuration
 ```
 
-## What's inside?
+## Features
 
-This Turborepo includes the following packages/apps:
+✨ **Multi-Tenant Architecture** - Logical isolation using RLS context
+🔐 **Secure API Keys** - SHA-256 hashing with Redis caching (L1/L2)
+⚡ **Event Streaming** - Kafka-based event sourcing
+💾 **PostgreSQL + Drizzle** - Type-safe ORM
+🚀 **Microservices Ready** - NestJS + Turborepo
+🐳 **Docker Compose** - Local development environment
 
-### Apps and Packages
+## Quick Start
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+### Prerequisites
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+- Node.js 18+
+- npm 11+
+- Docker & Docker Compose
 
-### Utilities
+### Installation
 
-This Turborepo has some additional tools already setup for you:
+1. **Clone & Setup**
+   ```bash
+   cd /workspaces/boost
+   npm install
+   ```
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+2. **Environment Variables**
+   ```bash
+   cp .env.example .env.local
+   ```
+
+3. **Start Infrastructure**
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **Build & Run**
+   ```bash
+   # Build all apps
+   npm run build
+
+   # Start API (port 3000)
+   npm run dev --workspace=@boost/api
+
+   # Start Worker (in another terminal)
+   npm run dev --workspace=@boost/worker
+   ```
+
+## API Endpoints
+
+### Health Check
+```bash
+GET /
+```
+
+### Create Event (Protected)
+```bash
+POST /events
+x-api-key: pk_live_<key>
+Content-Type: application/json
+
+{
+  "eventType": "user.signup",
+  "userId": "550e8400-e29b-41d4-a716-446655440000",
+  "payload": {
+    "email": "user@example.com",
+    "name": "John Doe"
+  }
+}
+```
+
+### Manage API Keys (Protected)
+```bash
+# Create new key
+POST /auth/api-keys
+x-api-key: pk_live_<key>
+
+# List keys
+GET /auth/api-keys
+x-api-key: pk_live_<key>
+
+# Revoke key
+DELETE /auth/api-keys/:id
+x-api-key: pk_live_<key>
+```
+
+## Database Schema
+
+### Organizations
+- `id` (UUID, PK)
+- `name` (VARCHAR)
+- `createdAt`, `updatedAt`
+
+### Projects
+- `id` (UUID, PK)
+- `organizationId` (UUID, FK)
+- `name`, `description` (VARCHAR/TEXT)
+- `createdAt`, `updatedAt`
+
+### API Keys
+- `id` (UUID, PK)
+- `projectId` (UUID, FK)
+- `keyHash` (VARCHAR, UNIQUE) - SHA-256 hash
+- `prefix` (VARCHAR) - Display prefix
+- `scopes` (JSON)
+- `lastUsedAt` (TIMESTAMP)
+
+### End Users
+- `id` (UUID, PK)
+- `projectId` (UUID, FK)
+- `externalId` (VARCHAR) - Customer's user ID
+- `metadata` (JSON)
+- Composite unique index: `(projectId, externalId)`
+
+### Events
+- `id` (UUID, PK)
+- `projectId` (UUID, FK)
+- `eventType` (VARCHAR)
+- `userId` (UUID, FK to endUser)
+- `payload` (JSON)
+- `status` (VARCHAR: pending/processed/failed)
+- `errorDetails` (TEXT, if failed)
+- `createdAt`, `processedAt`
+
+## Authentication
+
+API Keys are secured using:
+
+1. **Key Generation**: 32-byte random hex string
+   - Format: `pk_live_<random>`
+   - SHA-256 hash stored in database
+   - Only shown once at creation
+
+2. **Validation Flow**:
+   - L1 Cache: Redis (TTL 60s) - `apikey:<raw_key>` → `projectId`
+   - L2 Lookup: PostgreSQL - Hash comparison
+   - Returns `projectId` for multi-tenant isolation
+
+3. **Performance**:
+   - Warm (cached): ~10ms
+   - Cold (DB hit): ~50ms
+
+## Development
 
 ### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+```bash
+npm run build
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+### Lint & Format
+```bash
+npm run lint
+npm run format
 ```
 
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+### Run Tests
+```bash
+npm test
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+### Watch Mode
+```bash
+npm run dev
 ```
 
-### Remote Caching
+## Deployment
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+### Production Build
+```bash
+npm run build
+# API: apps/api/dist/main.js
+# Worker: apps/worker/dist/main.js
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
+### Environment Variables
 ```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+DATABASE_URL=postgresql://...
+KAFKA_BROKER=kafka:9092
+REDIS_URL=redis://redis:6379
+PORT=3000
+NODE_ENV=production
 ```
 
-## Useful Links
+## Project Timeline
 
-Learn more about the power of Turborepo:
+- **Phase 1** (Current): Project Setup & DB Schema ✅
+  - Turborepo initialization
+  - NestJS app scaffolding
+  - Drizzle schema & migrations
+  - Docker infrastructure
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+- **Phase 2**: API Key Management
+  - Key generation & hashing
+  - Redis caching layer
+  - Auth middleware
+
+- **Phase 3**: Event Processing
+  - Kafka producer/consumer
+  - Event persistence
+  - Error handling & retries
+
+- **Phase 4**: Analytics & Dashboard
+  - Event aggregation
+  - Real-time metrics
+  - Admin UI
+
+## Troubleshooting
+
+### Postgres connection error
+```bash
+# Check if container is running
+docker ps | grep postgres
+
+# Check logs
+docker logs boost-postgres
+```
+
+### Kafka not responding
+```bash
+# Verify Kafka health
+docker exec boost-kafka kafka-broker-api-versions --bootstrap-server localhost:9092
+```
+
+### TypeScript errors
+```bash
+# Clean build
+rm -rf dist
+npm run build
+```
+
+## Contributing
+
+1. Create feature branch: `git checkout -b feature/xyz`
+2. Make changes and commit
+3. Push and create PR
+
+## License
+
+MIT
