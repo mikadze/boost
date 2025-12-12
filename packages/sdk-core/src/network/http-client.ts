@@ -1,5 +1,11 @@
 import type { GamifyEvent, ApiResponse } from '../types.js';
 
+interface HttpResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
 /**
  * HTTP client for sending events to the API
  * Uses fetch with keepalive for reliable delivery during page unload
@@ -21,6 +27,67 @@ export class HttpClient {
   private log(message: string, data?: unknown): void {
     if (this.debug) {
       console.log(`[Gamify] ${message}`, data ?? '');
+    }
+  }
+
+  /**
+   * Generic GET request
+   */
+  async get<T>(path: string): Promise<HttpResponse<T>> {
+    this.log(`GET ${path}`);
+
+    try {
+      const response = await fetch(`${this.endpoint}${path}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': this.apiKey,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        this.log(`GET error: ${response.status}`, errorText);
+        return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+      }
+
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.log('GET network error', message);
+      return { success: false, error: message };
+    }
+  }
+
+  /**
+   * Generic POST request
+   */
+  async post<T>(path: string, body: unknown): Promise<HttpResponse<T>> {
+    this.log(`POST ${path}`, body);
+
+    try {
+      const response = await fetch(`${this.endpoint}${path}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': this.apiKey,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        this.log(`POST error: ${response.status}`, errorText);
+        return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+      }
+
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.log('POST network error', message);
+      return { success: false, error: message };
     }
   }
 

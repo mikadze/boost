@@ -6,6 +6,17 @@ import { ApiKeyRepository } from './repositories/api-key.repository';
 import { EventRepository } from './repositories/event.repository';
 import { OrganizationRepository } from './repositories/organization.repository';
 import { ProjectRepository } from './repositories/project.repository';
+// Issue #13: Rule Engine Repositories
+import { AttributeRepository } from './repositories/attribute.repository';
+import { CampaignRepository } from './repositories/campaign.repository';
+import { RuleRepository } from './repositories/rule.repository';
+// Issue #14: Promotion Toolkit Repositories
+import { CustomerSessionRepository } from './repositories/customer-session.repository';
+import { CouponRepository } from './repositories/coupon.repository';
+// Issue #15: Loyalty Repositories
+import { LoyaltyTierRepository } from './repositories/loyalty-tier.repository';
+import { LoyaltyLedgerRepository } from './repositories/loyalty-ledger.repository';
+import { EndUserRepository } from './repositories/end-user.repository';
 
 let pool: Pool;
 
@@ -35,6 +46,24 @@ export class DatabaseModule {
   static forRoot(connectionString: string): DynamicModule {
     initializePool(connectionString);
 
+    const repositories = [
+      ApiKeyRepository,
+      EventRepository,
+      OrganizationRepository,
+      ProjectRepository,
+      // Issue #13
+      AttributeRepository,
+      CampaignRepository,
+      RuleRepository,
+      // Issue #14
+      CustomerSessionRepository,
+      CouponRepository,
+      // Issue #15
+      LoyaltyTierRepository,
+      LoyaltyLedgerRepository,
+      EndUserRepository,
+    ];
+
     return {
       module: DatabaseModule,
       providers: [
@@ -46,12 +75,9 @@ export class DatabaseModule {
           provide: 'DB_POOL',
           useFactory: () => pool,
         },
-        ApiKeyRepository,
-        EventRepository,
-        OrganizationRepository,
-        ProjectRepository,
+        ...repositories,
       ],
-      exports: ['DRIZZLE_CONNECTION', 'DB_POOL', ApiKeyRepository, EventRepository, OrganizationRepository, ProjectRepository],
+      exports: ['DRIZZLE_CONNECTION', 'DB_POOL', ...repositories],
     };
   }
 
@@ -59,6 +85,24 @@ export class DatabaseModule {
     inject: any[];
     useFactory: (...args: any[]) => string | Promise<string>;
   }): DynamicModule {
+    const repositories = [
+      ApiKeyRepository,
+      EventRepository,
+      OrganizationRepository,
+      ProjectRepository,
+      // Issue #13
+      AttributeRepository,
+      CampaignRepository,
+      RuleRepository,
+      // Issue #14
+      CustomerSessionRepository,
+      CouponRepository,
+      // Issue #15
+      LoyaltyTierRepository,
+      LoyaltyLedgerRepository,
+      EndUserRepository,
+    ];
+
     return {
       module: DatabaseModule,
       providers: [
@@ -76,12 +120,9 @@ export class DatabaseModule {
           inject: ['DRIZZLE_CONNECTION'],
           useFactory: () => pool,
         },
-        ApiKeyRepository,
-        EventRepository,
-        OrganizationRepository,
-        ProjectRepository,
+        ...repositories,
       ],
-      exports: ['DRIZZLE_CONNECTION', 'DB_POOL', ApiKeyRepository, EventRepository, OrganizationRepository, ProjectRepository],
+      exports: ['DRIZZLE_CONNECTION', 'DB_POOL', ...repositories],
     };
   }
 }
