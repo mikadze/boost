@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, and, lt } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../schema';
 import { events, EventStatus } from '../schema';
@@ -77,5 +77,38 @@ export class EventRepository {
       where: eq(events.id, eventId),
     });
     return (result as EventRecord) || null;
+  }
+
+  /**
+   * Find events stuck in pending status longer than the threshold.
+   * Used by the Sweeper job to recover events that failed to emit to Kafka.
+   */
+  async findStuckPendingEvents(
+    olderThanMinutes: number,
+    limit: number = 100,
+  ): Promise<EventRecord[]> {
+    const threshold = new Date(Date.now() - olderThanMinutes * 60 * 1000);
+
+    const result = await this.db
+      .select()
+      .from(events)
+      .where(and(eq(events.status, 'pending'), lt(events.createdAt, threshold)))
+      .limit(limit);
+
+    return result as EventRecord[];
+  }
+
+  /**
+   * Mark an event as ready for retry by resetting its status.
+   * Used by the Sweeper to re-queue stuck events.
+   */
+  async markForRetry(eventId: string): Promise<void> {
+    await this.db
+      .update(events)
+      .set({
+        status: 'pending',
+        errorDetails: 'Retried by sweeper job',
+      })
+      .where(eq(events.id, eventId));
   }
 }
