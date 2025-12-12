@@ -7,8 +7,7 @@ import {
   uniqueIndex,
   foreignKey,
   index,
-  json,
-  integer,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -49,7 +48,7 @@ export const apiKeys = pgTable('apiKey', {
   // Prefix for UI identification (e.g., "pk_live_a1b2...")
   prefix: varchar('prefix', { length: 24 }).notNull(),
   // Scopes for authorization (future use)
-  scopes: json('scopes').default([]).notNull(),
+  scopes: jsonb('scopes').default([]).notNull(),
   // Track last usage for monitoring
   lastUsedAt: timestamp('last_used_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -70,8 +69,8 @@ export const endUsers = pgTable('endUser', {
   projectId: uuid('project_id').notNull(),
   // External identifier from customer's system
   externalId: varchar('external_id').notNull(),
-  // User metadata stored as JSON
-  metadata: json('metadata'),
+  // User metadata stored as JSONB (binary, indexable, faster queries)
+  metadata: jsonb('metadata'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => ({
@@ -92,8 +91,8 @@ export const events = pgTable('event', {
   eventType: varchar('event_type', { length: 255 }).notNull(),
   // User ID the event belongs to
   userId: uuid('user_id'),
-  // Event payload as JSON
-  payload: json('payload').notNull(),
+  // Event payload as JSONB (binary, indexable, faster queries)
+  payload: jsonb('payload').notNull(),
   // Processing status
   status: varchar('status', { length: 32 }).default('pending').notNull(),
   // Error details if processing failed
@@ -170,3 +169,6 @@ export type NewEndUser = typeof endUsers.$inferInsert;
 
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
+
+// Event status type for type-safe status handling
+export type EventStatus = 'pending' | 'processed' | 'failed';
