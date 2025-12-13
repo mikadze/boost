@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
-import { DatabaseModule } from '@boost/database';
 import { AuthModule } from '@boost/common';
 import { CouponsController } from './coupons.controller';
 import { CouponsService } from './coupons.service';
 
 @Module({
-  imports: [DatabaseModule, AuthModule],
+  imports: [AuthModule],
   controllers: [CouponsController],
   providers: [CouponsService],
   exports: [CouponsService],
