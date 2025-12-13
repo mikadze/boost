@@ -28,6 +28,9 @@ import { QuestDefinitionRepository } from './repositories/quest-definition.repos
 import { QuestStepRepository } from './repositories/quest-step.repository';
 import { UserQuestProgressRepository } from './repositories/user-quest-progress.repository';
 import { UserStepProgressRepository } from './repositories/user-step-progress.repository';
+// Issue #33: Badge System Repositories
+import { BadgeDefinitionRepository } from './repositories/badge-definition.repository';
+import { UserBadgeRepository } from './repositories/user-badge.repository';
 
 let pool: Pool;
 
@@ -84,6 +87,9 @@ export class DatabaseModule {
       QuestStepRepository,
       UserQuestProgressRepository,
       UserStepProgressRepository,
+      // Issue #33
+      BadgeDefinitionRepository,
+      UserBadgeRepository,
     ];
 
     return {
@@ -134,6 +140,9 @@ export class DatabaseModule {
       QuestStepRepository,
       UserQuestProgressRepository,
       UserStepProgressRepository,
+      // Issue #33
+      BadgeDefinitionRepository,
+      UserBadgeRepository,
     ];
 
     return {
