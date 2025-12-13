@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, inArray, asc } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../schema';
 import {
@@ -113,21 +113,31 @@ export class QuestDefinitionRepository {
   async findByProjectIdWithSteps(projectId: string): Promise<QuestDefinitionWithSteps[]> {
     const quests = await this.findByProjectId(projectId);
 
-    const questsWithSteps: QuestDefinitionWithSteps[] = [];
-    for (const quest of quests) {
-      const steps = await this.db
-        .select()
-        .from(questSteps)
-        .where(eq(questSteps.questId, quest.id))
-        .orderBy(questSteps.orderIndex);
-
-      questsWithSteps.push({
-        ...quest,
-        steps,
-      });
+    if (quests.length === 0) {
+      return [];
     }
 
-    return questsWithSteps;
+    // Batch fetch all steps for all quests in a single query (avoids N+1)
+    const questIds = quests.map(q => q.id);
+    const allSteps = await this.db
+      .select()
+      .from(questSteps)
+      .where(inArray(questSteps.questId, questIds))
+      .orderBy(asc(questSteps.orderIndex));
+
+    // Group steps by questId
+    const stepsByQuestId = new Map<string, QuestStep[]>();
+    for (const step of allSteps) {
+      const existing = stepsByQuestId.get(step.questId) ?? [];
+      existing.push(step);
+      stepsByQuestId.set(step.questId, existing);
+    }
+
+    // Combine quests with their steps
+    return quests.map(quest => ({
+      ...quest,
+      steps: stepsByQuestId.get(quest.id) ?? [],
+    }));
   }
 
   async update(id: string, data: UpdateQuestDefinitionData): Promise<QuestDefinition | null> {

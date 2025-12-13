@@ -18,6 +18,7 @@ import {
   UpdateQuestDto,
   CreateQuestStepDto,
   UpdateQuestStepDto,
+  CustomerQuestQueryDto,
 } from './dto/quest.dto';
 
 @Controller('quests')
@@ -199,9 +200,9 @@ export class CustomerQuestsController {
   @Get()
   async getUserQuests(
     @CurrentProjectId() projectId: string,
-    @Query('userId') userId: string,
+    @Query() query: CustomerQuestQueryDto,
   ) {
-    return this.questsService.getUserQuests(projectId, userId);
+    return this.questsService.getUserQuests(projectId, query.userId);
   }
 
   /**
@@ -211,9 +212,9 @@ export class CustomerQuestsController {
   @Get(':questId')
   async getUserQuestProgress(
     @CurrentProjectId() projectId: string,
-    @Query('userId') userId: string,
+    @Query() query: CustomerQuestQueryDto,
     @Param('questId') questId: string,
   ) {
-    return this.questsService.getUserQuestProgress(projectId, userId, questId);
+    return this.questsService.getUserQuestProgress(projectId, query.userId, questId);
   }
 }

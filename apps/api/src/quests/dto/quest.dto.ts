@@ -135,3 +135,13 @@ export class UpdateQuestDto {
 }
 
 export class AddQuestStepDto extends CreateQuestStepDto {}
+
+/**
+ * DTO for SDK customer quest queries
+ * Validates userId is provided in query params
+ */
+export class CustomerQuestQueryDto {
+  @IsString()
+  @IsNotEmpty()
+  userId!: string;
+}

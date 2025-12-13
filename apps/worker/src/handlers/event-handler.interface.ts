@@ -11,6 +11,13 @@ export interface EventHandler {
   getSupportedTypes(): string[];
 
   /**
+   * Optional method to check if this handler should process the event.
+   * Useful for handlers that need to evaluate events dynamically
+   * beyond just matching event types (e.g., quest progress handler).
+   */
+  shouldHandle?(event: RawEventMessage): Promise<boolean>;
+
+  /**
    * Process the event
    * @throws Error if processing fails
    */
