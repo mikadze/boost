@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../schema';
 import { organizations, members, Organization, Member } from '../schema';
@@ -51,20 +51,12 @@ export class OrganizationRepository {
    * Check if user is a member of organization
    */
   async isMember(userId: string, orgId: string): Promise<Member | null> {
-    const result = await this.db.query.members.findFirst({
-      where: eq(members.userId, userId),
-    });
-    if (result && result.organizationId === orgId) {
-      return result;
-    }
-    // Need to check both conditions
-    const memberResult = await this.db
+    const [member] = await this.db
       .select()
       .from(members)
-      .where(eq(members.userId, userId))
+      .where(and(eq(members.userId, userId), eq(members.organizationId, orgId)))
       .limit(1);
 
-    const member = memberResult.find(m => m.organizationId === orgId);
     return member || null;
   }
 

@@ -1,8 +1,10 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
 import { OrganizationRepository, ProjectRepository } from '@boost/database';
 
 @Injectable()
 export class OrganizationsService {
+  private readonly logger = new Logger(OrganizationsService.name);
+
   constructor(
     private readonly organizationRepo: OrganizationRepository,
     private readonly projectRepo: ProjectRepository,
@@ -12,7 +14,10 @@ export class OrganizationsService {
    * List all organizations for a user
    */
   async findByUserId(userId: string) {
-    return this.organizationRepo.findByUserId(userId);
+    this.logger.debug(`Finding organizations for userId=${userId}`);
+    const orgs = await this.organizationRepo.findByUserId(userId);
+    this.logger.debug(`Found ${orgs.length} orgs: ${JSON.stringify(orgs.map(o => ({ id: o.id, name: o.name })))}`);
+    return orgs;
   }
 
   /**
@@ -26,7 +31,9 @@ export class OrganizationsService {
    * Verify user is a member of organization
    */
   async verifyMembership(userId: string, orgId: string) {
+    this.logger.debug(`Checking membership: userId=${userId}, orgId=${orgId}`);
     const member = await this.organizationRepo.isMember(userId, orgId);
+    this.logger.debug(`Membership result: ${JSON.stringify(member)}`);
     if (!member) {
       throw new ForbiddenException('Not a member of this organization');
     }
