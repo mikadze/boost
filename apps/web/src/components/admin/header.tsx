@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell, Search, LogOut, User, Settings } from 'lucide-react';
+import { Bell, Search, LogOut, User, Settings, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar } from '@/components/ui/avatar';
@@ -24,7 +24,11 @@ import {
 import { useSession, signOut } from '@/lib/auth-client';
 import { useOrganization } from '@/hooks/use-organization';
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick: () => void;
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const { organizations, currentOrg, setCurrentOrg, projects } = useOrganization();
@@ -46,8 +50,18 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 h-16 glass-strong border-b border-border">
-      <div className="flex h-full items-center justify-between px-6">
+      <div className="flex h-full items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-4">
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onMenuClick}
+            className="lg:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+
           {/* Organization selector */}
           {organizations.length > 0 && (
             <Select

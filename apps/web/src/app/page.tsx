@@ -159,6 +159,7 @@ function Navbar() {
 
 function HeroSection() {
   const [copied, setCopied] = React.useState(false);
+  const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText('npm install @boost/sdk');
@@ -166,11 +167,23 @@ function HeroSection() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const { clientX, clientY } = e;
+    const x = (clientX / window.innerWidth - 0.5) * 20;
+    const y = (clientY / window.innerHeight - 0.5) * 20;
+    setMousePosition({ x, y });
+  };
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
-      {/* Aurora background */}
-      <div className="absolute inset-0 aurora" />
-      <div className="absolute inset-0 grid-pattern" />
+    <section
+      className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden"
+      onMouseMove={handleMouseMove}
+    >
+      {/* Light theme gradient background */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5" />
+      </div>
+      <div className="absolute inset-0 grid-pattern opacity-20" />
 
       <div className="container mx-auto px-6 py-20 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
@@ -187,8 +200,16 @@ function HeroSection() {
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-5xl md:text-7xl font-bold leading-tight"
+            transition={{
+              delay: 0.1,
+              type: 'spring',
+              stiffness: 150,
+              damping: 15
+            }}
+            style={{
+              transform: `translate(${mousePosition.x * 0.5}px, ${mousePosition.y * 0.5}px)`,
+            }}
+            className="text-5xl md:text-7xl font-bold leading-tight parallax-slow"
           >
             The{' '}
             <span className="gradient-text">loyalty engine</span>
@@ -212,13 +233,13 @@ function HeroSection() {
             transition={{ delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10"
           >
-            <GlowButton variant="glow" size="lg" asChild>
+            <GlowButton variant="glow" size="lg" className="button-apple magnetic" asChild>
               <Link href="/sign-up">
                 Start Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </GlowButton>
-            <Button variant="outline" size="lg" asChild>
+            <Button variant="outline" size="lg" className="magnetic-subtle" asChild>
               <Link href="/docs">
                 <Play className="mr-2 h-5 w-5" />
                 Watch Demo
@@ -252,8 +273,16 @@ function HeroSection() {
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="max-w-3xl mx-auto mt-16"
+          transition={{
+            delay: 0.5,
+            type: 'spring',
+            stiffness: 100,
+            damping: 15
+          }}
+          style={{
+            transform: `translate(${mousePosition.x * 0.3}px, ${mousePosition.y * 0.3}px)`,
+          }}
+          className="max-w-3xl mx-auto mt-16 parallax-medium"
         >
           <GlassCard className="overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
@@ -298,12 +327,16 @@ function FeaturesSection() {
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
+              initial={{ opacity: 0, scale: 0.9, filter: 'blur(10px)' }}
+              whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{
+                duration: 0.6,
+                delay: index * 0.1,
+                ease: [0.34, 1.56, 0.64, 1],
+              }}
             >
-              <GlassCard className="h-full hover:glow transition-shadow">
+              <GlassCard className="h-full magnetic-subtle transition-all duration-300">
                 <div className="p-6">
                   <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                     <feature.icon className="h-6 w-6 text-primary" />
@@ -349,14 +382,21 @@ function PipelineSection() {
           {pipelineSteps.map((step, index) => (
             <React.Fragment key={step.label}>
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.15 }}
+                transition={{
+                  delay: index * 0.2,
+                  duration: 0.5,
+                  ease: [0.34, 1.56, 0.64, 1],
+                }}
+                whileHover={{ scale: 1.1, rotate: 5 }}
                 className="flex flex-col items-center"
               >
-                <div className="h-16 w-16 rounded-xl glass flex items-center justify-center mb-2">
-                  <step.icon className="h-8 w-8 text-primary" />
+                <div className="magnetic-subtle">
+                  <div className="h-16 w-16 rounded-xl glass flex items-center justify-center mb-2">
+                    <step.icon className="h-8 w-8 text-primary" />
+                  </div>
                 </div>
                 <span className="text-sm text-muted-foreground">
                   {step.label}
@@ -364,10 +404,14 @@ function PipelineSection() {
               </motion.div>
               {index < pipelineSteps.length - 1 && (
                 <motion.div
-                  initial={{ opacity: 0, scaleX: 0 }}
-                  whileInView={{ opacity: 1, scaleX: 1 }}
+                  initial={{ scaleX: 0, opacity: 0 }}
+                  whileInView={{ scaleX: 1, opacity: 1 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.15 + 0.1 }}
+                  transition={{
+                    delay: index * 0.2 + 0.15,
+                    duration: 0.4,
+                  }}
+                  style={{ originX: 0 }}
                   className="h-0.5 w-12 bg-gradient-to-r from-primary/50 to-primary hidden sm:block"
                 />
               )}
@@ -417,13 +461,13 @@ function CTASection() {
               experiences and drive growth.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <GlowButton variant="glow" size="lg" asChild>
+              <GlowButton variant="glow" size="lg" className="button-apple magnetic" asChild>
                 <Link href="/sign-up">
                   Start Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </GlowButton>
-              <Button variant="outline" size="lg" asChild>
+              <Button variant="outline" size="lg" className="magnetic-subtle" asChild>
                 <Link href="/contact">Contact Sales</Link>
               </Button>
             </div>
@@ -431,6 +475,28 @@ function CTASection() {
         </motion.div>
       </div>
     </section>
+  );
+}
+
+function ScrollProgress() {
+  const [progress, setProgress] = React.useState(0);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = (window.scrollY / totalHeight) * 100;
+      setProgress(progress);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <motion.div
+      className="fixed top-0 left-0 right-0 h-1 bg-primary z-50 origin-left"
+      style={{ scaleX: progress / 100 }}
+    />
   );
 }
 
@@ -508,6 +574,7 @@ function Footer() {
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
+      <ScrollProgress />
       <Navbar />
       <HeroSection />
       <FeaturesSection />

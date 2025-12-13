@@ -218,16 +218,18 @@ export default function AdminDashboard() {
                       <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#2D3748" />
-                  <XAxis dataKey="name" stroke="#94A3B8" fontSize={12} />
-                  <YAxis stroke="#94A3B8" fontSize={12} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={12} />
+                  <YAxis stroke="var(--muted-foreground)" fontSize={12} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#151923',
-                      border: '1px solid #2D3748',
+                      backgroundColor: 'var(--card)',
+                      border: '1px solid var(--border)',
                       borderRadius: '8px',
+                      color: 'var(--foreground)',
                     }}
-                    labelStyle={{ color: '#E2E8F0' }}
+                    labelStyle={{ color: 'var(--foreground)' }}
+                    itemStyle={{ color: 'var(--muted-foreground)' }}
                   />
                   <Area
                     type="monotone"
@@ -314,22 +316,24 @@ export default function AdminDashboard() {
           <GlassCardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={campaignPerformanceData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#2D3748" />
-                <XAxis type="number" stroke="#94A3B8" fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis type="number" stroke="var(--muted-foreground)" fontSize={12} />
                 <YAxis
                   dataKey="name"
                   type="category"
-                  stroke="#94A3B8"
+                  stroke="var(--muted-foreground)"
                   fontSize={12}
                   width={100}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#151923',
-                    border: '1px solid #2D3748',
+                    backgroundColor: 'var(--card)',
+                    border: '1px solid var(--border)',
                     borderRadius: '8px',
+                    color: 'var(--foreground)',
                   }}
-                  labelStyle={{ color: '#E2E8F0' }}
+                  labelStyle={{ color: 'var(--foreground)' }}
+                  itemStyle={{ color: 'var(--muted-foreground)' }}
                 />
                 <Bar
                   dataKey="redemptions"

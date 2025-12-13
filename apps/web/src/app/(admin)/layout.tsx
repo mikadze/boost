@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from '@/lib/auth-client';
 import { Sidebar } from '@/components/admin/sidebar';
@@ -13,6 +13,15 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const { data: session, isPending } = useSession();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Set dark theme on mount
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    return () => {
+      document.documentElement.removeAttribute('data-theme');
+    };
+  }, []);
 
   useEffect(() => {
     if (!isPending && !session?.user) {
@@ -37,11 +46,19 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
-      <div className="pl-64">
-        <Header />
-        <main className="p-6">{children}</main>
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <div className="lg:pl-64 transition-all duration-300">
+        <Header onMenuClick={() => setSidebarOpen(true)} />
+        <main className="p-4 md:p-6">{children}</main>
       </div>
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
     </div>
   );
 }

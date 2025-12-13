@@ -1,54 +1,71 @@
 @import 'tailwindcss';
 
-/* Midnight Design System - High-Contrast, Deep Depth */
-@theme {
-  /* Dark theme base (Midnight) */
-  --color-background: #0B0E14;
-  --color-foreground: #E2E8F0;
+/* Dual-Theme Design System - Light (Landing) & Dark (Admin) */
 
-  /* Surface colors with depth */
-  --color-card: #151923;
-  --color-card-foreground: #E2E8F0;
-  --color-popover: #1A1F2E;
-  --color-popover-foreground: #E2E8F0;
+/* Light Theme (Landing Page - Default) */
+:root {
+  /* Base colors - Apple-inspired light theme */
+  --background: #FFFFFF;
+  --foreground: #1D1D1F;
+  --foreground-secondary: #6E6E73;
 
-  /* Primary (Indigo) */
-  --color-primary: #6366F1;
-  --color-primary-foreground: #FFFFFF;
+  /* Surface colors with subtle depth */
+  --surface-1: #F5F5F7;
+  --surface-2: #FBFBFD;
+  --surface-3: #FFFFFF;
+
+  /* Card colors */
+  --card: #FFFFFF;
+  --card-foreground: #1D1D1F;
+  --popover: #FFFFFF;
+  --popover-foreground: #1D1D1F;
+
+  /* Primary (Indigo for brand consistency) */
+  --primary: #6366F1;
+  --primary-foreground: #FFFFFF;
 
   /* Secondary */
-  --color-secondary: #1E293B;
-  --color-secondary-foreground: #E2E8F0;
+  --secondary: #F5F5F7;
+  --secondary-foreground: #1D1D1F;
 
   /* Muted */
-  --color-muted: #1E293B;
-  --color-muted-foreground: #94A3B8;
+  --muted: #F5F5F7;
+  --muted-foreground: #6E6E73;
 
   /* Accent */
-  --color-accent: #6366F1;
-  --color-accent-foreground: #FFFFFF;
+  --accent: #6366F1;
+  --accent-foreground: #FFFFFF;
 
-  /* Destructive */
-  --color-destructive: #EF4444;
-  --color-destructive-foreground: #FFFFFF;
+  /* Status colors */
+  --success: #34C759;
+  --success-foreground: #FFFFFF;
+  --destructive: #FF3B30;
+  --destructive-foreground: #FFFFFF;
+  --warning: #FF9500;
+  --warning-foreground: #000000;
 
-  /* Success */
-  --color-success: #22C55E;
-  --color-success-foreground: #FFFFFF;
+  /* Borders and inputs - subtle */
+  --border: #D2D2D7;
+  --input: #E8E8ED;
+  --ring: #6366F1;
 
-  /* Warning */
-  --color-warning: #F59E0B;
-  --color-warning-foreground: #000000;
+  /* Shadows for light theme */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 
-  /* Border and input */
-  --color-border: #2D3748;
-  --color-input: #2D3748;
-  --color-ring: #6366F1;
+  /* Glow effects for light theme */
+  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.2);
+  --shadow-glow-lg: 0 0 40px rgba(99, 102, 241, 0.3);
 
-  /* Surface variants */
-  --color-surface-1: #151923;
-  --color-surface-2: #1A1F2E;
-  --color-surface-3: #1E2433;
+  /* Glassmorphism values for light theme */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-bg-strong: rgba(255, 255, 255, 0.9);
+  --glass-border-strong: rgba(0, 0, 0, 0.15);
+  --glass-bg-subtle: rgba(255, 255, 255, 0.5);
+  --glass-border-subtle: rgba(0, 0, 0, 0.05);
 
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
@@ -59,10 +76,120 @@
   --radius-sm: 0.5rem;
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
+}
 
-  /* Shadows for depth */
+/* Dark Theme (Admin Panel) */
+[data-theme="dark"] {
+  /* Base colors - Midnight theme */
+  --background: #0B0E14;
+  --foreground: #E2E8F0;
+  --foreground-secondary: #94A3B8;
+
+  /* Surface colors with depth */
+  --surface-1: #151923;
+  --surface-2: #1A1F2E;
+  --surface-3: #1E2433;
+
+  /* Card colors */
+  --card: #151923;
+  --card-foreground: #E2E8F0;
+  --popover: #1A1F2E;
+  --popover-foreground: #E2E8F0;
+
+  /* Primary (Indigo) */
+  --primary: #6366F1;
+  --primary-foreground: #FFFFFF;
+
+  /* Secondary */
+  --secondary: #1E293B;
+  --secondary-foreground: #E2E8F0;
+
+  /* Muted */
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+
+  /* Accent */
+  --accent: #6366F1;
+  --accent-foreground: #FFFFFF;
+
+  /* Status colors */
+  --success: #22C55E;
+  --success-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --warning: #F59E0B;
+  --warning-foreground: #000000;
+
+  /* Borders and inputs */
+  --border: #2D3748;
+  --input: #2D3748;
+  --ring: #6366F1;
+
+  /* Shadows for dark theme */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7);
+
+  /* Glow effects for dark theme */
   --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
   --shadow-glow-lg: 0 0 40px rgba(99, 102, 241, 0.4);
+
+  /* Glassmorphism values for dark theme */
+  --glass-bg: rgba(21, 25, 35, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-bg-strong: rgba(21, 25, 35, 0.95);
+  --glass-border-strong: rgba(255, 255, 255, 0.15);
+  --glass-bg-subtle: rgba(21, 25, 35, 0.6);
+  --glass-border-subtle: rgba(255, 255, 255, 0.05);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  --gradient-glow: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+
+  /* Radius */
+  --radius: 0.75rem;
+  --radius-sm: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+}
+
+/* Tailwind Theme Mapping */
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --gradient-primary: var(--gradient-primary);
+  --gradient-glow: var(--gradient-glow);
+  --radius: var(--radius);
+  --radius-sm: var(--radius-sm);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --shadow-glow: var(--shadow-glow);
+  --shadow-glow-lg: var(--shadow-glow-lg);
 }
 
 @layer base {
@@ -102,24 +229,24 @@
 @layer utilities {
   /* Glassmorphism utilities */
   .glass {
-    background: rgba(21, 25, 35, 0.8);
+    background: var(--glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
   }
 
   .glass-strong {
-    background: rgba(21, 25, 35, 0.95);
+    background: var(--glass-bg-strong);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid var(--glass-border-strong);
   }
 
   .glass-subtle {
-    background: rgba(21, 25, 35, 0.6);
+    background: var(--glass-bg-subtle);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border-subtle);
   }
 
   /* Glow effects */
@@ -258,5 +385,150 @@
   .dot-pattern {
     background-image: radial-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px);
     background-size: 20px 20px;
+  }
+
+  /* Apple-Style Animation Utilities */
+
+  /* Smooth Scroll Animations */
+  @keyframes scroll-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes scroll-fade-out {
+    from {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-30px) scale(0.95);
+    }
+  }
+
+  /* Parallax effect layers */
+  .parallax-slow {
+    transition: transform 0.1s ease-out;
+  }
+
+  .parallax-medium {
+    transition: transform 0.08s ease-out;
+  }
+
+  .parallax-fast {
+    transition: transform 0.05s ease-out;
+  }
+
+  /* Magnetic Hover Effects */
+  .magnetic {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .magnetic:hover {
+    transform: scale(1.05);
+  }
+
+  .magnetic-subtle {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .magnetic-subtle:hover {
+    transform: scale(1.02) translateY(-2px);
+  }
+
+  /* Elastic Spring Animations */
+  @keyframes elastic-appear {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    70% {
+      transform: scale(0.97);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .elastic-appear {
+    animation: elastic-appear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Blur Transitions */
+  .blur-transition {
+    transition: filter 0.3s ease-out, transform 0.3s ease-out;
+  }
+
+  .blur-transition:hover {
+    filter: blur(0px);
+  }
+
+  .blur-on-scroll {
+    filter: blur(8px);
+    transition: filter 0.5s ease-out;
+  }
+
+  .blur-on-scroll.in-view {
+    filter: blur(0px);
+  }
+
+  /* Staggered Reveal Utility */
+  .stagger-item {
+    opacity: 0;
+    animation: stagger-fade-in 0.6s ease-out forwards;
+  }
+
+  @keyframes stagger-fade-in {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .stagger-item:nth-child(1) { animation-delay: 0.1s; }
+  .stagger-item:nth-child(2) { animation-delay: 0.2s; }
+  .stagger-item:nth-child(3) { animation-delay: 0.3s; }
+  .stagger-item:nth-child(4) { animation-delay: 0.4s; }
+  .stagger-item:nth-child(5) { animation-delay: 0.5s; }
+  .stagger-item:nth-child(6) { animation-delay: 0.6s; }
+
+  /* Smooth Button Hover Effects (Apple-style) */
+  .button-apple {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .button-apple::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .button-apple:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  .button-apple:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-lg);
   }
 }

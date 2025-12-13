@@ -15,6 +15,7 @@ import {
   Settings,
   ChevronDown,
   Sparkles,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -51,11 +52,31 @@ const navigation = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 w-64 glass-strong border-r border-border">
+    <aside
+      className={cn(
+        'fixed inset-y-0 left-0 z-50 w-64 glass-strong border-r border-border',
+        'transition-transform duration-300 lg:translate-x-0',
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      )}
+    >
+      {/* Close button for mobile */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 lg:hidden p-2 rounded-lg hover:bg-surface-2 text-muted-foreground hover:text-foreground transition-colors"
+        aria-label="Close sidebar"
+      >
+        <X className="h-5 w-5" />
+      </button>
+
       <div className="flex h-16 items-center gap-2 px-6 border-b border-border">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
           <Sparkles className="h-5 w-5 text-primary-foreground" />
