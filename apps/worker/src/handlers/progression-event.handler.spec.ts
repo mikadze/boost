@@ -123,8 +123,10 @@ describe('ProgressionEventHandler', () => {
       const types = handler.getSupportedTypes();
       expect(types).toContain('user_signup');
       expect(types).toContain('referral_success');
-      expect(types).toContain('purchase');
-      expect(types).toContain('checkout_success');
+      expect(types).toContain('commission.created');
+      // Should NOT include purchase/checkout_success to avoid conflicts with PurchaseEventHandler
+      expect(types).not.toContain('purchase');
+      expect(types).not.toContain('checkout_success');
     });
   });
 

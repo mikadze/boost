@@ -38,15 +38,17 @@ export class ProgressionEventHandler implements EventHandler {
 
   /**
    * Event types that can trigger progression evaluation
-   * Empty array means this handler is called for all events
+   *
+   * Note: We listen for 'commission.created' instead of 'purchase'/'checkout_success'
+   * to ensure the commission ledger entry exists before calculating stats.
+   * The PurchaseEventHandler emits 'commission.created' after creating the ledger entry.
    */
   getSupportedTypes(): string[] {
     // Trigger on events that affect user stats
     return [
       'user_signup',
       'referral_success',
-      'purchase',
-      'checkout_success',
+      'commission.created', // Emitted by PurchaseEventHandler after ledger entry creation
     ];
   }
 

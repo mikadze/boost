@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
+import { ClientKafka } from '@nestjs/microservices';
 import { RawEventMessage, CommissionService } from '@boost/common';
 import {
   CommissionPlanRepository,
@@ -24,6 +25,8 @@ export class PurchaseEventHandler implements EventHandler {
   private readonly logger = new Logger(PurchaseEventHandler.name);
 
   constructor(
+    @Inject('KAFKA_SERVICE')
+    private readonly kafkaClient: ClientKafka,
     private readonly commissionService: CommissionService,
     private readonly commissionPlanRepository: CommissionPlanRepository,
     private readonly commissionLedgerRepository: CommissionLedgerRepository,
@@ -105,7 +108,7 @@ export class PurchaseEventHandler implements EventHandler {
     // Create commission ledger entry
     const orderId = this.extractOrderId(properties);
 
-    await this.commissionLedgerRepository.create({
+    const ledgerEntry = await this.commissionLedgerRepository.create({
       projectId: event.projectId,
       endUserId: referrer.id,
       commissionPlanId: commissionPlan.id,
@@ -121,6 +124,28 @@ export class PurchaseEventHandler implements EventHandler {
       `Commission created: ${this.commissionService.formatCurrency(calculation.amount)} ` +
       `for referrer ${referrer.externalId} (${calculation.planType} plan: ${commissionPlan.name})`,
     );
+
+    // Emit commission.created event to trigger progression evaluation
+    // This ensures progression stats include this commission before evaluation
+    const commissionCreatedEvent = {
+      projectId: event.projectId,
+      userId: referrer.externalId,
+      event: 'commission.created',
+      properties: {
+        commissionId: ledgerEntry.id,
+        amount: calculation.amount,
+        sourceAmount: amountCents,
+        planId: commissionPlan.id,
+        planName: commissionPlan.name,
+        referredUserId: purchaserUserId,
+        orderId,
+      },
+      timestamp: new Date().toISOString(),
+      receivedAt: new Date().toISOString(),
+    };
+
+    this.kafkaClient.emit('raw-events', commissionCreatedEvent);
+    this.logger.debug('Emitted commission.created event for progression evaluation');
   }
 
   /**

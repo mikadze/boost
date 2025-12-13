@@ -39,6 +39,7 @@ const {
 
 describe('PurchaseEventHandler', () => {
   let handler: PurchaseEventHandler;
+  let kafkaClient: any;
   let commissionService: any;
   let commissionPlanRepository: any;
   let commissionLedgerRepository: any;
@@ -84,6 +85,10 @@ describe('PurchaseEventHandler', () => {
   };
 
   beforeEach(async () => {
+    const mockKafkaClient = {
+      emit: jest.fn(),
+    };
+
     const mockCommissionServiceInstance = {
       calculate: jest.fn(),
       formatCurrency: jest.fn(),
@@ -111,6 +116,10 @@ describe('PurchaseEventHandler', () => {
       providers: [
         PurchaseEventHandler,
         {
+          provide: 'KAFKA_SERVICE',
+          useValue: mockKafkaClient,
+        },
+        {
           provide: CommissionService,
           useValue: mockCommissionServiceInstance,
         },
@@ -134,6 +143,7 @@ describe('PurchaseEventHandler', () => {
     }).compile();
 
     handler = module.get<PurchaseEventHandler>(PurchaseEventHandler);
+    kafkaClient = module.get('KAFKA_SERVICE');
     commissionService = module.get(CommissionService);
     commissionPlanRepository = module.get(CommissionPlanRepository);
     commissionLedgerRepository = module.get(CommissionLedgerRepository);
@@ -208,6 +218,18 @@ describe('PurchaseEventHandler', () => {
         referredUserId: 'purchaser-1',
         currency: 'USD',
       });
+
+      // Verify commission.created event was emitted to Kafka
+      expect(kafkaClient.emit).toHaveBeenCalledWith('raw-events', expect.objectContaining({
+        projectId: 'project-1',
+        userId: 'referrer-1',
+        event: 'commission.created',
+        properties: expect.objectContaining({
+          commissionId: 'ledger-1',
+          amount: 500,
+          sourceAmount: 5000,
+        }),
+      }));
     });
 
     it('should skip if no amount in event', async () => {
