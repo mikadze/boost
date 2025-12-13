@@ -6,8 +6,10 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Megaphone,
+  Target,
   Users,
   Code,
+  FolderOpen,
   Key,
   Webhook,
   Bug,
@@ -23,31 +25,37 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 const navigation = [
   {
     name: 'Dashboard',
-    href: '/admin',
+    href: '/dashboard',
     icon: LayoutDashboard,
   },
   {
     name: 'Campaigns',
-    href: '/admin/campaigns',
+    href: '/dashboard/campaigns',
     icon: Megaphone,
   },
   {
+    name: 'Quests',
+    href: '/dashboard/quests',
+    icon: Target,
+  },
+  {
     name: 'Customers',
-    href: '/admin/customers',
+    href: '/dashboard/customers',
     icon: Users,
   },
   {
     name: 'Developer',
     icon: Code,
     children: [
-      { name: 'API Keys', href: '/admin/developer/api-keys', icon: Key },
-      { name: 'Webhooks', href: '/admin/developer/webhooks', icon: Webhook },
-      { name: 'Debugger', href: '/admin/developer/debugger', icon: Bug },
+      { name: 'Projects', href: '/dashboard/developer/projects', icon: FolderOpen },
+      { name: 'API Keys', href: '/dashboard/developer/api-keys', icon: Key },
+      { name: 'Webhooks', href: '/dashboard/developer/webhooks', icon: Webhook },
+      { name: 'Debugger', href: '/dashboard/developer/debugger', icon: Bug },
     ],
   },
   {
     name: 'Playground',
-    href: '/admin/playground',
+    href: '/dashboard/playground',
     icon: Play,
   },
 ];
@@ -100,7 +108,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         )}
       </nav>
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
-        <NavItem href="/admin/settings" icon={Settings} active={pathname === '/admin/settings'}>
+        <NavItem href="/dashboard/settings" icon={Settings} active={pathname === '/dashboard/settings'}>
           Settings
         </NavItem>
       </div>

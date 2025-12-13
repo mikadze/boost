@@ -371,7 +371,7 @@ export default function RuleBuilderPage() {
 
   const handleSave = () => {
     console.log('Saving rule:', { ruleName, conditions, effects });
-    router.push(`/admin/campaigns/${params.id}`);
+    router.push(`/dashboard/campaigns/${params.id}`);
   };
 
   return (

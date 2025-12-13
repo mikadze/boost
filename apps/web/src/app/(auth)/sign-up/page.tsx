@@ -82,7 +82,7 @@ export default function SignUpPage() {
         return;
       }
 
-      router.push('/admin');
+      router.push('/dashboard');
     } catch {
       setError('An unexpected error occurred');
     } finally {

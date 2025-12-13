@@ -166,7 +166,7 @@ export default function CampaignDetailPage() {
               <GlassCardHeader className="flex-row items-center justify-between">
                 <GlassCardTitle>Campaign Rules</GlassCardTitle>
                 <GlowButton size="sm" asChild>
-                  <Link href={`/admin/campaigns/${params.id}/rules`}>
+                  <Link href={`/dashboard/campaigns/${params.id}/rules`}>
                     <Plus className="mr-2 h-4 w-4" />
                     Add Rule
                   </Link>

@@ -147,7 +147,7 @@ const columns: ColumnDef<Campaign>[] = [
     ),
     cell: ({ row }) => (
       <Link
-        href={`/admin/campaigns/${row.original.id}`}
+        href={`/dashboard/campaigns/${row.original.id}`}
         className="font-medium hover:text-primary transition-colors"
       >
         {row.getValue('name')}
@@ -205,7 +205,7 @@ const columns: ColumnDef<Campaign>[] = [
     header: 'Rules',
     cell: ({ row }) => (
       <Link
-        href={`/admin/campaigns/${row.original.id}/rules`}
+        href={`/dashboard/campaigns/${row.original.id}/rules`}
         className="text-sm text-primary hover:underline"
       >
         {row.getValue('rules')} rules
@@ -274,7 +274,7 @@ export default function CampaignsPage() {
           </p>
         </div>
         <GlowButton variant="glow" asChild>
-          <Link href="/admin/campaigns/new">
+          <Link href="/dashboard/campaigns/new">
             <Plus className="mr-2 h-4 w-4" />
             New Campaign
           </Link>

@@ -135,7 +135,7 @@ const columns: ColumnDef<Customer>[] = [
     ),
     cell: ({ row }) => (
       <Link
-        href={`/admin/customers/${row.original.id}`}
+        href={`/dashboard/customers/${row.original.id}`}
         className="flex items-center gap-3 hover:opacity-80 transition-opacity"
       >
         <Avatar
@@ -246,7 +246,7 @@ const columns: ColumnDef<Customer>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem asChild>
-              <Link href={`/admin/customers/${row.original.id}`}>
+              <Link href={`/dashboard/customers/${row.original.id}`}>
                 <Eye className="mr-2 h-4 w-4" />
                 View Profile
               </Link>

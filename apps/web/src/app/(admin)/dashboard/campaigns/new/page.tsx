@@ -74,7 +74,7 @@ export default function NewCampaignPage() {
   const onSubmit = async (data: FormData) => {
     console.log('Creating campaign:', data);
     // TODO: Call API to create campaign
-    router.push('/admin/campaigns');
+    router.push('/dashboard/campaigns');
   };
 
   const nextStep = () => {

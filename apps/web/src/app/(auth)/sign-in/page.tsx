@@ -49,7 +49,7 @@ export default function SignInPage() {
         return;
       }
 
-      router.push('/admin');
+      router.push('/dashboard');
     } catch {
       setError('An unexpected error occurred');
     } finally {
