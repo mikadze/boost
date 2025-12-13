@@ -197,6 +197,10 @@ export const endUsers = pgTable('endUser', {
   // Loyalty fields (Issue #15)
   loyaltyPoints: bigint('loyalty_points', { mode: 'number' }).default(0).notNull(),
   tierId: uuid('tier_id'),
+  // Issue #20: Commission plan for affiliate earnings
+  commissionPlanId: uuid('commission_plan_id'),
+  // Issue #20: Unique referral code for affiliate tracking
+  referralCode: varchar('referral_code', { length: 100 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => ({
@@ -208,6 +212,7 @@ export const endUsers = pgTable('endUser', {
   uniqueUserIdx: uniqueIndex('end_user_external_id_idx').on(t.projectId, t.externalId),
   projectIdx: index('end_user_project_idx').on(t.projectId),
   tierIdx: index('end_user_tier_idx').on(t.tierId),
+  referralCodeIdx: uniqueIndex('end_user_referral_code_idx').on(t.projectId, t.referralCode),
 }));
 
 // Events table - raw event data (partitioned by month in SQL)
@@ -744,6 +749,227 @@ export type NewLoyaltyTier = typeof loyaltyTiers.$inferInsert;
 export type LoyaltyLedgerEntry = typeof loyaltyLedger.$inferSelect;
 export type NewLoyaltyLedgerEntry = typeof loyaltyLedger.$inferInsert;
 
+// ============================================
+// Issue #20: Monetization Schema
+// ============================================
+
+// Commission Plans table - defines commission structures
+export const commissionPlans = pgTable('commission_plan', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  /** Plan name (e.g., 'Bronze Affiliate', 'Gold Partner') */
+  name: varchar('name', { length: 255 }).notNull(),
+  /** Description of the plan */
+  description: text('description'),
+  /** Commission type: PERCENTAGE or FIXED */
+  type: varchar('type', { length: 20 }).notNull(), // 'PERCENTAGE' | 'FIXED'
+  /** Value in cents or basis points (1000 = 10.00% for percentage, 1000 = $10.00 for fixed) */
+  value: integer('value').notNull(),
+  /** Currency code (ISO 4217) */
+  currency: varchar('currency', { length: 3 }).default('USD').notNull(),
+  /** Whether this is the default plan for the project */
+  isDefault: boolean('is_default').default(false).notNull(),
+  /** Whether plan is active */
+  active: boolean('active').default(true).notNull(),
+  /** Additional metadata */
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => ({
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  projectIdx: index('commission_plan_project_idx').on(t.projectId),
+  defaultIdx: index('commission_plan_default_idx').on(t.projectId, t.isDefault),
+}));
+
+// Commission Ledger table - immutable transaction history
+export const commissionLedger = pgTable('commission_ledger', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  /** End user (affiliate) receiving the commission */
+  endUserId: uuid('end_user_id').notNull(),
+  /** Commission plan used for calculation */
+  commissionPlanId: uuid('commission_plan_id').notNull(),
+  /** Commission amount in cents */
+  amount: bigint('amount', { mode: 'number' }).notNull(),
+  /** Original transaction amount in cents (for audit) */
+  sourceAmount: bigint('source_amount', { mode: 'number' }).notNull(),
+  /** Status of the commission */
+  status: varchar('status', { length: 20 }).default('PENDING').notNull(), // 'PENDING' | 'PAID' | 'REJECTED'
+  /** Source event ID for audit trail */
+  sourceEventId: uuid('source_event_id'),
+  /** Order ID from the purchase */
+  orderId: varchar('order_id', { length: 255 }),
+  /** Referred user ID (who made the purchase) */
+  referredUserId: varchar('referred_user_id', { length: 255 }),
+  /** Currency code */
+  currency: varchar('currency', { length: 3 }).default('USD').notNull(),
+  /** Notes or rejection reason */
+  notes: text('notes'),
+  /** Additional metadata */
+  metadata: jsonb('metadata'),
+  /** When the commission was paid */
+  paidAt: timestamp('paid_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => ({
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  endUserFk: foreignKey({
+    columns: [t.endUserId],
+    foreignColumns: [endUsers.id],
+  }).onDelete('cascade'),
+  planFk: foreignKey({
+    columns: [t.commissionPlanId],
+    foreignColumns: [commissionPlans.id],
+  }).onDelete('restrict'),
+  eventFk: foreignKey({
+    columns: [t.sourceEventId],
+    foreignColumns: [events.id],
+  }).onDelete('set null'),
+  endUserIdx: index('commission_ledger_end_user_idx').on(t.endUserId),
+  projectIdx: index('commission_ledger_project_idx').on(t.projectId),
+  statusIdx: index('commission_ledger_status_idx').on(t.status),
+  createdIdx: index('commission_ledger_created_idx').on(t.createdAt),
+}));
+
+// Referral Tracking table - tracks referral relationships
+export const referralTracking = pgTable('referral_tracking', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  /** The referrer (affiliate) end user ID */
+  referrerId: uuid('referrer_id').notNull(),
+  /** The referred user's external ID */
+  referredExternalId: varchar('referred_external_id', { length: 255 }).notNull(),
+  /** Referral code used */
+  referralCode: varchar('referral_code', { length: 100 }).notNull(),
+  /** Attribution source (e.g., 'url_param', 'manual') */
+  source: varchar('source', { length: 50 }).default('url_param').notNull(),
+  /** When the referral was tracked */
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => ({
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  referrerFk: foreignKey({
+    columns: [t.referrerId],
+    foreignColumns: [endUsers.id],
+  }).onDelete('cascade'),
+  uniqueReferralIdx: uniqueIndex('referral_tracking_unique_idx').on(t.projectId, t.referredExternalId),
+  referrerIdx: index('referral_tracking_referrer_idx').on(t.referrerId),
+  projectIdx: index('referral_tracking_project_idx').on(t.projectId),
+  codeIdx: index('referral_tracking_code_idx').on(t.referralCode),
+}));
+
+// ============================================
+// Issue #21: Progression Engine Tables
+// ============================================
+
+// Progression Rules table - defines upgrade conditions
+export const progressionRules = pgTable('progression_rule', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  /** Rule name (e.g., 'Gold Tier Upgrade') */
+  name: varchar('name', { length: 255 }).notNull(),
+  /** Description of the rule */
+  description: text('description'),
+  /** Metric to evaluate (e.g., 'referral_count', 'total_earnings') */
+  triggerMetric: varchar('trigger_metric', { length: 100 }).notNull(),
+  /** Threshold value to trigger the rule */
+  threshold: integer('threshold').notNull(),
+  /** Target commission plan ID when rule triggers */
+  actionTargetPlanId: uuid('action_target_plan_id').notNull(),
+  /** Priority for rule evaluation (higher = first) */
+  priority: integer('priority').default(0).notNull(),
+  /** Whether rule is active */
+  active: boolean('active').default(true).notNull(),
+  /** Additional metadata */
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => ({
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  targetPlanFk: foreignKey({
+    columns: [t.actionTargetPlanId],
+    foreignColumns: [commissionPlans.id],
+  }).onDelete('cascade'),
+  projectIdx: index('progression_rule_project_idx').on(t.projectId),
+  metricIdx: index('progression_rule_metric_idx').on(t.triggerMetric),
+  activeIdx: index('progression_rule_active_idx').on(t.active),
+  priorityIdx: index('progression_rule_priority_idx').on(t.priority),
+}));
+
+// Commission Plan Relations
+export const commissionPlanRelations = relations(commissionPlans, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [commissionPlans.projectId],
+    references: [projects.id],
+  }),
+  ledgerEntries: many(commissionLedger),
+  progressionRules: many(progressionRules),
+}));
+
+export const commissionLedgerRelations = relations(commissionLedger, ({ one }) => ({
+  project: one(projects, {
+    fields: [commissionLedger.projectId],
+    references: [projects.id],
+  }),
+  endUser: one(endUsers, {
+    fields: [commissionLedger.endUserId],
+    references: [endUsers.id],
+  }),
+  commissionPlan: one(commissionPlans, {
+    fields: [commissionLedger.commissionPlanId],
+    references: [commissionPlans.id],
+  }),
+  sourceEvent: one(events, {
+    fields: [commissionLedger.sourceEventId],
+    references: [events.id],
+  }),
+}));
+
+export const referralTrackingRelations = relations(referralTracking, ({ one }) => ({
+  project: one(projects, {
+    fields: [referralTracking.projectId],
+    references: [projects.id],
+  }),
+  referrer: one(endUsers, {
+    fields: [referralTracking.referrerId],
+    references: [endUsers.id],
+  }),
+}));
+
+export const progressionRuleRelations = relations(progressionRules, ({ one }) => ({
+  project: one(projects, {
+    fields: [progressionRules.projectId],
+    references: [projects.id],
+  }),
+  targetPlan: one(commissionPlans, {
+    fields: [progressionRules.actionTargetPlanId],
+    references: [commissionPlans.id],
+  }),
+}));
+
+// Issue #20 & #21: Types
+export type CommissionPlan = typeof commissionPlans.$inferSelect;
+export type NewCommissionPlan = typeof commissionPlans.$inferInsert;
+
+export type CommissionLedgerEntry = typeof commissionLedger.$inferSelect;
+export type NewCommissionLedgerEntry = typeof commissionLedger.$inferInsert;
+
+export type ReferralTracking = typeof referralTracking.$inferSelect;
+export type NewReferralTracking = typeof referralTracking.$inferInsert;
+
+export type ProgressionRule = typeof progressionRules.$inferSelect;
+export type NewProgressionRule = typeof progressionRules.$inferInsert;
+
 // Status types for type-safe handling
 export type EventStatus = 'pending' | 'processed' | 'failed';
 export type MemberRole = 'owner' | 'admin' | 'member';
@@ -751,3 +977,5 @@ export type InvitationStatus = 'pending' | 'accepted' | 'rejected' | 'expired';
 export type CustomerSessionStatus = 'active' | 'completed' | 'abandoned';
 export type CouponDiscountType = 'percentage' | 'fixed_amount';
 export type LoyaltyTransactionType = 'earn' | 'redeem' | 'expire' | 'adjust' | 'bonus';
+export type CommissionPlanType = 'PERCENTAGE' | 'FIXED';
+export type CommissionStatus = 'PENDING' | 'PAID' | 'REJECTED';

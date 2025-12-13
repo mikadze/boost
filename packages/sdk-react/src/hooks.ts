@@ -7,6 +7,9 @@ import type {
   SessionResponse,
   LoyaltyProfile,
   LoyaltyHistoryResponse,
+  // Issue #22: Affiliate types
+  AffiliateStats,
+  LeaderboardResponse,
 } from '@gamify/core';
 
 /**
@@ -347,5 +350,270 @@ export function useLoyalty(options?: {
     ...state,
     refreshProfile,
     refreshHistory,
+  };
+}
+
+// ============================================
+// Issue #22: useReferral Hook
+// ============================================
+
+interface ReferralState {
+  referrerCode: string | null;
+  hasReferrer: boolean;
+}
+
+interface ReferralActions {
+  setReferrer: (code: string) => void;
+  clearReferrer: () => void;
+  detectFromUrl: () => string | null;
+}
+
+/**
+ * useReferral - Hook for managing referral attribution
+ *
+ * Automatically detects `?ref=code` parameter from URLs and stores
+ * the referrer code in localStorage for attribution tracking.
+ *
+ * @example
+ * ```tsx
+ * function SignupPage() {
+ *   const { referrerCode, hasReferrer, setReferrer } = useReferral();
+ *
+ *   useEffect(() => {
+ *     if (hasReferrer) {
+ *       console.log('User was referred by:', referrerCode);
+ *     }
+ *   }, [hasReferrer, referrerCode]);
+ *
+ *   return (
+ *     <div>
+ *       {hasReferrer && <p>Thanks for using referral code: {referrerCode}</p>}
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useReferral(): ReferralState & ReferralActions {
+  const context = useGamifyContext();
+  const [state, setState] = useState<ReferralState>({
+    referrerCode: context?.client?.referral?.getReferrer() ?? null,
+    hasReferrer: context?.client?.referral?.hasReferrer() ?? false,
+  });
+
+  const setReferrer = useCallback(
+    (code: string) => {
+      if (context?.client?.referral) {
+        context.client.referral.setReferrer(code);
+        setState({
+          referrerCode: code,
+          hasReferrer: true,
+        });
+      }
+    },
+    [context]
+  );
+
+  const clearReferrer = useCallback(() => {
+    if (context?.client?.referral) {
+      context.client.referral.clearReferrer();
+      setState({
+        referrerCode: null,
+        hasReferrer: false,
+      });
+    }
+  }, [context]);
+
+  const detectFromUrl = useCallback(() => {
+    if (context?.client?.referral) {
+      const code = context.client.referral.detectReferrerFromUrl();
+      if (code) {
+        setState({
+          referrerCode: code,
+          hasReferrer: true,
+        });
+      }
+      return code;
+    }
+    return null;
+  }, [context]);
+
+  // Auto-detect on mount
+  useEffect(() => {
+    if (context?.client?.referral) {
+      const code = context.client.referral.getReferrer();
+      setState({
+        referrerCode: code,
+        hasReferrer: code !== null,
+      });
+    }
+  }, [context]);
+
+  return {
+    ...state,
+    setReferrer,
+    clearReferrer,
+    detectFromUrl,
+  };
+}
+
+// ============================================
+// Issue #22: useAffiliateStats Hook
+// ============================================
+
+interface AffiliateState {
+  stats: AffiliateStats | null;
+  loading: boolean;
+  error: string | null;
+}
+
+interface AffiliateActions {
+  refreshStats: (forceRefresh?: boolean) => Promise<void>;
+}
+
+/**
+ * useAffiliateStats - Hook for fetching user affiliate statistics
+ *
+ * @param options - Configuration options
+ *
+ * @example
+ * ```tsx
+ * function AffiliateDashboard() {
+ *   const { stats, loading, error, refreshStats } = useAffiliateStats({
+ *     autoRefresh: true,
+ *   });
+ *
+ *   if (loading) return <Spinner />;
+ *   if (error) return <Error message={error} />;
+ *
+ *   return (
+ *     <div>
+ *       <p>Your referral code: {stats?.referralCode}</p>
+ *       <p>Referrals: {stats?.referralCount}</p>
+ *       <p>Total earnings: ${(stats?.earnings.totalEarned ?? 0) / 100}</p>
+ *       <p>Current tier: {stats?.tier?.name ?? 'None'}</p>
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useAffiliateStats(options?: {
+  autoRefresh?: boolean;
+}): AffiliateState & AffiliateActions {
+  const context = useGamifyContext();
+  const [state, setState] = useState<AffiliateState>({
+    stats: context?.client?.affiliate?.getCachedStats() ?? null,
+    loading: false,
+    error: null,
+  });
+
+  const refreshStats = useCallback(
+    async (forceRefresh = false) => {
+      if (!context?.client) {
+        setState((s) => ({ ...s, error: 'SDK not initialized' }));
+        return;
+      }
+
+      setState((s) => ({ ...s, loading: true, error: null }));
+
+      try {
+        const stats = await context.client.getAffiliateStats(forceRefresh);
+        setState({ stats, loading: false, error: null });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        setState((s) => ({ ...s, loading: false, error: message }));
+      }
+    },
+    [context]
+  );
+
+  // Auto-refresh on mount if user is identified
+  useEffect(() => {
+    if (options?.autoRefresh && context?.client?.getUserId()) {
+      void refreshStats();
+    }
+  }, [options?.autoRefresh, context, refreshStats]);
+
+  return {
+    ...state,
+    refreshStats,
+  };
+}
+
+// ============================================
+// Issue #22: useLeaderboard Hook
+// ============================================
+
+interface LeaderboardState {
+  leaderboard: LeaderboardResponse | null;
+  loading: boolean;
+  error: string | null;
+}
+
+interface LeaderboardActions {
+  refresh: (limit?: number) => Promise<void>;
+}
+
+/**
+ * useLeaderboard - Hook for fetching affiliate leaderboard data
+ *
+ * @param limit - Number of entries to fetch (default: 10)
+ *
+ * @example
+ * ```tsx
+ * function LeaderboardPage() {
+ *   const { leaderboard, loading, error, refresh } = useLeaderboard(10);
+ *
+ *   useEffect(() => {
+ *     refresh();
+ *   }, [refresh]);
+ *
+ *   if (loading) return <Spinner />;
+ *   if (error) return <Error message={error} />;
+ *
+ *   return (
+ *     <ol>
+ *       {leaderboard?.entries.map((entry) => (
+ *         <li key={entry.userId}>
+ *           #{entry.rank} - {entry.displayName}: {entry.referralCount} referrals
+ *         </li>
+ *       ))}
+ *     </ol>
+ *   );
+ * }
+ * ```
+ */
+export function useLeaderboard(
+  limit = 10
+): LeaderboardState & LeaderboardActions {
+  const context = useGamifyContext();
+  const [state, setState] = useState<LeaderboardState>({
+    leaderboard: null,
+    loading: false,
+    error: null,
+  });
+
+  const refresh = useCallback(
+    async (customLimit?: number) => {
+      if (!context?.client) {
+        setState((s) => ({ ...s, error: 'SDK not initialized' }));
+        return;
+      }
+
+      setState((s) => ({ ...s, loading: true, error: null }));
+
+      try {
+        const leaderboard = await context.client.getLeaderboard(customLimit ?? limit);
+        setState({ leaderboard, loading: false, error: null });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        setState((s) => ({ ...s, loading: false, error: message }));
+      }
+    },
+    [context, limit]
+  );
+
+  return {
+    ...state,
+    refresh,
   };
 }

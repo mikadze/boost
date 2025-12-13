@@ -14,6 +14,9 @@ export interface UpdateEndUserData {
   metadata?: Record<string, unknown>;
   loyaltyPoints?: number;
   tierId?: string | null;
+  // Issue #20: Affiliate fields
+  commissionPlanId?: string | null;
+  referralCode?: string | null;
 }
 
 @Injectable()
@@ -137,5 +140,29 @@ export class EndUserRepository {
 
   async delete(id: string): Promise<void> {
     await this.db.delete(endUsers).where(eq(endUsers.id, id));
+  }
+
+  // Issue #20: Affiliate methods
+  async findByReferralCode(
+    projectId: string,
+    referralCode: string,
+  ): Promise<EndUser | null> {
+    const result = await this.db.query.endUsers.findFirst({
+      where: and(
+        eq(endUsers.projectId, projectId),
+        eq(endUsers.referralCode, referralCode),
+      ),
+    });
+    return result ?? null;
+  }
+
+  async updateCommissionPlan(id: string, commissionPlanId: string | null): Promise<void> {
+    await this.db
+      .update(endUsers)
+      .set({
+        commissionPlanId,
+        updatedAt: new Date(),
+      })
+      .where(eq(endUsers.id, id));
   }
 }
