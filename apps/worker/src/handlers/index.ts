@@ -10,3 +10,6 @@ export * from './purchase-event.handler';
 
 // Issue #21: Progression handlers
 export * from './progression-event.handler';
+
+// Issue #25-29: Quest Engine handlers
+export * from './quest-progress-event.handler';
