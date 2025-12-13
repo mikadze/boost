@@ -23,6 +23,11 @@ import { CommissionLedgerRepository } from './repositories/commission-ledger.rep
 import { ReferralTrackingRepository } from './repositories/referral-tracking.repository';
 // Issue #21: Progression Engine Repository
 import { ProgressionRuleRepository } from './repositories/progression-rule.repository';
+// Issue #25: Quest Engine Repositories
+import { QuestDefinitionRepository } from './repositories/quest-definition.repository';
+import { QuestStepRepository } from './repositories/quest-step.repository';
+import { UserQuestProgressRepository } from './repositories/user-quest-progress.repository';
+import { UserStepProgressRepository } from './repositories/user-step-progress.repository';
 
 let pool: Pool;
 
@@ -74,6 +79,11 @@ export class DatabaseModule {
       ReferralTrackingRepository,
       // Issue #21
       ProgressionRuleRepository,
+      // Issue #25
+      QuestDefinitionRepository,
+      QuestStepRepository,
+      UserQuestProgressRepository,
+      UserStepProgressRepository,
     ];
 
     return {
@@ -119,6 +129,11 @@ export class DatabaseModule {
       ReferralTrackingRepository,
       // Issue #21
       ProgressionRuleRepository,
+      // Issue #25
+      QuestDefinitionRepository,
+      QuestStepRepository,
+      UserQuestProgressRepository,
+      UserStepProgressRepository,
     ];
 
     return {
