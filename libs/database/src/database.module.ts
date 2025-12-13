@@ -17,6 +17,12 @@ import { CouponRepository } from './repositories/coupon.repository';
 import { LoyaltyTierRepository } from './repositories/loyalty-tier.repository';
 import { LoyaltyLedgerRepository } from './repositories/loyalty-ledger.repository';
 import { EndUserRepository } from './repositories/end-user.repository';
+// Issue #20: Monetization Repositories
+import { CommissionPlanRepository } from './repositories/commission-plan.repository';
+import { CommissionLedgerRepository } from './repositories/commission-ledger.repository';
+import { ReferralTrackingRepository } from './repositories/referral-tracking.repository';
+// Issue #21: Progression Engine Repository
+import { ProgressionRuleRepository } from './repositories/progression-rule.repository';
 
 let pool: Pool;
 
@@ -62,6 +68,12 @@ export class DatabaseModule {
       LoyaltyTierRepository,
       LoyaltyLedgerRepository,
       EndUserRepository,
+      // Issue #20
+      CommissionPlanRepository,
+      CommissionLedgerRepository,
+      ReferralTrackingRepository,
+      // Issue #21
+      ProgressionRuleRepository,
     ];
 
     return {
@@ -101,6 +113,12 @@ export class DatabaseModule {
       LoyaltyTierRepository,
       LoyaltyLedgerRepository,
       EndUserRepository,
+      // Issue #20
+      CommissionPlanRepository,
+      CommissionLedgerRepository,
+      ReferralTrackingRepository,
+      // Issue #21
+      ProgressionRuleRepository,
     ];
 
     return {

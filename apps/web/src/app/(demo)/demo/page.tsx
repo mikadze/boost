@@ -18,6 +18,9 @@ import { DemoProducts, type Product } from '@/components/demo/demo-products';
 import { DemoCart, type CartItem } from '@/components/demo/demo-cart';
 import { DemoLoyalty } from '@/components/demo/demo-loyalty';
 import { DemoUserPanel, demoUsers, type DemoUser } from '@/components/demo/demo-user-panel';
+import { DemoReferral } from '@/components/demo/demo-referral';
+import { DemoAffiliateStats } from '@/components/demo/demo-affiliate-stats';
+import { DemoLeaderboard } from '@/components/demo/demo-leaderboard';
 
 function DemoHeader() {
   const { apiKey, setApiKey } = useDemoContext();
@@ -185,6 +188,36 @@ function DemoContent() {
               />
             </motion.div>
           )}
+
+          {/* Affiliate Section - Only show when user selected */}
+          {currentUser && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <DemoReferral userId={currentUser.id} />
+            </motion.div>
+          )}
+
+          {currentUser && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <DemoAffiliateStats userId={currentUser.id} />
+            </motion.div>
+          )}
+
+          {/* Leaderboard - Always visible */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <DemoLeaderboard currentUserId={currentUser?.id || null} />
+          </motion.div>
         </motion.div>
 
         {/* Right Column - Console */}
@@ -207,7 +240,7 @@ function DemoContent() {
       >
         <p>
           This is an interactive demo of the Boost SDK.
-          Try adding products to cart, applying coupons (SAVE20, WELCOME10), and exploring loyalty features.
+          Try adding products to cart, applying coupons (SAVE20, WELCOME10), exploring loyalty features, and managing affiliate referrals.
         </p>
       </motion.footer>
     </div>
