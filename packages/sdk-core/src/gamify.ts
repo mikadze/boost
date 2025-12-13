@@ -16,6 +16,21 @@ const ANONYMOUS_ID_KEY = 'anonymous_id';
 const USER_TRAITS_KEY = 'user_traits';
 
 /**
+ * Events that require a secret key (server-side only)
+ * These will be rejected by the API when sent with a publishable key
+ */
+const TRUSTED_EVENTS = [
+  'purchase',
+  'checkout_complete',
+  'checkout_success',
+  'commission.created',
+  'referral_success',
+  'user.leveled_up',
+  'step.completed',
+  'quest.completed',
+] as const;
+
+/**
  * Generate anonymous ID for unidentified users
  */
 function generateAnonymousId(): string {
@@ -43,6 +58,15 @@ export class Gamify {
   constructor(config: GamifyConfig) {
     if (!config.apiKey) {
       throw new Error('[Gamify] API key is required');
+    }
+
+    // Reject secret keys in client-side SDK
+    if (config.apiKey.startsWith('sk_')) {
+      throw new Error(
+        '[Gamify] Secret keys (sk_live_*) cannot be used in the browser. ' +
+        'Use a publishable key (pk_live_*) for client-side tracking. ' +
+        'For server-side tracking, use @gamify/node instead.'
+      );
     }
 
     this.config = {
@@ -179,6 +203,14 @@ export class Gamify {
     if (!eventType || typeof eventType !== 'string') {
       this.log('Invalid event type provided');
       return;
+    }
+
+    // Warn about trusted events that require server-side tracking
+    if ((TRUSTED_EVENTS as readonly string[]).includes(eventType)) {
+      console.warn(
+        `[Gamify] Event "${eventType}" requires a secret key and will be rejected. ` +
+        `Use @gamify/node on your server to track this event.`
+      );
     }
 
     // Issue #22: Inject referrer properties into event

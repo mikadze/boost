@@ -33,6 +33,10 @@ export class ProjectsController {
   /**
    * POST /projects/:projectId/api-keys
    * Create a new API key for a project
+   *
+   * Key types:
+   * - 'publishable' (pk_live_*): Client-side SDK, can only send behavioral events
+   * - 'secret' (sk_live_*): Server-side SDK, can send all events including financial
    */
   @Post(':projectId/api-keys')
   async createApiKey(
@@ -42,7 +46,7 @@ export class ProjectsController {
   ) {
     // Verify user has access to this project
     await this.projectsService.verifyProjectAccess(user.id, projectId);
-    return this.projectsService.createApiKey(projectId, dto.name, dto.scopes);
+    return this.projectsService.createApiKey(projectId, dto.name, dto.scopes, dto.type);
   }
 }
 

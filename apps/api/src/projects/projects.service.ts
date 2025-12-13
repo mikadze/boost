@@ -1,5 +1,5 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { ProjectRepository, OrganizationRepository, ApiKeyRepository } from '@boost/database';
+import { ProjectRepository, OrganizationRepository, ApiKeyRepository, ApiKeyType } from '@boost/database';
 import { ApiKeyService } from '@boost/common';
 
 @Injectable()
@@ -39,6 +39,7 @@ export class ProjectsService {
       name: key.prefix, // Using prefix as display name
       projectId: projectId, // Use the parameter since we queried by project
       keyPrefix: key.prefix,
+      type: key.type, // publishable or secret
       createdAt: key.createdAt.toISOString(),
       lastUsedAt: key.lastUsedAt?.toISOString(),
     }));
@@ -46,9 +47,19 @@ export class ProjectsService {
 
   /**
    * Create a new API key for a project
+   *
+   * @param projectId - Project to create the key for
+   * @param name - Display name for the key
+   * @param scopes - Optional scopes for the key
+   * @param type - Key type: 'publishable' for client-side, 'secret' for server-side
    */
-  async createApiKey(projectId: string, name: string, scopes: string[] = []) {
-    const rawKey = await this.apiKeyService.createKey(projectId, scopes);
+  async createApiKey(
+    projectId: string,
+    name: string,
+    scopes: string[] = [],
+    type: ApiKeyType = 'secret',
+  ) {
+    const rawKey = await this.apiKeyService.createKey(projectId, scopes, type);
     const keys = await this.apiKeyService.listKeys(projectId);
     const newKey = keys[keys.length - 1]; // Get the just-created key
 
@@ -58,6 +69,7 @@ export class ProjectsService {
         name: name,
         projectId: projectId,
         keyPrefix: rawKey.substring(0, 12),
+        type: type,
         createdAt: new Date().toISOString(),
       },
       secret: rawKey, // Only returned once!

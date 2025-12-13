@@ -8,12 +8,23 @@ import {
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { ApiKeyService } from '../auth/api-key.service';
+import { ApiKeyType } from '@boost/database';
 import * as crypto from 'crypto';
+
+/**
+ * Cached API key data including type for authorization
+ */
+interface CachedApiKeyData {
+  projectId: string;
+  type: ApiKeyType;
+}
 
 /**
  * High-performance API Key Guard with Redis caching
  * L1: Redis cache (TTL 60s)
  * L2: Database lookup
+ *
+ * Attaches both projectId and apiKeyType to the request for downstream use
  */
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
@@ -36,10 +47,11 @@ export class ApiKeyGuard implements CanActivate {
 
     // L1: Check Redis cache using hash (not raw key)
     const cacheKey = `apikey:${keyHash}`;
-    const cachedProjectId = await this.cacheManager.get<string>(cacheKey);
+    const cachedData = await this.cacheManager.get<CachedApiKeyData>(cacheKey);
 
-    if (cachedProjectId) {
-      request.projectId = cachedProjectId;
+    if (cachedData) {
+      request.projectId = cachedData.projectId;
+      request.apiKeyType = cachedData.type;
       return true;
     }
 
@@ -55,11 +67,16 @@ export class ApiKeyGuard implements CanActivate {
       console.error('Failed to update last used timestamp:', err);
     });
 
-    // Cache the projectId using hash as key (TTL 60 seconds)
-    await this.cacheManager.set(cacheKey, result.projectId, 60000);
+    // Cache both projectId and type using hash as key (TTL 60 seconds)
+    const cacheData: CachedApiKeyData = {
+      projectId: result.projectId,
+      type: result.type,
+    };
+    await this.cacheManager.set(cacheKey, cacheData, 60000);
 
     // Attach to request
     request.projectId = result.projectId;
+    request.apiKeyType = result.type;
 
     return true;
   }

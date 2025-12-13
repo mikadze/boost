@@ -168,8 +168,10 @@ export const apiKeys = pgTable('apiKey', {
   projectId: uuid('project_id').notNull(),
   // SHA256 Hash of the full key - never store plain text
   keyHash: varchar('key_hash', { length: 64 }).notNull(),
-  // Prefix for UI identification (e.g., "pk_live_a1b2...")
+  // Prefix for UI identification (e.g., "pk_live_a1b2..." or "sk_live_a1b2...")
   prefix: varchar('prefix', { length: 24 }).notNull(),
+  // Key type: 'publishable' for client-side (limited events), 'secret' for server-side (all events)
+  type: varchar('type', { length: 20 }).default('secret').notNull(),
   // Scopes for authorization (future use)
   scopes: jsonb('scopes').default([]).notNull(),
   // Track last usage for monitoring
@@ -184,6 +186,7 @@ export const apiKeys = pgTable('apiKey', {
   // Critical for O(1) lookups during authentication
   hashIdx: uniqueIndex('api_key_hash_idx').on(t.keyHash),
   projectIdx: index('api_key_project_idx').on(t.projectId),
+  typeIdx: index('api_key_type_idx').on(t.type),
 }));
 
 // End Users table - user data ingested via API
@@ -1199,3 +1202,4 @@ export type LoyaltyTransactionType = 'earn' | 'redeem' | 'expire' | 'adjust' | '
 export type CommissionPlanType = 'PERCENTAGE' | 'FIXED';
 export type CommissionStatus = 'PENDING' | 'PAID' | 'REJECTED';
 export type QuestProgressStatus = 'not_started' | 'in_progress' | 'completed';
+export type ApiKeyType = 'publishable' | 'secret';

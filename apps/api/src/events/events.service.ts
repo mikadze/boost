@@ -1,6 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { lastValueFrom, timeout, catchError, throwError } from 'rxjs';
+import { EventSource } from '@boost/common';
 import { TrackEventDto } from './dto/track-event.dto';
 
 /**
@@ -14,6 +15,8 @@ export interface RawEventKafkaMessage {
   properties: Record<string, unknown>;
   timestamp: string;
   receivedAt: string;
+  /** Event source: 'server' for secret key, 'client' for publishable key */
+  _source: EventSource;
 }
 
 @Injectable()
@@ -28,8 +31,16 @@ export class EventsService {
   /**
    * Track an event - Kafka only, no DB writes
    * High-throughput design for <50ms response time
+   *
+   * @param projectId - Project ID from API key
+   * @param dto - Event data
+   * @param source - Event source ('server' or 'client') based on API key type
    */
-  async trackEvent(projectId: string, dto: TrackEventDto): Promise<void> {
+  async trackEvent(
+    projectId: string,
+    dto: TrackEventDto,
+    source: EventSource,
+  ): Promise<void> {
     const receivedAt = new Date().toISOString();
 
     // Build Kafka message
@@ -40,6 +51,7 @@ export class EventsService {
       properties: dto.traits || {},
       timestamp: dto.timestamp || receivedAt,
       receivedAt,
+      _source: source,
     };
 
     // Fire-and-forget to Kafka with short timeout

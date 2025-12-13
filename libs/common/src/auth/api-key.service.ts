@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ApiKeyRepository } from '@boost/database';
+import { ApiKeyRepository, ApiKeyType } from '@boost/database';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -10,13 +10,22 @@ export class ApiKeyService {
    * Generate a new API key for a project
    * Returns the raw key (only shown once to user)
    * Stores the SHA-256 hash in the database
+   *
+   * @param projectId - Project to create the key for
+   * @param scopes - Optional scopes for the key
+   * @param type - Key type: 'publishable' for client-side (limited events), 'secret' for server-side (all events)
    */
-  async createKey(projectId: string, scopes: string[] = []): Promise<string> {
+  async createKey(
+    projectId: string,
+    scopes: string[] = [],
+    type: ApiKeyType = 'secret',
+  ): Promise<string> {
     // Generate 32-byte random hex string
     const randomBytes = crypto.randomBytes(32).toString('hex');
 
-    // Format: pk_live_<random>
-    const rawKey = `pk_live_${randomBytes}`;
+    // Format: pk_live_<random> for publishable, sk_live_<random> for secret
+    const keyPrefix = type === 'publishable' ? 'pk_live_' : 'sk_live_';
+    const rawKey = `${keyPrefix}${randomBytes}`;
 
     // Create SHA-256 hash
     const keyHash = this.hashKey(rawKey);
@@ -30,6 +39,7 @@ export class ApiKeyService {
       keyHash,
       prefix,
       scopes,
+      type,
     });
 
     // Return the raw key (only time it's shown)
@@ -38,8 +48,9 @@ export class ApiKeyService {
 
   /**
    * Validate an API key by hashing and comparing to stored hash
+   * Returns projectId and key type for authorization
    */
-  async validateKey(rawKey: string): Promise<{ projectId: string } | null> {
+  async validateKey(rawKey: string): Promise<{ projectId: string; type: ApiKeyType } | null> {
     const keyHash = this.hashKey(rawKey);
     return this.apiKeyRepository.findByHash(keyHash);
   }

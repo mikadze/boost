@@ -7,6 +7,7 @@ export * from './guards/session.guard';
 export * from './decorators/current-project-id.decorator';
 export * from './decorators/current-user.decorator';
 export * from './decorators/correlation-id.decorator';
+export * from './decorators/current-api-key-type.decorator';
 export * from './middleware';
 export * from './config';
 export * from './types';

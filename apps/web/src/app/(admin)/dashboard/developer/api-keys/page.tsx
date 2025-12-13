@@ -11,6 +11,8 @@ import {
   MoreHorizontal,
   AlertTriangle,
   Activity,
+  Globe,
+  Server,
 } from 'lucide-react';
 import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent } from '@/components/ui/glass-card';
 import { GlowButton } from '@/components/ui/glow-button';
@@ -35,11 +37,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+type ApiKeyType = 'publishable' | 'secret';
 
 interface ApiKey {
   id: string;
   name: string;
   prefix: string;
+  type: ApiKeyType;
   createdAt: string;
   lastUsed: string;
   requests: number;
@@ -49,8 +61,9 @@ interface ApiKey {
 const apiKeys: ApiKey[] = [
   {
     id: '1',
-    name: 'Production API Key',
-    prefix: 'pk_live_abc123...',
+    name: 'Production Server Key',
+    prefix: 'sk_live_abc123...',
+    type: 'secret',
     createdAt: '2024-01-15',
     lastUsed: '2024-07-11T14:32:00',
     requests: 284592,
@@ -58,8 +71,9 @@ const apiKeys: ApiKey[] = [
   },
   {
     id: '2',
-    name: 'Development Key',
-    prefix: 'pk_test_xyz789...',
+    name: 'Website Tracking',
+    prefix: 'pk_live_xyz789...',
+    type: 'publishable',
     createdAt: '2024-03-20',
     lastUsed: '2024-07-10T09:15:00',
     requests: 45123,
@@ -67,8 +81,9 @@ const apiKeys: ApiKey[] = [
   },
   {
     id: '3',
-    name: 'Staging Environment',
-    prefix: 'pk_test_stg456...',
+    name: 'Mobile App',
+    prefix: 'pk_live_mob456...',
+    type: 'publishable',
     createdAt: '2024-05-01',
     lastUsed: '2024-07-08T16:45:00',
     requests: 12847,
@@ -78,6 +93,7 @@ const apiKeys: ApiKey[] = [
 
 export default function ApiKeysPage() {
   const [keyName, setKeyName] = React.useState('');
+  const [keyType, setKeyType] = React.useState<ApiKeyType>('publishable');
   const [isCreating, setIsCreating] = React.useState(false);
   const [newSecret, setNewSecret] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState(false);
@@ -88,7 +104,8 @@ export default function ApiKeysPage() {
     setIsCreating(true);
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    setNewSecret('pk_live_' + Math.random().toString(36).substring(2, 34));
+    const prefix = keyType === 'secret' ? 'sk_live_' : 'pk_live_';
+    setNewSecret(prefix + Math.random().toString(36).substring(2, 34));
     setIsCreating(false);
   };
 
@@ -103,6 +120,7 @@ export default function ApiKeysPage() {
     setDialogOpen(false);
     setNewSecret(null);
     setKeyName('');
+    setKeyType('publishable');
   };
 
   return (
@@ -179,6 +197,41 @@ export default function ApiKeysPage() {
                       className="bg-surface-1"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="key-type">Key Type</Label>
+                    <Select value={keyType} onValueChange={(v) => setKeyType(v as ApiKeyType)}>
+                      <SelectTrigger className="bg-surface-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="publishable">
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-blue-400" />
+                            <span>Publishable (pk_live_*)</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="secret">
+                          <div className="flex items-center gap-2">
+                            <Server className="h-4 w-4 text-purple-400" />
+                            <span>Secret (sk_live_*)</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {keyType === 'publishable' ? (
+                        <>
+                          <Globe className="inline h-3 w-3 mr-1" />
+                          Safe for browser/client-side. Can track page views, clicks, cart updates.
+                        </>
+                      ) : (
+                        <>
+                          <Server className="inline h-3 w-3 mr-1" />
+                          Server-side only. Can track purchases, commissions, and all events.
+                        </>
+                      )}
+                    </p>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button
@@ -236,12 +289,26 @@ export default function ApiKeysPage() {
                   className="flex items-center justify-between p-4 rounded-lg bg-surface-1 border border-border"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Key className="h-5 w-5 text-primary" />
+                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                      key.type === 'secret'
+                        ? 'bg-purple-500/10'
+                        : 'bg-blue-500/10'
+                    }`}>
+                      {key.type === 'secret' ? (
+                        <Server className="h-5 w-5 text-purple-400" />
+                      ) : (
+                        <Globe className="h-5 w-5 text-blue-400" />
+                      )}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{key.name}</p>
+                        <StatusBadge
+                          variant={key.type === 'secret' ? 'primary' : 'info'}
+                          size="sm"
+                        >
+                          {key.type === 'secret' ? 'Secret' : 'Publishable'}
+                        </StatusBadge>
                         <StatusBadge variant="active" size="sm">
                           Active
                         </StatusBadge>

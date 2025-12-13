@@ -44,6 +44,17 @@ export class PurchaseEventHandler implements EventHandler {
   async handle(event: RawEventMessage): Promise<void> {
     this.logger.debug(`Processing purchase event: ${event.event}`);
 
+    // SECURITY: Defense-in-depth validation
+    // Purchase events should only be accepted from server-side (secret key)
+    // The API controller already blocks this, but we double-check here
+    if (event._source === 'client') {
+      this.logger.warn(
+        `Rejected client-sourced purchase event for user ${event.userId}. ` +
+          `Purchase events must be sent from server with secret key (sk_live_*).`,
+      );
+      return;
+    }
+
     const properties = event.properties as Record<string, unknown> | undefined;
 
     // Extract transaction amount from event properties

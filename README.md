@@ -19,11 +19,19 @@ A high-performance, scalable data ingestion platform built with NestJS, Drizzle 
 ## Features
 
 ✨ **Multi-Tenant Architecture** - Logical isolation using RLS context
-🔐 **Secure API Keys** - SHA-256 hashing with Redis caching (L1/L2)
+🔐 **Dual API Keys** - Publishable (client) & Secret (server) keys with event restrictions
 ⚡ **Event Streaming** - Kafka-based event sourcing
 💾 **PostgreSQL + Drizzle** - Type-safe ORM
 🚀 **Microservices Ready** - NestJS + Turborepo
 🐳 **Docker Compose** - Local development environment
+
+## SDKs
+
+| Package | Description | Use Case |
+|---------|-------------|----------|
+| `@gamify/core` | Browser/client-side SDK | Page views, clicks, cart updates |
+| `@gamify/react` | React hooks & components | React applications |
+| `@gamify/node` | Server-side SDK | Purchases, commissions, webhooks |
 
 ## Quick Start
 
@@ -66,6 +74,49 @@ A high-performance, scalable data ingestion platform built with NestJS, Drizzle 
    npm run dev --workspace=@boost/web
    ```
 
+## SDK Usage
+
+### Client-Side (Browser)
+
+```typescript
+import { Gamify } from '@gamify/core';
+
+const gamify = new Gamify({
+  apiKey: 'pk_live_...', // Publishable key only
+});
+
+// Track behavioral events
+gamify.track('page_view', { page: '/products' });
+gamify.track('cart_add', { productId: 'prod_123', quantity: 2 });
+
+// Identify users
+gamify.identify('user_123', { email: 'user@example.com' });
+```
+
+### Server-Side (Node.js)
+
+```typescript
+import { GamifyClient } from '@gamify/node';
+
+const gamify = new GamifyClient({
+  secretKey: process.env.GAMIFY_SECRET_KEY!, // sk_live_*
+});
+
+// Track purchases (server-only)
+await gamify.purchase({
+  userId: 'user_123',
+  orderId: 'order_456',
+  amount: 9999, // cents
+  currency: 'USD',
+});
+
+// Track referral completions
+await gamify.referralSuccess({
+  referredUserId: 'new_user_789',
+  referralCode: 'FRIEND20',
+});
+```
+
 ## API Endpoints
 
 ### Health Check
@@ -73,35 +124,54 @@ A high-performance, scalable data ingestion platform built with NestJS, Drizzle 
 GET /
 ```
 
-### Create Event (Protected)
+### Track Event (Publishable Key)
 ```bash
-POST /events
+POST /v1/events/track
 x-api-key: pk_live_<key>
 Content-Type: application/json
 
 {
-  "eventType": "user.signup",
-  "userId": "550e8400-e29b-41d4-a716-446655440000",
-  "payload": {
-    "email": "user@example.com",
-    "name": "John Doe"
+  "event": "page_view",
+  "userId": "user_123",
+  "properties": {
+    "page": "/products",
+    "referrer": "google.com"
   }
 }
 ```
 
-### Manage API Keys (Protected)
+### Track Purchase (Secret Key Required)
 ```bash
-# Create new key
-POST /auth/api-keys
-x-api-key: pk_live_<key>
+POST /v1/events/track
+x-api-key: sk_live_<key>
+Content-Type: application/json
+
+{
+  "event": "purchase",
+  "userId": "user_123",
+  "properties": {
+    "orderId": "order_456",
+    "amount": 9999,
+    "currency": "USD"
+  }
+}
+```
+
+### Manage API Keys
+```bash
+# Create publishable key
+POST /v1/projects/:projectId/api-keys
+{ "name": "Website", "type": "publishable" }
+
+# Create secret key
+POST /v1/projects/:projectId/api-keys
+{ "name": "Backend", "type": "secret" }
 
 # List keys
-GET /auth/api-keys
-x-api-key: pk_live_<key>
+GET /v1/projects/:projectId/api-keys
 
 # Revoke key
-DELETE /auth/api-keys/:id
-x-api-key: pk_live_<key>
+DELETE /v1/projects/:projectId/api-keys/:id
 ```
 
 ## Database Schema
@@ -121,7 +191,8 @@ x-api-key: pk_live_<key>
 - `id` (UUID, PK)
 - `projectId` (UUID, FK)
 - `keyHash` (VARCHAR, UNIQUE) - SHA-256 hash
-- `prefix` (VARCHAR) - Display prefix
+- `prefix` (VARCHAR) - Display prefix (e.g., `pk_live_abc...`)
+- `type` (VARCHAR) - `publishable` or `secret`
 - `scopes` (JSON)
 - `lastUsedAt` (TIMESTAMP)
 
@@ -142,23 +213,45 @@ x-api-key: pk_live_<key>
 - `errorDetails` (TEXT, if failed)
 - `createdAt`, `processedAt`
 
-## Authentication
+## API Keys & Security
 
-API Keys are secured using:
+### Key Types
 
-1. **Key Generation**: 32-byte random hex string
-   - Format: `pk_live_<random>`
-   - SHA-256 hash stored in database
-   - Only shown once at creation
+| Type | Prefix | Use Case | Allowed Events |
+|------|--------|----------|----------------|
+| **Publishable** | `pk_live_*` | Browser, mobile apps | Behavioral events only |
+| **Secret** | `sk_live_*` | Server-side only | All events |
 
-2. **Validation Flow**:
-   - L1 Cache: Redis (TTL 60s) - `apikey:<raw_key>` → `projectId`
-   - L2 Lookup: PostgreSQL - Hash comparison
-   - Returns `projectId` for multi-tenant isolation
+### Event Classification
 
-3. **Performance**:
-   - Warm (cached): ~10ms
-   - Cold (DB hit): ~50ms
+**Publishable Key Events** (client-safe):
+- `page_view`, `product_view`, `click`, `form_submit`, `search`
+- `cart_update`, `cart_add`, `cart_remove`, `checkout_start`
+- `signup`, `login`, `logout`, `$profile_update`
+
+**Secret Key Events** (server-only):
+- `purchase`, `checkout_complete`, `checkout_success`
+- `commission.created`, `referral_success`
+- `user.leveled_up`, `step.completed`, `quest.completed`
+
+### Security Layers
+
+1. **API Controller**: Blocks trusted events from publishable keys
+2. **Worker Handler**: Defense-in-depth validation of event source
+3. **Client SDK**: Rejects secret keys, warns on trusted events
+4. **Server SDK**: Requires secret keys only
+
+### Key Generation
+
+- 32-byte random hex string
+- SHA-256 hash stored in database
+- Only shown once at creation
+
+### Validation Flow
+
+- L1 Cache: Redis (TTL 60s) - `apikey:<hash>` → `{projectId, type}`
+- L2 Lookup: PostgreSQL - Hash comparison
+- Returns `projectId` + `keyType` for multi-tenant isolation
 
 ## Development
 

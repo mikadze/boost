@@ -1,4 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional, MaxLength, IsArray } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, MaxLength, IsArray, IsIn } from 'class-validator';
+import { ApiKeyType } from '@boost/database';
 
 export class CreateApiKeyDto {
   @IsString()
@@ -10,4 +11,14 @@ export class CreateApiKeyDto {
   @IsString({ each: true })
   @IsOptional()
   scopes?: string[];
+
+  /**
+   * API key type:
+   * - 'publishable': For client-side use (pk_live_*), can only send behavioral events
+   * - 'secret': For server-side use (sk_live_*), can send all events including financial
+   */
+  @IsString()
+  @IsIn(['publishable', 'secret'])
+  @IsOptional()
+  type?: ApiKeyType = 'secret';
 }
