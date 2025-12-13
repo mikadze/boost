@@ -29,6 +29,8 @@ import { CouponsModule } from './coupons/coupons.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 // Issue #25-28: Quest Engine
 import { QuestsModule } from './quests/quests.module';
+// Issue #34: Rewards Store
+import { RewardsModule } from './rewards/rewards.module';
 
 @Module({
   imports: [
@@ -78,6 +80,8 @@ import { QuestsModule } from './quests/quests.module';
     LoyaltyModule,
     // Issue #25-28: Quest Engine
     QuestsModule,
+    // Issue #34: Rewards Store
+    RewardsModule,
   ],
   controllers: [AppController, EventsController, AuthController, BetterAuthController],
   providers: [AppService, EventsService],

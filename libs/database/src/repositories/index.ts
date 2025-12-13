@@ -30,3 +30,7 @@ export * from './quest-definition.repository';
 export * from './quest-step.repository';
 export * from './user-quest-progress.repository';
 export * from './user-step-progress.repository';
+
+// Issue #34: Rewards Store Repositories
+export * from './reward-item.repository';
+export * from './redemption-transaction.repository';
