@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventRepository } from '@boost/database';
 import { RawEventMessage } from '@boost/common';
-import { EventHandlerRegistry } from './handlers';
+import { EventHandlerRegistry, QuestProgressEventHandler } from './handlers';
 
 @Injectable()
 export class WorkerService {
@@ -10,6 +10,7 @@ export class WorkerService {
   constructor(
     private readonly eventRepository: EventRepository,
     private readonly handlerRegistry: EventHandlerRegistry,
+    private readonly questProgressHandler: QuestProgressEventHandler,
   ) {}
 
   /**
@@ -40,6 +41,17 @@ export class WorkerService {
 
       // Dispatch to appropriate handler via Strategy pattern
       await this.handlerRegistry.dispatch(rawEvent);
+
+      // Issue #25-29: Check for quest progress on ALL events
+      // This runs separately from the main dispatch to evaluate quest step triggers
+      try {
+        if (await this.questProgressHandler.shouldHandle(rawEvent)) {
+          await this.questProgressHandler.handle(rawEvent);
+        }
+      } catch (questError) {
+        // Log but don't fail the event processing if quest evaluation fails
+        this.logger.warn(`Quest progress evaluation failed: ${questError}`);
+      }
 
       // Update event status to processed via repository
       await this.eventRepository.markAsProcessed(eventId);

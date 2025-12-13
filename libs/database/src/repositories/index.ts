@@ -24,3 +24,9 @@ export * from './referral-tracking.repository';
 
 // Issue #21: Progression Engine Repositories
 export * from './progression-rule.repository';
+
+// Issue #25: Quest Engine Repositories
+export * from './quest-definition.repository';
+export * from './quest-step.repository';
+export * from './user-quest-progress.repository';
+export * from './user-step-progress.repository';

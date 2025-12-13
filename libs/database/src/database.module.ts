@@ -17,6 +17,11 @@ import { CouponRepository } from './repositories/coupon.repository';
 import { LoyaltyTierRepository } from './repositories/loyalty-tier.repository';
 import { LoyaltyLedgerRepository } from './repositories/loyalty-ledger.repository';
 import { EndUserRepository } from './repositories/end-user.repository';
+// Issue #25: Quest Engine Repositories
+import { QuestDefinitionRepository } from './repositories/quest-definition.repository';
+import { QuestStepRepository } from './repositories/quest-step.repository';
+import { UserQuestProgressRepository } from './repositories/user-quest-progress.repository';
+import { UserStepProgressRepository } from './repositories/user-step-progress.repository';
 
 let pool: Pool;
 
@@ -62,6 +67,11 @@ export class DatabaseModule {
       LoyaltyTierRepository,
       LoyaltyLedgerRepository,
       EndUserRepository,
+      // Issue #25
+      QuestDefinitionRepository,
+      QuestStepRepository,
+      UserQuestProgressRepository,
+      UserStepProgressRepository,
     ];
 
     return {
@@ -101,6 +111,11 @@ export class DatabaseModule {
       LoyaltyTierRepository,
       LoyaltyLedgerRepository,
       EndUserRepository,
+      // Issue #25
+      QuestDefinitionRepository,
+      QuestStepRepository,
+      UserQuestProgressRepository,
+      UserStepProgressRepository,
     ];
 
     return {

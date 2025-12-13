@@ -970,6 +970,225 @@ export type NewReferralTracking = typeof referralTracking.$inferInsert;
 export type ProgressionRule = typeof progressionRules.$inferSelect;
 export type NewProgressionRule = typeof progressionRules.$inferInsert;
 
+// ============================================
+// Issue #25: Quest Engine Tables
+// ============================================
+
+// Quest Definitions table - defines quests
+export const questDefinitions = pgTable('quest_definition', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  /** Quest name */
+  name: varchar('name', { length: 255 }).notNull(),
+  /** Quest description */
+  description: text('description'),
+  /** XP reward for completing the quest */
+  rewardXp: integer('reward_xp').default(0).notNull(),
+  /** Badge ID to award on completion (optional) */
+  rewardBadgeId: varchar('reward_badge_id', { length: 255 }),
+  /** Whether quest is published/active */
+  active: boolean('active').default(false).notNull(),
+  /** Additional metadata */
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => ({
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  projectIdx: index('quest_definition_project_idx').on(t.projectId),
+  activeIdx: index('quest_definition_active_idx').on(t.active),
+}));
+
+// Quest Steps table - defines steps within a quest
+export const questSteps = pgTable('quest_step', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  questId: uuid('quest_id').notNull(),
+  projectId: uuid('project_id').notNull(),
+  /** Event name that triggers this step (e.g., 'avatar_uploaded', 'profile.bio_updated') */
+  eventName: varchar('event_name', { length: 255 }).notNull(),
+  /** Number of times the event must occur to complete the step */
+  requiredCount: integer('required_count').default(1).notNull(),
+  /** Order index for step ordering */
+  orderIndex: integer('order_index').default(0).notNull(),
+  /** Step title for display */
+  title: varchar('title', { length: 255 }),
+  /** Step description */
+  description: text('description'),
+  /** Additional metadata */
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => ({
+  questFk: foreignKey({
+    columns: [t.questId],
+    foreignColumns: [questDefinitions.id],
+  }).onDelete('cascade'),
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  questIdx: index('quest_step_quest_idx').on(t.questId),
+  projectIdx: index('quest_step_project_idx').on(t.projectId),
+  eventNameIdx: index('quest_step_event_name_idx').on(t.eventName),
+  orderIdx: index('quest_step_order_idx').on(t.questId, t.orderIndex),
+}));
+
+// User Quest Progress table - tracks user progress on quests
+export const userQuestProgress = pgTable('user_quest_progress', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  /** End user ID (FK to endUsers) */
+  endUserId: uuid('end_user_id').notNull(),
+  /** Quest definition ID */
+  questId: uuid('quest_id').notNull(),
+  /** Status of the quest progress */
+  status: varchar('status', { length: 32 }).default('not_started').notNull(), // 'not_started' | 'in_progress' | 'completed'
+  /** Percent complete (0-100) */
+  percentComplete: integer('percent_complete').default(0).notNull(),
+  /** When the quest was started */
+  startedAt: timestamp('started_at'),
+  /** When the quest was completed */
+  completedAt: timestamp('completed_at'),
+  /** Additional metadata */
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => ({
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  endUserFk: foreignKey({
+    columns: [t.endUserId],
+    foreignColumns: [endUsers.id],
+  }).onDelete('cascade'),
+  questFk: foreignKey({
+    columns: [t.questId],
+    foreignColumns: [questDefinitions.id],
+  }).onDelete('cascade'),
+  uniqueProgressIdx: uniqueIndex('user_quest_progress_unique_idx').on(t.endUserId, t.questId),
+  projectIdx: index('user_quest_progress_project_idx').on(t.projectId),
+  endUserIdx: index('user_quest_progress_end_user_idx').on(t.endUserId),
+  questIdx: index('user_quest_progress_quest_idx').on(t.questId),
+  statusIdx: index('user_quest_progress_status_idx').on(t.status),
+}));
+
+// User Step Progress table - tracks user progress on individual steps
+export const userStepProgress = pgTable('user_step_progress', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  /** End user ID (FK to endUsers) */
+  endUserId: uuid('end_user_id').notNull(),
+  /** Quest step ID */
+  stepId: uuid('step_id').notNull(),
+  /** User quest progress ID (for easy lookup) */
+  userQuestProgressId: uuid('user_quest_progress_id').notNull(),
+  /** Current count of events triggered */
+  currentCount: integer('current_count').default(0).notNull(),
+  /** Whether the step is complete */
+  isComplete: boolean('is_complete').default(false).notNull(),
+  /** When the step was completed */
+  completedAt: timestamp('completed_at'),
+  /** Additional metadata */
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => ({
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  endUserFk: foreignKey({
+    columns: [t.endUserId],
+    foreignColumns: [endUsers.id],
+  }).onDelete('cascade'),
+  stepFk: foreignKey({
+    columns: [t.stepId],
+    foreignColumns: [questSteps.id],
+  }).onDelete('cascade'),
+  userQuestProgressFk: foreignKey({
+    columns: [t.userQuestProgressId],
+    foreignColumns: [userQuestProgress.id],
+  }).onDelete('cascade'),
+  uniqueStepProgressIdx: uniqueIndex('user_step_progress_unique_idx').on(t.endUserId, t.stepId),
+  projectIdx: index('user_step_progress_project_idx').on(t.projectId),
+  endUserIdx: index('user_step_progress_end_user_idx').on(t.endUserId),
+  stepIdx: index('user_step_progress_step_idx').on(t.stepId),
+  questProgressIdx: index('user_step_progress_quest_progress_idx').on(t.userQuestProgressId),
+}));
+
+// Issue #25: Quest Engine Relations
+export const questDefinitionRelations = relations(questDefinitions, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [questDefinitions.projectId],
+    references: [projects.id],
+  }),
+  steps: many(questSteps),
+  userProgress: many(userQuestProgress),
+}));
+
+export const questStepRelations = relations(questSteps, ({ one, many }) => ({
+  quest: one(questDefinitions, {
+    fields: [questSteps.questId],
+    references: [questDefinitions.id],
+  }),
+  project: one(projects, {
+    fields: [questSteps.projectId],
+    references: [projects.id],
+  }),
+  userProgress: many(userStepProgress),
+}));
+
+export const userQuestProgressRelations = relations(userQuestProgress, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [userQuestProgress.projectId],
+    references: [projects.id],
+  }),
+  endUser: one(endUsers, {
+    fields: [userQuestProgress.endUserId],
+    references: [endUsers.id],
+  }),
+  quest: one(questDefinitions, {
+    fields: [userQuestProgress.questId],
+    references: [questDefinitions.id],
+  }),
+  stepProgress: many(userStepProgress),
+}));
+
+export const userStepProgressRelations = relations(userStepProgress, ({ one }) => ({
+  project: one(projects, {
+    fields: [userStepProgress.projectId],
+    references: [projects.id],
+  }),
+  endUser: one(endUsers, {
+    fields: [userStepProgress.endUserId],
+    references: [endUsers.id],
+  }),
+  step: one(questSteps, {
+    fields: [userStepProgress.stepId],
+    references: [questSteps.id],
+  }),
+  questProgress: one(userQuestProgress, {
+    fields: [userStepProgress.userQuestProgressId],
+    references: [userQuestProgress.id],
+  }),
+}));
+
+// Issue #25: Quest Engine Types
+export type QuestDefinition = typeof questDefinitions.$inferSelect;
+export type NewQuestDefinition = typeof questDefinitions.$inferInsert;
+
+export type QuestStep = typeof questSteps.$inferSelect;
+export type NewQuestStep = typeof questSteps.$inferInsert;
+
+export type UserQuestProgress = typeof userQuestProgress.$inferSelect;
+export type NewUserQuestProgress = typeof userQuestProgress.$inferInsert;
+
+export type UserStepProgress = typeof userStepProgress.$inferSelect;
+export type NewUserStepProgress = typeof userStepProgress.$inferInsert;
+
 // Status types for type-safe handling
 export type EventStatus = 'pending' | 'processed' | 'failed';
 export type MemberRole = 'owner' | 'admin' | 'member';
@@ -979,3 +1198,4 @@ export type CouponDiscountType = 'percentage' | 'fixed_amount';
 export type LoyaltyTransactionType = 'earn' | 'redeem' | 'expire' | 'adjust' | 'bonus';
 export type CommissionPlanType = 'PERCENTAGE' | 'FIXED';
 export type CommissionStatus = 'PENDING' | 'PAID' | 'REJECTED';
+export type QuestProgressStatus = 'not_started' | 'in_progress' | 'completed';
