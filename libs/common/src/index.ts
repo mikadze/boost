@@ -10,3 +10,6 @@ export * from './decorators/correlation-id.decorator';
 export * from './middleware';
 export * from './config';
 export * from './types';
+
+// Issue #20: Finance module
+export * from './finance';

@@ -189,3 +189,77 @@ export interface LoyaltyHistoryResponse {
   transactions: LoyaltyTransaction[];
   total: number;
 }
+
+// ============================================
+// Issue #22: Affiliate Types
+// ============================================
+
+/**
+ * Affiliate tier/plan information
+ */
+export interface AffiliateTier {
+  id: string;
+  name: string;
+  type: 'PERCENTAGE' | 'FIXED';
+  value: number;
+}
+
+/**
+ * Referral information
+ */
+export interface ReferralInfo {
+  id: string;
+  referredExternalId: string;
+  referralCode: string;
+  createdAt: string;
+}
+
+/**
+ * Affiliate earnings summary
+ */
+export interface AffiliateEarnings {
+  totalEarned: number;
+  totalPending: number;
+  totalPaid: number;
+  transactionCount: number;
+  currency: string;
+}
+
+/**
+ * Affiliate statistics profile
+ */
+export interface AffiliateStats {
+  userId: string;
+  referralCode: string | null;
+  referralCount: number;
+  earnings: AffiliateEarnings;
+  tier: AffiliateTier | null;
+}
+
+/**
+ * Affiliate stats API response
+ */
+export interface AffiliateStatsResponse {
+  stats: AffiliateStats;
+}
+
+/**
+ * Leaderboard entry
+ */
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  displayName?: string;
+  referralCount: number;
+  totalEarnings: number;
+  tier?: AffiliateTier | null;
+}
+
+/**
+ * Leaderboard response
+ */
+export interface LeaderboardResponse {
+  entries: LeaderboardEntry[];
+  total: number;
+  currentUserRank?: number;
+}

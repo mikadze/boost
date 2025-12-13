@@ -16,3 +16,11 @@ export * from './coupon.repository';
 export * from './loyalty-tier.repository';
 export * from './loyalty-ledger.repository';
 export * from './end-user.repository';
+
+// Issue #20: Monetization Repositories
+export * from './commission-plan.repository';
+export * from './commission-ledger.repository';
+export * from './referral-tracking.repository';
+
+// Issue #21: Progression Engine Repositories
+export * from './progression-rule.repository';

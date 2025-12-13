@@ -1,9 +1,11 @@
-import type { GamifyConfig, GamifyEvent, UserTraits, StorageAdapter, CartItem } from './types.js';
+import type { GamifyConfig, GamifyEvent, UserTraits, StorageAdapter, CartItem, AffiliateStats, LeaderboardResponse } from './types.js';
 import { createStorage } from './storage/index.js';
 import { EventQueue } from './queue/index.js';
 import { HttpClient } from './network/index.js';
 import { SessionManager } from './session/index.js';
 import { LoyaltyManager } from './loyalty/index.js';
+import { ReferralManager } from './referral/index.js';
+import { AffiliateManager } from './affiliate/index.js';
 
 const DEFAULT_ENDPOINT = 'https://api.gamify.io';
 const DEFAULT_FLUSH_INTERVAL = 10000; // 10 seconds
@@ -30,6 +32,8 @@ export class Gamify {
   private readonly client: HttpClient;
   private readonly _session: SessionManager;
   private readonly _loyalty: LoyaltyManager;
+  private readonly _referral: ReferralManager;
+  private readonly _affiliate: AffiliateManager;
   private flushTimer: ReturnType<typeof setInterval> | null = null;
   private anonymousId: string;
   private userId: string | null = null;
@@ -61,6 +65,10 @@ export class Gamify {
     // Initialize Session and Loyalty managers
     this._session = new SessionManager(this.config, this.client, this.storage);
     this._loyalty = new LoyaltyManager(this.config, this.client, this.storage);
+
+    // Issue #22: Initialize Referral and Affiliate managers
+    this._referral = new ReferralManager(this.config, this.storage);
+    this._affiliate = new AffiliateManager(this.config, this.client, this.storage);
 
     // Load or generate anonymous ID
     const storedAnonymousId = this.storage.get<string>(ANONYMOUS_ID_KEY);
@@ -173,9 +181,12 @@ export class Gamify {
       return;
     }
 
+    // Issue #22: Inject referrer properties into event
+    const referrerProps = this._referral.getReferrerProperties();
+
     const event: GamifyEvent = {
       type: eventType,
-      properties: properties ?? {},
+      properties: { ...referrerProps, ...properties },
       timestamp: new Date().toISOString(),
       anonymousId: this.anonymousId,
       ...(this.userId && { userId: this.userId }),
@@ -324,5 +335,58 @@ export class Gamify {
       throw new Error('[Gamify] User must be identified before getting loyalty history');
     }
     return this._loyalty.getHistory(this.userId, limit, offset);
+  }
+
+  // ============================================
+  // Referral Module (Issue #22)
+  // ============================================
+
+  /**
+   * Get the referral manager
+   */
+  get referral(): ReferralManager {
+    return this._referral;
+  }
+
+  /**
+   * Convenience method: Get current referrer code
+   */
+  getReferrer(): string | null {
+    return this._referral.getReferrer();
+  }
+
+  /**
+   * Convenience method: Set referrer code manually
+   */
+  setReferrer(code: string): void {
+    this._referral.setReferrer(code);
+  }
+
+  // ============================================
+  // Affiliate Module (Issue #22)
+  // ============================================
+
+  /**
+   * Get the affiliate manager
+   */
+  get affiliate(): AffiliateManager {
+    return this._affiliate;
+  }
+
+  /**
+   * Convenience method: Get affiliate stats for current user
+   */
+  async getAffiliateStats(forceRefresh = false): Promise<AffiliateStats> {
+    if (!this.userId) {
+      throw new Error('[Gamify] User must be identified before getting affiliate stats');
+    }
+    return this._affiliate.getStats(this.userId, forceRefresh);
+  }
+
+  /**
+   * Convenience method: Get leaderboard
+   */
+  async getLeaderboard(limit = 10): Promise<LeaderboardResponse> {
+    return this._affiliate.getLeaderboard(limit);
   }
 }

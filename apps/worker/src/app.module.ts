@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { DatabaseModule } from '@boost/database';
-import { AppConfigModule, AppConfig } from '@boost/common';
+import { AppConfigModule, AppConfig, CommissionService } from '@boost/common';
 import { WorkerController } from './worker.controller';
 import { WorkerService } from './worker.service';
 import {
@@ -13,6 +13,9 @@ import {
   UserEventHandler,
   DefaultEventHandler,
   RuleEngineEventHandler,
+  // Issue #20 & #21: New handlers
+  PurchaseEventHandler,
+  ProgressionEventHandler,
 } from './handlers';
 import { SweeperService } from './sweeper';
 import { RuleEngineService, EffectExecutorService } from './engine';
@@ -55,11 +58,17 @@ import { RuleEngineService, EffectExecutorService } from './engine';
     // Rule Engine (Issue #13)
     RuleEngineService,
     EffectExecutorService,
+    // Issue #20: Commission Service
+    CommissionService,
     // Event handlers
     TrackingEventHandler,
     UserEventHandler,
     DefaultEventHandler,
     RuleEngineEventHandler,
+    // Issue #20: Purchase handler for commission calculation
+    PurchaseEventHandler,
+    // Issue #21: Progression handler for level-up logic
+    ProgressionEventHandler,
     // Handler registry with multi-provider injection
     {
       provide: EVENT_HANDLERS,
@@ -67,8 +76,22 @@ import { RuleEngineService, EffectExecutorService } from './engine';
         trackingHandler: TrackingEventHandler,
         userHandler: UserEventHandler,
         ruleEngineHandler: RuleEngineEventHandler,
-      ) => [trackingHandler, userHandler, ruleEngineHandler],
-      inject: [TrackingEventHandler, UserEventHandler, RuleEngineEventHandler],
+        purchaseHandler: PurchaseEventHandler,
+        progressionHandler: ProgressionEventHandler,
+      ) => [
+        trackingHandler,
+        userHandler,
+        ruleEngineHandler,
+        purchaseHandler,
+        progressionHandler,
+      ],
+      inject: [
+        TrackingEventHandler,
+        UserEventHandler,
+        RuleEngineEventHandler,
+        PurchaseEventHandler,
+        ProgressionEventHandler,
+      ],
     },
     EventHandlerRegistry,
     // Sweeper job for stuck pending events
