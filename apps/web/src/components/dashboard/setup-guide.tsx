@@ -162,18 +162,17 @@ function Confetti({ show }: ConfettiProps) {
 
 interface SendTestEventButtonProps {
   projectId: string;
-  apiKey: string | undefined;
   onSuccess: () => void;
   disabled?: boolean;
 }
 
-function SendTestEventButton({ projectId, apiKey, onSuccess, disabled }: SendTestEventButtonProps) {
+function SendTestEventButton({ projectId, onSuccess, disabled }: SendTestEventButtonProps) {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   const handleSendTestEvent = async () => {
-    if (!apiKey) {
-      setError('No API key available');
+    if (!projectId) {
+      setError('No project selected');
       return;
     }
 
@@ -182,26 +181,20 @@ function SendTestEventButton({ projectId, apiKey, onSuccess, disabled }: SendTes
 
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
-      const response = await fetch(`${API_URL}/events/track`, {
+      // Use session-authenticated endpoint instead of API key
+      const response = await fetch(`${API_URL}/projects/${projectId}/events/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': apiKey,
         },
-        body: JSON.stringify({
-          event: 'test_event',
-          userId: 'setup-guide-test',
-          properties: {
-            source: 'setup-guide',
-            timestamp: new Date().toISOString(),
-          },
-        }),
+        credentials: 'include', // Include session cookies
       });
 
       if (response.ok) {
         onSuccess();
       } else {
-        setError('Failed to send test event');
+        const data = await response.json().catch(() => ({}));
+        setError(data.message || 'Failed to send test event');
       }
     } catch {
       setError('Network error. Please check your connection.');
@@ -214,7 +207,7 @@ function SendTestEventButton({ projectId, apiKey, onSuccess, disabled }: SendTes
     <div className="space-y-2">
       <GlowButton
         onClick={handleSendTestEvent}
-        disabled={disabled || isLoading || !apiKey}
+        disabled={disabled || isLoading || !projectId}
         variant="glow"
       >
         {isLoading ? (
@@ -522,9 +515,8 @@ function MyComponent() {
                     )}
                     <SendTestEventButton
                       projectId={currentProject?.id ?? ''}
-                      apiKey={projectApiKey?.keyPrefix}
                       onSuccess={handleTestEventSuccess}
-                      disabled={!currentProject || !projectApiKey}
+                      disabled={!currentProject}
                     />
                   </div>
                   {!projectApiKey && (

@@ -26,7 +26,9 @@ interface DemoContextValue {
 
 const DemoContext = React.createContext<DemoContextValue | null>(null);
 
-const DEFAULT_API_KEY = 'pk_live_31d08b51fca1ec234f09279cbac1f82222e896bf593d755715423a034e7bc67f';
+// Demo API key for playground - should be set via NEXT_PUBLIC_DEMO_API_KEY env variable
+// Falls back to a placeholder that prompts users to set up their own key
+const DEFAULT_API_KEY = process.env.NEXT_PUBLIC_DEMO_API_KEY ?? 'pk_live_demo_key_not_configured';
 const DEFAULT_ENDPOINT = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 const STORAGE_KEY = 'boost_demo_api_key';
 

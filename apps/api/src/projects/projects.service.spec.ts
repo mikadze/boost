@@ -75,6 +75,8 @@ describe('ProjectsService', () => {
             countByProjectId: jest.fn(),
             getFirstEventDate: jest.fn(),
             findRecentByProjectId: jest.fn(),
+            create: jest.fn(),
+            markAsProcessed: jest.fn(),
           },
         },
         {
@@ -267,6 +269,57 @@ describe('ProjectsService', () => {
 
       await expect(service.revokeApiKeyWithOwnershipCheck('user-1', 'key-1'))
         .rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('sendTestEvent', () => {
+    it('should create and mark test event as processed', async () => {
+      const eventId = 'event-123';
+      eventRepo.create.mockResolvedValue({ id: eventId });
+      eventRepo.markAsProcessed.mockResolvedValue();
+
+      const result = await service.sendTestEvent('project-1', 'user-1');
+
+      expect(result.success).toBe(true);
+      expect(result.eventId).toBe(eventId);
+      expect(result.eventType).toBe('test_event');
+      expect(result.createdAt).toBeDefined();
+      expect(eventRepo.create).toHaveBeenCalledWith({
+        projectId: 'project-1',
+        eventType: 'test_event',
+        userId: 'setup-guide-user-1',
+        payload: expect.objectContaining({
+          source: 'setup-guide',
+          message: 'Test event from Boost setup guide',
+        }),
+      });
+      expect(eventRepo.markAsProcessed).toHaveBeenCalledWith(eventId);
+    });
+  });
+
+  describe('getRecentEvents limit validation', () => {
+    it('should clamp limit to maximum of 100', async () => {
+      eventRepo.findRecentByProjectId.mockResolvedValue([]);
+
+      await service.getRecentEvents('project-1', 500);
+
+      expect(eventRepo.findRecentByProjectId).toHaveBeenCalledWith('project-1', 100);
+    });
+
+    it('should clamp limit to minimum of 1', async () => {
+      eventRepo.findRecentByProjectId.mockResolvedValue([]);
+
+      await service.getRecentEvents('project-1', -5);
+
+      expect(eventRepo.findRecentByProjectId).toHaveBeenCalledWith('project-1', 1);
+    });
+
+    it('should use default of 10 when not specified', async () => {
+      eventRepo.findRecentByProjectId.mockResolvedValue([]);
+
+      await service.getRecentEvents('project-1');
+
+      expect(eventRepo.findRecentByProjectId).toHaveBeenCalledWith('project-1', 10);
     });
   });
 });

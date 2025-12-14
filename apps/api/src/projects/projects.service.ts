@@ -142,7 +142,9 @@ export class ProjectsService {
    * Used by the setup guide to verify event ingestion.
    */
   async getRecentEvents(projectId: string, limit: number = 10) {
-    const events = await this.eventRepo.findRecentByProjectId(projectId, limit);
+    // Validate limit is within acceptable range
+    const validatedLimit = Math.min(Math.max(1, limit), 100);
+    const events = await this.eventRepo.findRecentByProjectId(projectId, validatedLimit);
     return events.map((event) => ({
       id: event.id,
       eventType: event.eventType,
@@ -150,5 +152,37 @@ export class ProjectsService {
       status: event.status,
       createdAt: event.createdAt.toISOString(),
     }));
+  }
+
+  /**
+   * Send a test event for a project.
+   * Used by the setup guide to verify integration without requiring an API key.
+   * This is a session-authenticated endpoint so users don't need to expose their API key.
+   */
+  async sendTestEvent(projectId: string, userId: string) {
+    const eventType = 'test_event';
+    const createdAt = new Date();
+
+    // Create the event
+    const { id: eventId } = await this.eventRepo.create({
+      projectId,
+      eventType,
+      userId: `setup-guide-${userId}`,
+      payload: {
+        source: 'setup-guide',
+        timestamp: createdAt.toISOString(),
+        message: 'Test event from Boost setup guide',
+      },
+    });
+
+    // Mark it as processed immediately (test events don't need Kafka processing)
+    await this.eventRepo.markAsProcessed(eventId);
+
+    return {
+      success: true,
+      eventId,
+      eventType,
+      createdAt: createdAt.toISOString(),
+    };
   }
 }

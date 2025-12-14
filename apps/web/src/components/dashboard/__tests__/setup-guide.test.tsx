@@ -92,6 +92,30 @@ describe('SetupGuide', () => {
     expect(screen.getByText('Send Test Event')).toBeInTheDocument();
   });
 
+  it('sends test event via session-authenticated endpoint', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ success: true, eventId: 'test-1' }),
+    });
+    global.fetch = mockFetch;
+
+    render(<SetupGuide />);
+
+    const sendButton = screen.getByText('Send Test Event');
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      // Verify the session-authenticated endpoint was called
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/projects/project-1/events/test'),
+        expect.objectContaining({
+          method: 'POST',
+          credentials: 'include',
+        })
+      );
+    });
+  });
+
   it('shows listening indicator when Start Listening is clicked', async () => {
     render(<SetupGuide />);
 

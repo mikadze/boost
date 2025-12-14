@@ -43,8 +43,24 @@ export class ProjectsController {
     @Query('limit') limit?: string,
   ) {
     await this.projectsService.verifyProjectAccess(user.id, projectId);
-    const eventLimit = limit ? parseInt(limit, 10) : 10;
+    const parsedLimit = limit ? parseInt(limit, 10) : 10;
+    // Validate limit is a valid number between 1 and 100
+    const eventLimit = Number.isNaN(parsedLimit) ? 10 : Math.min(Math.max(1, parsedLimit), 100);
     return this.projectsService.getRecentEvents(projectId, eventLimit);
+  }
+
+  /**
+   * POST /projects/:projectId/events/test
+   * Send a test event for a project (session-authenticated)
+   * Used by setup guide to verify integration without requiring an API key
+   */
+  @Post(':projectId/events/test')
+  async sendTestEvent(
+    @CurrentUser() user: { id: string },
+    @Param('projectId') projectId: string,
+  ) {
+    await this.projectsService.verifyProjectAccess(user.id, projectId);
+    return this.projectsService.sendTestEvent(projectId, user.id);
   }
 
   /**
