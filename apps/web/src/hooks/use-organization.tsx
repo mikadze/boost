@@ -76,7 +76,7 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
   });
 
   const { data: apiKeys = [] } = useQuery({
-    queryKey: ['apiKeys', currentOrg?.id],
+    queryKey: ['apiKeys', currentOrg?.id, projects.map(p => p.id).join(',')],
     queryFn: async () => {
       if (!currentOrg) return [];
       const allKeys: ApiKey[] = [];

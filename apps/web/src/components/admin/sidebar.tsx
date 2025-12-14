@@ -24,6 +24,7 @@ import {
   Ticket,
   Database,
   Sliders,
+  Code,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -75,6 +76,7 @@ const navigation = [
     name: 'Settings',
     icon: Sliders,
     children: [
+      { name: 'SDK Setup', href: '/dashboard/developer/sdk-setup', icon: Code },
       { name: 'API Keys', href: '/dashboard/developer/api-keys', icon: Key },
       { name: 'Webhooks', href: '/dashboard/developer/webhooks', icon: Webhook },
       { name: 'General', href: '/dashboard/settings', icon: Settings },

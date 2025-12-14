@@ -11,6 +11,8 @@ import {
   PartyPopper,
   ArrowRight,
   Zap,
+  Server,
+  Monitor,
 } from 'lucide-react';
 import { useOrganization } from '@/hooks/use-organization';
 import { useRecentEvents, type RecentEvent } from '@/hooks/use-project-stats';
@@ -24,6 +26,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { GlowButton } from '@/components/ui/glow-button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
+
+type SdkType = 'frontend' | 'backend';
 
 interface SetupStep {
   number: number;
@@ -205,10 +211,10 @@ function SendTestEventButton({ projectId, onSuccess, disabled }: SendTestEventBu
 
   return (
     <div className="space-y-2">
-      <GlowButton
+      <Button
         onClick={handleSendTestEvent}
         disabled={disabled || isLoading || !projectId}
-        variant="glow"
+        variant="outline"
       >
         {isLoading ? (
           <>
@@ -221,7 +227,7 @@ function SendTestEventButton({ projectId, onSuccess, disabled }: SendTestEventBu
             Send Test Event
           </>
         )}
-      </GlowButton>
+      </Button>
       {error && (
         <p className="text-sm text-red-400">{error}</p>
       )}
@@ -242,6 +248,7 @@ export function SetupGuide({ onComplete }: SetupGuideProps) {
   const [hasReceivedEvent, setHasReceivedEvent] = React.useState(false);
   const [showConfetti, setShowConfetti] = React.useState(false);
   const [initialEventCount, setInitialEventCount] = React.useState<number | null>(null);
+  const [sdkType, setSdkType] = React.useState<SdkType>('frontend');
 
   const { data: recentEvents, refetch } = useRecentEvents(currentProject?.id, {
     enabled: isListening && !hasReceivedEvent,
@@ -305,25 +312,26 @@ export function SetupGuide({ onComplete }: SetupGuideProps) {
     },
   ];
 
-  const installCode = 'npm install @boost/sdk-react';
+  // Frontend SDK code examples
+  const frontendInstallCode = 'npm install @gamify/react';
 
-  const initializeCode = `import { BoostProvider } from '@boost/sdk-react';
+  const frontendInitializeCode = `import { GamifyProvider } from '@gamify/react';
 
 export default function App({ children }) {
   return (
-    <BoostProvider
-      apiKey="${projectApiKey?.keyPrefix || 'your-api-key'}..."
+    <GamifyProvider
+      apiKey="${projectApiKey?.keyPrefix || 'pk_live_'}..."
       endpoint="${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}"
     >
       {children}
-    </BoostProvider>
+    </GamifyProvider>
   );
 }`;
 
-  const trackEventCode = `import { useBoost } from '@boost/sdk-react';
+  const frontendTrackEventCode = `import { useGamify } from '@gamify/react';
 
 function MyComponent() {
-  const { track } = useBoost();
+  const { track } = useGamify();
 
   const handleClick = () => {
     track('button_clicked', {
@@ -334,6 +342,38 @@ function MyComponent() {
 
   return <button onClick={handleClick}>Sign Up</button>;
 }`;
+
+  // Backend SDK code examples
+  const backendInstallCode = 'npm install @gamify/node';
+
+  const backendInitializeCode = `import { GamifyClient } from '@gamify/node';
+
+const gamify = new GamifyClient({
+  secretKey: process.env.GAMIFY_SECRET_KEY!, // sk_live_...
+});`;
+
+  const backendTrackEventCode = `// Track a purchase (server-side only)
+await gamify.purchase({
+  userId: 'user_123',
+  orderId: 'order_456',
+  amount: 9999, // Amount in cents ($99.99)
+  currency: 'USD',
+  items: [
+    { productId: 'prod_1', name: 'Widget', unitPrice: 9999, quantity: 1 }
+  ],
+});
+
+// Track custom events
+await gamify.track({
+  userId: 'user_123',
+  event: 'subscription_renewed',
+  properties: { plan: 'premium' },
+});`;
+
+  // Dynamic code based on SDK type
+  const installCode = sdkType === 'frontend' ? frontendInstallCode : backendInstallCode;
+  const initializeCode = sdkType === 'frontend' ? frontendInitializeCode : backendInitializeCode;
+  const trackEventCode = sdkType === 'frontend' ? frontendTrackEventCode : backendTrackEventCode;
 
   return (
     <>
@@ -391,13 +431,72 @@ function MyComponent() {
                 <div>
                   <GlassCardTitle>Step 1: Install the SDK</GlassCardTitle>
                   <GlassCardDescription>
-                    Add the Boost SDK to your React project
+                    Choose your SDK based on where you want to track events
                   </GlassCardDescription>
                 </div>
               </div>
             </GlassCardHeader>
-            <GlassCardContent>
-              <CodeBlock code={installCode} language="bash" />
+            <GlassCardContent className="space-y-4">
+              {/* SDK Type Tabs */}
+              <Tabs value={sdkType} onValueChange={(v) => setSdkType(v as SdkType)}>
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="frontend" className="flex items-center gap-2">
+                    <Monitor className="h-4 w-4" />
+                    Frontend
+                  </TabsTrigger>
+                  <TabsTrigger value="backend" className="flex items-center gap-2">
+                    <Server className="h-4 w-4" />
+                    Backend
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="frontend" className="space-y-4">
+                  <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <p className="text-sm text-blue-400">
+                      <strong>React SDK</strong> - For client-side tracking in browsers. Uses publishable keys (pk_*) for behavioral events like page views, clicks, and cart updates.
+                    </p>
+                  </div>
+                  <CodeBlock code={installCode} language="bash" />
+                </TabsContent>
+
+                <TabsContent value="backend" className="space-y-4">
+                  <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <p className="text-sm text-purple-400">
+                      <strong>Node.js SDK</strong> - For server-side tracking. Uses secret keys (sk_*) for trusted events like purchases and commissions.
+                    </p>
+                  </div>
+
+                  {/* Language options */}
+                  <div className="flex flex-wrap gap-2">
+                    <button className="px-3 py-1.5 rounded-md bg-primary/20 text-primary text-sm font-medium border border-primary/30">
+                      Node.js
+                    </button>
+                    <button
+                      disabled
+                      className="px-3 py-1.5 rounded-md bg-muted/30 text-muted-foreground/50 text-sm font-medium border border-border cursor-not-allowed flex items-center gap-1.5"
+                    >
+                      Python
+                      <span className="text-xs opacity-60">Soon</span>
+                    </button>
+                    <button
+                      disabled
+                      className="px-3 py-1.5 rounded-md bg-muted/30 text-muted-foreground/50 text-sm font-medium border border-border cursor-not-allowed flex items-center gap-1.5"
+                    >
+                      Go
+                      <span className="text-xs opacity-60">Soon</span>
+                    </button>
+                    <button
+                      disabled
+                      className="px-3 py-1.5 rounded-md bg-muted/30 text-muted-foreground/50 text-sm font-medium border border-border cursor-not-allowed flex items-center gap-1.5"
+                    >
+                      Ruby
+                      <span className="text-xs opacity-60">Soon</span>
+                    </button>
+                  </div>
+
+                  <CodeBlock code={installCode} language="bash" />
+                </TabsContent>
+              </Tabs>
             </GlassCardContent>
           </GlassCard>
         </motion.div>
@@ -415,9 +514,13 @@ function MyComponent() {
                   <Code className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <GlassCardTitle>Step 2: Initialize the Provider</GlassCardTitle>
+                  <GlassCardTitle>
+                    Step 2: {sdkType === 'frontend' ? 'Initialize the Provider' : 'Initialize the Client'}
+                  </GlassCardTitle>
                   <GlassCardDescription>
-                    Wrap your app with the BoostProvider component
+                    {sdkType === 'frontend'
+                      ? 'Wrap your app with the GamifyProvider component'
+                      : 'Create a GamifyClient instance in your server code'}
                   </GlassCardDescription>
                 </div>
               </div>
@@ -425,13 +528,17 @@ function MyComponent() {
             <GlassCardContent className="space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Add the provider to your root component:
+                  {sdkType === 'frontend'
+                    ? 'Add the provider to your root component:'
+                    : 'Initialize the client with your secret key:'}
                 </p>
                 <CodeBlock code={initializeCode} language="tsx" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Then track events anywhere in your app:
+                  {sdkType === 'frontend'
+                    ? 'Then track events anywhere in your app:'
+                    : 'Track events from your API routes or server actions:'}
                 </p>
                 <CodeBlock code={trackEventCode} language="tsx" />
               </div>
@@ -505,9 +612,9 @@ function MyComponent() {
                   </p>
                   <div className="flex items-center gap-4">
                     {!isListening ? (
-                      <Button onClick={handleStartListening} variant="outline">
+                      <GlowButton onClick={handleStartListening} variant="glow">
                         Start Listening
-                      </Button>
+                      </GlowButton>
                     ) : (
                       <StatusBadge variant="warning" dot pulse>
                         Polling every 3 seconds
