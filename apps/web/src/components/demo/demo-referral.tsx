@@ -7,6 +7,8 @@ import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent } from '@/
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAddLog } from './demo-provider';
+import { DemoCodeToggle } from './sdk-code-snippet';
+import { SDK_SNIPPETS } from './sdk-snippets';
 
 // Mock referral codes per demo user
 const demoReferralCodes: Record<string, string> = {
@@ -110,13 +112,14 @@ export function DemoReferral({ userId }: DemoReferralProps) {
   };
 
   return (
-    <GlassCard>
-      <GlassCardHeader className="flex-row items-center justify-between">
-        <GlassCardTitle className="flex items-center gap-2">
-          <Link2 className="h-5 w-5" />
-          Referral Link
-        </GlassCardTitle>
-      </GlassCardHeader>
+    <DemoCodeToggle {...SDK_SNIPPETS.referral}>
+      <GlassCard>
+        <GlassCardHeader>
+          <GlassCardTitle className="flex items-center gap-2">
+            <Link2 className="h-5 w-5" />
+            Referral Link
+          </GlassCardTitle>
+        </GlassCardHeader>
       <GlassCardContent className="space-y-4">
         {/* Your Referral Link */}
         <div>
@@ -209,6 +212,7 @@ export function DemoReferral({ userId }: DemoReferralProps) {
           )}
         </div>
       </GlassCardContent>
-    </GlassCard>
+      </GlassCard>
+    </DemoCodeToggle>
   );
 }

@@ -6,6 +6,8 @@ import { Workflow, Zap, Clock, CheckCircle2, Loader2, Play, Pause, ChevronRight 
 import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { useAddLog } from './demo-provider';
+import { DemoCodeToggle } from './sdk-code-snippet';
+import { SDK_SNIPPETS } from './sdk-snippets';
 
 interface CampaignRule {
   id: string;
@@ -273,25 +275,26 @@ export function DemoCampaigns({ userId }: DemoCampaignsProps) {
   };
 
   return (
-    <GlassCard>
-      <GlassCardHeader className="flex-row items-center justify-between">
-        <GlassCardTitle className="flex items-center gap-2">
-          <Workflow className="h-5 w-5" />
-          Automations
-        </GlassCardTitle>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            'Refresh'
-          )}
-        </Button>
-      </GlassCardHeader>
+    <DemoCodeToggle {...SDK_SNIPPETS.campaigns}>
+      <GlassCard>
+        <GlassCardHeader className="flex-row items-center justify-between">
+          <GlassCardTitle className="flex items-center gap-2">
+            <Workflow className="h-5 w-5" />
+            Automations
+          </GlassCardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              'Refresh'
+            )}
+          </Button>
+        </GlassCardHeader>
       <GlassCardContent className="space-y-4">
         {/* Stats Summary */}
         <div className="flex gap-3">
@@ -453,6 +456,7 @@ export function DemoCampaigns({ userId }: DemoCampaignsProps) {
           </div>
         )}
       </GlassCardContent>
-    </GlassCard>
+      </GlassCard>
+    </DemoCodeToggle>
   );
 }

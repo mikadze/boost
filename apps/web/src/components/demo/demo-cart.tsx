@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { GlowButton } from '@/components/ui/glow-button';
 import { Input } from '@/components/ui/input';
 import { useAddLog } from './demo-provider';
+import { DemoCodeToggle } from './sdk-code-snippet';
+import { SDK_SNIPPETS } from './sdk-snippets';
 import type { Product } from './demo-products';
 
 export interface CartItem extends Product {
@@ -145,16 +147,17 @@ export function DemoCart({ items, onUpdateQuantity, userId }: DemoCartProps) {
   };
 
   return (
-    <GlassCard>
-      <GlassCardHeader className="flex-row items-center justify-between">
-        <GlassCardTitle className="flex items-center gap-2">
-          <ShoppingCart className="h-5 w-5" />
-          Cart
-        </GlassCardTitle>
-        <span className="text-sm text-muted-foreground">
-          {items.length} {items.length === 1 ? 'item' : 'items'}
-        </span>
-      </GlassCardHeader>
+    <DemoCodeToggle {...SDK_SNIPPETS.cart}>
+      <GlassCard>
+        <GlassCardHeader className="flex-row items-center justify-between">
+          <GlassCardTitle className="flex items-center gap-2">
+            <ShoppingCart className="h-5 w-5" />
+            Cart
+          </GlassCardTitle>
+          <span className="text-sm text-muted-foreground">
+            {items.length} {items.length === 1 ? 'item' : 'items'}
+          </span>
+        </GlassCardHeader>
       <GlassCardContent>
         {items.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
@@ -284,6 +287,7 @@ export function DemoCart({ items, onUpdateQuantity, userId }: DemoCartProps) {
           </div>
         )}
       </GlassCardContent>
-    </GlassCard>
+      </GlassCard>
+    </DemoCodeToggle>
   );
 }

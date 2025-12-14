@@ -4,7 +4,6 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Check,
-  Copy,
   Terminal,
   Code,
   Loader2,
@@ -27,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { GlowButton } from '@/components/ui/glow-button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { CodeBlock } from '@/components/ui/code-block';
 import { cn } from '@/lib/utils';
 
 type SdkType = 'frontend' | 'backend';
@@ -37,43 +37,6 @@ interface SetupStep {
   description: string;
   isComplete: boolean;
   isActive: boolean;
-}
-
-interface CodeBlockProps {
-  code: string;
-  language?: string;
-}
-
-function CodeBlock({ code, language = 'bash' }: CodeBlockProps) {
-  const [copied, setCopied] = React.useState(false);
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="relative group">
-      <pre className="p-4 rounded-lg bg-black/50 border border-border overflow-x-auto text-sm">
-        <code className={`language-${language} text-muted-foreground`}>
-          {code}
-        </code>
-      </pre>
-      <Button
-        size="icon"
-        variant="ghost"
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={handleCopy}
-      >
-        {copied ? (
-          <Check className="h-4 w-4 text-green-400" />
-        ) : (
-          <Copy className="h-4 w-4" />
-        )}
-      </Button>
-    </div>
-  );
 }
 
 interface StepIndicatorProps {

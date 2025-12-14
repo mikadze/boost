@@ -7,6 +7,8 @@ import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent } from '@/
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAddLog } from './demo-provider';
+import { DemoCodeToggle } from './sdk-code-snippet';
+import { SDK_SNIPPETS } from './sdk-snippets';
 
 interface LoyaltyTier {
   name: string;
@@ -110,25 +112,26 @@ export function DemoLoyalty({ userId, userPoints, onRedeemPoints }: DemoLoyaltyP
   };
 
   return (
-    <GlassCard>
-      <GlassCardHeader className="flex-row items-center justify-between">
-        <GlassCardTitle className="flex items-center gap-2">
-          <Award className="h-5 w-5" />
-          Loyalty Program
-        </GlassCardTitle>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleRefreshProfile}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <TrendingUp className="h-4 w-4" />
-          )}
-        </Button>
-      </GlassCardHeader>
+    <DemoCodeToggle {...SDK_SNIPPETS.loyalty}>
+      <GlassCard>
+        <GlassCardHeader className="flex-row items-center justify-between">
+          <GlassCardTitle className="flex items-center gap-2">
+            <Award className="h-5 w-5" />
+            Loyalty Program
+          </GlassCardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefreshProfile}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <TrendingUp className="h-4 w-4" />
+            )}
+          </Button>
+        </GlassCardHeader>
       <GlassCardContent className="space-y-4">
         {/* Points Balance */}
         <div className="text-center py-4">
@@ -223,6 +226,7 @@ export function DemoLoyalty({ userId, userPoints, onRedeemPoints }: DemoLoyaltyP
           </div>
         </div>
       </GlassCardContent>
-    </GlassCard>
+      </GlassCard>
+    </DemoCodeToggle>
   );
 }

@@ -6,6 +6,8 @@ import { DollarSign, Users, TrendingUp, RefreshCw, Copy, Check, Crown, Loader2 }
 import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { useAddLog } from './demo-provider';
+import { DemoCodeToggle } from './sdk-code-snippet';
+import { SDK_SNIPPETS } from './sdk-snippets';
 
 interface AffiliateTier {
   id: string;
@@ -151,25 +153,26 @@ export function DemoAffiliateStats({ userId }: DemoAffiliateStatsProps) {
   }
 
   return (
-    <GlassCard>
-      <GlassCardHeader className="flex-row items-center justify-between">
-        <GlassCardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
-          Affiliate Dashboard
-        </GlassCardTitle>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4" />
-          )}
-        </Button>
-      </GlassCardHeader>
+    <DemoCodeToggle {...SDK_SNIPPETS.affiliateStats}>
+      <GlassCard>
+        <GlassCardHeader className="flex-row items-center justify-between">
+          <GlassCardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Affiliate Dashboard
+          </GlassCardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+          </Button>
+        </GlassCardHeader>
       <GlassCardContent className="space-y-4">
         {/* Tier Badge */}
         {stats.tier ? (
@@ -278,6 +281,7 @@ export function DemoAffiliateStats({ userId }: DemoAffiliateStatsProps) {
           </div>
         </div>
       </GlassCardContent>
-    </GlassCard>
+      </GlassCard>
+    </DemoCodeToggle>
   );
 }

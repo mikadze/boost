@@ -7,6 +7,8 @@ import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent } from '@/
 import { Button } from '@/components/ui/button';
 import { useTrack } from '@gamify/react';
 import { useAddLog } from './demo-provider';
+import { DemoCodeToggle } from './sdk-code-snippet';
+import { SDK_SNIPPETS } from './sdk-snippets';
 
 export interface Product {
   id: string;
@@ -81,14 +83,15 @@ export function DemoProducts({ onAddToCart }: DemoProductsProps) {
   };
 
   return (
-    <GlassCard>
-      <GlassCardHeader>
-        <GlassCardTitle className="flex items-center gap-2">
-          <ShoppingBag className="h-5 w-5" />
-          Products
-        </GlassCardTitle>
-      </GlassCardHeader>
-      <GlassCardContent>
+    <DemoCodeToggle {...SDK_SNIPPETS.products}>
+      <GlassCard>
+        <GlassCardHeader>
+          <GlassCardTitle className="flex items-center gap-2">
+            <ShoppingBag className="h-5 w-5" />
+            Products
+          </GlassCardTitle>
+        </GlassCardHeader>
+        <GlassCardContent>
         <div className="grid gap-3 sm:grid-cols-2">
           {products.map((product) => {
             const IconComponent = product.icon;
@@ -124,7 +127,8 @@ export function DemoProducts({ onAddToCart }: DemoProductsProps) {
           })}
         </div>
       </GlassCardContent>
-    </GlassCard>
+      </GlassCard>
+    </DemoCodeToggle>
   );
 }
 

@@ -7,6 +7,8 @@ import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent } from '@/
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAddLog } from './demo-provider';
+import { DemoCodeToggle } from './sdk-code-snippet';
+import { SDK_SNIPPETS } from './sdk-snippets';
 
 interface Badge {
   id: string;
@@ -318,25 +320,26 @@ export function DemoBadges({ userId }: DemoBadgesProps) {
   const totalCount = badges.length;
 
   return (
-    <GlassCard>
-      <GlassCardHeader className="flex-row items-center justify-between">
-        <GlassCardTitle className="flex items-center gap-2">
-          <Medal className="h-5 w-5" />
-          Achievements
-        </GlassCardTitle>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            'Refresh'
-          )}
-        </Button>
-      </GlassCardHeader>
+    <DemoCodeToggle {...SDK_SNIPPETS.badges}>
+      <GlassCard>
+        <GlassCardHeader className="flex-row items-center justify-between">
+          <GlassCardTitle className="flex items-center gap-2">
+            <Medal className="h-5 w-5" />
+            Achievements
+          </GlassCardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              'Refresh'
+            )}
+          </Button>
+        </GlassCardHeader>
       <GlassCardContent className="space-y-4">
         {/* Progress Summary */}
         <div className="flex items-center justify-between p-3 rounded-lg bg-surface-1">
@@ -449,6 +452,7 @@ export function DemoBadges({ userId }: DemoBadgesProps) {
           </div>
         )}
       </GlassCardContent>
-    </GlassCard>
+      </GlassCard>
+    </DemoCodeToggle>
   );
 }

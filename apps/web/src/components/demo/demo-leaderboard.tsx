@@ -6,6 +6,8 @@ import { Trophy, Medal, RefreshCw, Loader2 } from 'lucide-react';
 import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { useAddLog } from './demo-provider';
+import { DemoCodeToggle } from './sdk-code-snippet';
+import { SDK_SNIPPETS } from './sdk-snippets';
 
 interface AffiliateTier {
   id: string;
@@ -98,32 +100,33 @@ export function DemoLeaderboard({ currentUserId }: DemoLeaderboardProps) {
     : null;
 
   return (
-    <GlassCard>
-      <GlassCardHeader className="flex-row items-center justify-between">
-        <GlassCardTitle className="flex items-center gap-2">
-          <Trophy className="h-5 w-5" />
-          Affiliate Leaderboard
-        </GlassCardTitle>
-        <div className="flex items-center gap-2">
-          {currentUserRank && (
-            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">
-              Your rank: #{currentUserRank}
-            </span>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
+    <DemoCodeToggle {...SDK_SNIPPETS.leaderboard}>
+      <GlassCard>
+        <GlassCardHeader className="flex-row items-center justify-between">
+          <GlassCardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5" />
+            Affiliate Leaderboard
+          </GlassCardTitle>
+          <div className="flex items-center gap-2">
+            {currentUserRank && (
+              <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">
+                Your rank: #{currentUserRank}
+              </span>
             )}
-          </Button>
-        </div>
-      </GlassCardHeader>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </GlassCardHeader>
       <GlassCardContent>
         <div className="space-y-2">
           <AnimatePresence mode="popLayout">
@@ -195,6 +198,7 @@ export function DemoLeaderboard({ currentUserId }: DemoLeaderboardProps) {
           Rankings based on total referrals
         </p>
       </GlassCardContent>
-    </GlassCard>
+      </GlassCard>
+    </DemoCodeToggle>
   );
 }

@@ -7,6 +7,8 @@ import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent } from '@/
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAddLog } from './demo-provider';
+import { DemoCodeToggle } from './sdk-code-snippet';
+import { SDK_SNIPPETS } from './sdk-snippets';
 
 interface QuestStep {
   id: string;
@@ -215,25 +217,26 @@ export function DemoQuests({ userId }: DemoQuestsProps) {
   };
 
   return (
-    <GlassCard>
-      <GlassCardHeader className="flex-row items-center justify-between">
-        <GlassCardTitle className="flex items-center gap-2">
-          <Target className="h-5 w-5" />
-          Quests
-        </GlassCardTitle>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            'Refresh'
-          )}
-        </Button>
-      </GlassCardHeader>
+    <DemoCodeToggle {...SDK_SNIPPETS.quests}>
+      <GlassCard>
+        <GlassCardHeader className="flex-row items-center justify-between">
+          <GlassCardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            Quests
+          </GlassCardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              'Refresh'
+            )}
+          </Button>
+        </GlassCardHeader>
       <GlassCardContent className="space-y-3">
         <AnimatePresence mode="popLayout">
           {quests.map((quest) => (
@@ -345,6 +348,7 @@ export function DemoQuests({ userId }: DemoQuestsProps) {
           </div>
         )}
       </GlassCardContent>
-    </GlassCard>
+      </GlassCard>
+    </DemoCodeToggle>
   );
 }

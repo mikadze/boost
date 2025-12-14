@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useIdentify } from '@gamify/react';
 import { useAddLog } from './demo-provider';
+import { DemoCodeToggle } from './sdk-code-snippet';
+import { SDK_SNIPPETS } from './sdk-snippets';
 
 export interface DemoUser {
   id: string;
@@ -85,27 +87,27 @@ export function DemoUserPanel({ currentUser, onSelectUser, onLogout }: DemoUserP
   };
 
   return (
-    <GlassCard>
-      <GlassCardContent className="py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <User className="h-5 w-5 text-primary" />
+    <DemoCodeToggle {...SDK_SNIPPETS.userPanel}>
+      <GlassCard>
+        <GlassCardContent className="py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              {currentUser ? (
+                <div>
+                  <p className="font-medium text-sm">{currentUser.name}</p>
+                  <p className="text-xs text-muted-foreground">{currentUser.email}</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="font-medium text-sm">Select a User</p>
+                  <p className="text-xs text-muted-foreground">Choose a demo account</p>
+                </div>
+              )}
             </div>
-            {currentUser ? (
-              <div>
-                <p className="font-medium text-sm">{currentUser.name}</p>
-                <p className="text-xs text-muted-foreground">{currentUser.email}</p>
-              </div>
-            ) : (
-              <div>
-                <p className="font-medium text-sm">Select a User</p>
-                <p className="text-xs text-muted-foreground">Choose a demo account</p>
-              </div>
-            )}
-          </div>
 
-          <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -138,9 +140,9 @@ export function DemoUserPanel({ currentUser, onSelectUser, onLogout }: DemoUserP
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </div>
-      </GlassCardContent>
-    </GlassCard>
+        </GlassCardContent>
+      </GlassCard>
+    </DemoCodeToggle>
   );
 }
 
