@@ -1,8 +1,9 @@
 'use client';
 
 import * as React from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Settings, Key } from 'lucide-react';
+import { Settings, Key, Check, Link2 } from 'lucide-react';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,11 +24,17 @@ import { DemoLeaderboard } from '@/components/demo/demo-leaderboard';
 import { DemoQuests } from '@/components/demo/demo-quests';
 import { DemoBadges } from '@/components/demo/demo-badges';
 import { DemoCampaigns } from '@/components/demo/demo-campaigns';
+import { useOrganization } from '@/hooks/use-organization';
 
 function PlaygroundHeader() {
-  const { apiKey, setApiKey } = useDemoContext();
+  const { apiKey, setApiKey, projectName, isConnectedToProject } = useDemoContext();
   const [showSettings, setShowSettings] = React.useState(false);
   const [tempKey, setTempKey] = React.useState(apiKey);
+
+  // Update tempKey when apiKey changes (e.g., from auto-connect)
+  React.useEffect(() => {
+    setTempKey(apiKey);
+  }, [apiKey]);
 
   return (
     <motion.div
@@ -43,9 +50,16 @@ function PlaygroundHeader() {
       </div>
 
       <div className="flex items-center gap-3">
-        <StatusBadge variant="active" dot pulse>
-          Live Demo
-        </StatusBadge>
+        {isConnectedToProject ? (
+          <StatusBadge variant="active" dot>
+            <Link2 className="h-3 w-3 mr-1" />
+            Connected to {projectName}
+          </StatusBadge>
+        ) : (
+          <StatusBadge variant="warning" dot pulse>
+            Demo Mode
+          </StatusBadge>
+        )}
 
         <Collapsible open={showSettings} onOpenChange={setShowSettings}>
           <CollapsibleTrigger asChild>
@@ -79,9 +93,16 @@ function PlaygroundHeader() {
                       Save
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Pre-configured with demo key
-                  </p>
+                  {isConnectedToProject ? (
+                    <p className="text-xs text-green-400 mt-1 flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      Using {projectName}&apos;s API key
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Pre-configured with demo key
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -256,11 +277,34 @@ function PlaygroundContent() {
   );
 }
 
-export default function PlaygroundPage() {
+function PlaygroundWithProvider() {
+  const searchParams = useSearchParams();
+  const { projects, apiKeys } = useOrganization();
+  const autoConnect = searchParams.get('autoConnect') === 'true';
+
+  // Get the first project and its API key
+  const currentProject = projects[0];
+  const projectApiKey = apiKeys.find((key) => key.projectId === currentProject?.id);
+
+  // Use project's API key if autoConnect is true or if we have a valid key
+  const shouldUseProjectKey = autoConnect || !!projectApiKey;
+  const initialApiKey = shouldUseProjectKey && projectApiKey ? projectApiKey.keyPrefix : undefined;
+
   return (
-    <DemoProvider>
+    <DemoProvider
+      initialApiKey={initialApiKey}
+      projectName={shouldUseProjectKey ? currentProject?.name : undefined}
+    >
       <PlaygroundHeader />
       <PlaygroundContent />
     </DemoProvider>
+  );
+}
+
+export default function PlaygroundPage() {
+  return (
+    <React.Suspense fallback={<div className="animate-pulse">Loading...</div>}>
+      <PlaygroundWithProvider />
+    </React.Suspense>
   );
 }

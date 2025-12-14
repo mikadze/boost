@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Check, ArrowRight, Building2, FolderOpen, Key, AlertTriangle, Copy } from 'lucide-react';
+import { Check, ArrowRight, Building2, FolderOpen, Key, AlertTriangle, Copy, Play, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -218,7 +218,7 @@ export default function OnboardingPage() {
                 You&apos;re All Set!
               </CardTitle>
               <CardDescription>
-                Save your API key and start tracking events
+                Save your API key and choose how you&apos;d like to get started
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -245,10 +245,26 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              <Button onClick={() => router.push('/dashboard')} className="w-full">
-                Go to Dashboard
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <div className="pt-4 space-y-3">
+                <p className="text-sm text-muted-foreground text-center">
+                  How would you like to continue?
+                </p>
+                <Button
+                  onClick={() => router.push('/dashboard/playground?autoConnect=true')}
+                  className="w-full"
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  Open Playground
+                </Button>
+                <Button
+                  onClick={() => router.push('/dashboard')}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Go to Dashboard
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}

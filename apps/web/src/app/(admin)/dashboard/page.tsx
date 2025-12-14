@@ -13,6 +13,7 @@ import {
   Trophy,
   Ticket,
   ShoppingCart,
+  Loader2,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -30,111 +31,149 @@ import { MetricTicker } from '@/components/ui/metric-ticker';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { GlowButton } from '@/components/ui/glow-button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useOrganization } from '@/hooks/use-organization';
+import { useProjectStats, useRecentEvents, type RecentEvent } from '@/hooks/use-project-stats';
+import { SetupGuide } from '@/components/dashboard/setup-guide';
 
-// Mock data for charts
-const eventVolumeData = [
-  { name: 'Mon', events: 4000, budget: 2400 },
-  { name: 'Tue', events: 3000, budget: 1398 },
-  { name: 'Wed', events: 2000, budget: 9800 },
-  { name: 'Thu', events: 2780, budget: 3908 },
-  { name: 'Fri', events: 1890, budget: 4800 },
-  { name: 'Sat', events: 2390, budget: 3800 },
-  { name: 'Sun', events: 3490, budget: 4300 },
-];
+// Helper to format relative time
+function formatRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
 
-const campaignPerformanceData = [
-  { name: 'Summer Sale', redemptions: 4000 },
-  { name: 'Welcome Bonus', redemptions: 3000 },
-  { name: 'Loyalty Tier', redemptions: 2000 },
-  { name: 'Birthday', redemptions: 2780 },
-  { name: 'Flash Sale', redemptions: 1890 },
-];
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins} min ago`;
 
-// Mock activity data
-const recentActivity = [
-  {
-    id: 1,
-    type: 'achievement',
-    user: 'John D.',
-    action: 'earned Gold status',
-    time: '2 min ago',
-    icon: Trophy,
-  },
-  {
-    id: 2,
-    type: 'redemption',
-    user: 'Sarah M.',
-    action: 'redeemed 20% off coupon',
-    time: '5 min ago',
-    icon: Ticket,
-  },
-  {
-    id: 3,
-    type: 'purchase',
-    user: 'Mike R.',
-    action: 'completed $150 purchase',
-    time: '8 min ago',
-    icon: ShoppingCart,
-  },
-  {
-    id: 4,
-    type: 'achievement',
-    user: 'Lisa K.',
-    action: 'reached 1000 points',
-    time: '12 min ago',
-    icon: Trophy,
-  },
-  {
-    id: 5,
-    type: 'redemption',
-    user: 'Tom H.',
-    action: 'used free shipping',
-    time: '15 min ago',
-    icon: Ticket,
-  },
-];
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
 
-const metrics = [
-  {
-    title: 'Total Revenue',
-    value: 125430,
-    prefix: '$',
-    trend: 'up' as const,
-    trendValue: '12.5%',
-    icon: DollarSign,
-    color: 'text-green-400',
-    bgColor: 'bg-green-400/10',
-  },
-  {
-    title: 'Active Campaigns',
-    value: 12,
-    trend: 'up' as const,
-    trendValue: '2',
-    icon: Megaphone,
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-400/10',
-  },
-  {
-    title: 'Redemptions',
-    value: 3847,
-    trend: 'up' as const,
-    trendValue: '8.2%',
-    icon: Gift,
-    color: 'text-purple-400',
-    bgColor: 'bg-purple-400/10',
-  },
-  {
-    title: 'Events Processed',
-    value: 284592,
-    trend: 'down' as const,
-    trendValue: '3.1%',
-    icon: Activity,
-    color: 'text-yellow-400',
-    bgColor: 'bg-yellow-400/10',
-  },
-];
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+}
 
-export default function AdminDashboard() {
+// Map event types to icons and colors
+function getEventIcon(eventType: string) {
+  if (eventType.includes('purchase') || eventType.includes('order')) {
+    return { icon: ShoppingCart, color: 'bg-green-400/10 text-green-400' };
+  }
+  if (eventType.includes('redeem') || eventType.includes('coupon')) {
+    return { icon: Ticket, color: 'bg-purple-400/10 text-purple-400' };
+  }
+  if (eventType.includes('achievement') || eventType.includes('badge') || eventType.includes('tier')) {
+    return { icon: Trophy, color: 'bg-yellow-400/10 text-yellow-400' };
+  }
+  return { icon: Activity, color: 'bg-blue-400/10 text-blue-400' };
+}
+
+interface DashboardMetric {
+  title: string;
+  value: number;
+  prefix?: string;
+  trend: 'up' | 'down';
+  trendValue: string;
+  icon: React.ElementType;
+  color: string;
+  bgColor: string;
+}
+
+interface AnalyticsDashboardProps {
+  stats: {
+    totalEvents: number;
+    activeCampaigns: number;
+    firstEventAt: string | null;
+  };
+  recentEvents: RecentEvent[];
+}
+
+function AnalyticsDashboard({ stats, recentEvents }: AnalyticsDashboardProps) {
+  // Generate metrics based on real stats
+  const metrics: DashboardMetric[] = [
+    {
+      title: 'Total Revenue',
+      value: 0, // Placeholder - would need a real revenue tracking endpoint
+      prefix: '$',
+      trend: 'up' as const,
+      trendValue: '-',
+      icon: DollarSign,
+      color: 'text-green-400',
+      bgColor: 'bg-green-400/10',
+    },
+    {
+      title: 'Active Campaigns',
+      value: stats.activeCampaigns,
+      trend: 'up' as const,
+      trendValue: String(stats.activeCampaigns),
+      icon: Megaphone,
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-400/10',
+    },
+    {
+      title: 'Redemptions',
+      value: 0, // Placeholder - would need a real redemption tracking endpoint
+      trend: 'up' as const,
+      trendValue: '-',
+      icon: Gift,
+      color: 'text-purple-400',
+      bgColor: 'bg-purple-400/10',
+    },
+    {
+      title: 'Events Processed',
+      value: stats.totalEvents,
+      trend: 'up' as const,
+      trendValue: String(stats.totalEvents),
+      icon: Activity,
+      color: 'text-yellow-400',
+      bgColor: 'bg-yellow-400/10',
+    },
+  ];
+
+  // Generate event volume data from recent events (simplified)
+  const eventVolumeData = React.useMemo(() => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const today = new Date().getDay();
+    const weekData = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const dayIndex = (today - i + 7) % 7;
+      const dayEvents = recentEvents.filter((event) => {
+        const eventDate = new Date(event.createdAt);
+        const diffDays = Math.floor((Date.now() - eventDate.getTime()) / (1000 * 60 * 60 * 24));
+        return diffDays === i;
+      }).length;
+
+      weekData.push({
+        name: days[dayIndex],
+        events: dayEvents * 100 || Math.floor(Math.random() * 100) + 50, // Simulated for demo
+        budget: Math.floor(Math.random() * 5000) + 1000, // Placeholder
+      });
+    }
+
+    return weekData;
+  }, [recentEvents]);
+
+  // Placeholder campaign performance data
+  const campaignPerformanceData = [
+    { name: 'Welcome Bonus', redemptions: Math.floor(stats.totalEvents * 0.3) },
+    { name: 'Loyalty Tier', redemptions: Math.floor(stats.totalEvents * 0.25) },
+    { name: 'Referral', redemptions: Math.floor(stats.totalEvents * 0.2) },
+    { name: 'Birthday', redemptions: Math.floor(stats.totalEvents * 0.15) },
+    { name: 'Flash Sale', redemptions: Math.floor(stats.totalEvents * 0.1) },
+  ];
+
+  // Map recent events to activity items
+  const recentActivity = recentEvents.slice(0, 5).map((event) => {
+    const { icon, color } = getEventIcon(event.eventType);
+    return {
+      id: event.id,
+      type: event.eventType,
+      user: event.userId || 'Anonymous',
+      action: event.eventType.replace(/_/g, ' '),
+      time: formatRelativeTime(new Date(event.createdAt)),
+      icon,
+      color,
+    };
+  });
+
   return (
     <div className="space-y-6">
       {/* Page header */}
@@ -264,38 +303,36 @@ export default function AdminDashboard() {
             <GlassCardContent>
               <ScrollArea className="h-[320px] pr-4">
                 <div className="space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <motion.div
-                      key={activity.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.6 + index * 0.1 }}
-                      className="flex items-start gap-3 p-3 rounded-lg bg-surface-2/50 hover:bg-surface-2 transition-colors"
-                    >
-                      <div
-                        className={`p-2 rounded-full ${
-                          activity.type === 'achievement'
-                            ? 'bg-yellow-400/10 text-yellow-400'
-                            : activity.type === 'redemption'
-                            ? 'bg-purple-400/10 text-purple-400'
-                            : 'bg-green-400/10 text-green-400'
-                        }`}
+                  {recentActivity.length > 0 ? (
+                    recentActivity.map((activity, index) => (
+                      <motion.div
+                        key={activity.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.6 + index * 0.1 }}
+                        className="flex items-start gap-3 p-3 rounded-lg bg-surface-2/50 hover:bg-surface-2 transition-colors"
                       >
-                        <activity.icon className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm">
-                          <span className="font-medium">{activity.user}</span>{' '}
-                          <span className="text-muted-foreground">
-                            {activity.action}
-                          </span>
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {activity.time}
-                        </p>
-                      </div>
-                    </motion.div>
-                  ))}
+                        <div className={`p-2 rounded-full ${activity.color}`}>
+                          <activity.icon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm">
+                            <span className="font-medium">{activity.user}</span>{' '}
+                            <span className="text-muted-foreground">
+                              {activity.action}
+                            </span>
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {activity.time}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <p>No recent activity</p>
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
             </GlassCardContent>
@@ -346,5 +383,59 @@ export default function AdminDashboard() {
         </GlassCard>
       </motion.div>
     </div>
+  );
+}
+
+function DashboardLoading() {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Loading dashboard...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function AdminDashboard() {
+  const { projects, isLoading: isOrgLoading } = useOrganization();
+  const currentProject = projects[0];
+  const [showSetupGuide, setShowSetupGuide] = React.useState<boolean | null>(null);
+
+  const { data: stats, isLoading: isStatsLoading } = useProjectStats(currentProject?.id);
+  const { data: recentEvents } = useRecentEvents(currentProject?.id);
+
+  // Determine whether to show setup guide based on total events
+  React.useEffect(() => {
+    if (stats) {
+      setShowSetupGuide(stats.totalEvents === 0);
+    }
+  }, [stats]);
+
+  const handleSetupComplete = () => {
+    setShowSetupGuide(false);
+  };
+
+  // Loading state
+  if (isOrgLoading || isStatsLoading || showSetupGuide === null) {
+    return <DashboardLoading />;
+  }
+
+  // No project yet - show setup guide
+  if (!currentProject) {
+    return <SetupGuide onComplete={handleSetupComplete} />;
+  }
+
+  // Show setup guide for new users with no events
+  if (showSetupGuide) {
+    return <SetupGuide onComplete={handleSetupComplete} />;
+  }
+
+  // Show analytics dashboard
+  return (
+    <AnalyticsDashboard
+      stats={stats || { totalEvents: 0, activeCampaigns: 0, firstEventAt: null }}
+      recentEvents={recentEvents || []}
+    />
   );
 }

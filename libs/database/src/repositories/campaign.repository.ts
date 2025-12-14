@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../schema';
 import { campaigns, rules, Campaign, NewCampaign, Rule } from '../schema';
@@ -109,5 +109,18 @@ export class CampaignRepository {
 
   async delete(id: string): Promise<void> {
     await this.db.delete(campaigns).where(eq(campaigns.id, id));
+  }
+
+  /**
+   * Count active campaigns for a project.
+   * Used for project stats summary.
+   */
+  async countActiveCampaigns(projectId: string): Promise<number> {
+    const result = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(campaigns)
+      .where(and(eq(campaigns.projectId, projectId), eq(campaigns.active, true)));
+
+    return result[0]?.count ?? 0;
   }
 }
