@@ -13,3 +13,6 @@ export * from './progression-event.handler';
 
 // Issue #25-29: Quest Engine handlers
 export * from './quest-progress-event.handler';
+
+// Issue #32: Streak Engine handlers
+export * from './streak-event.handler';

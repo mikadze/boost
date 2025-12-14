@@ -18,6 +18,8 @@ import {
   ProgressionEventHandler,
   // Issue #25-29: Quest Engine handler
   QuestProgressEventHandler,
+  // Issue #32: Streak Engine handler
+  StreakEventHandler,
 } from './handlers';
 import { SweeperService } from './sweeper';
 import { RuleEngineService, EffectExecutorService } from './engine';
@@ -73,6 +75,8 @@ import { RuleEngineService, EffectExecutorService } from './engine';
     ProgressionEventHandler,
     // Issue #25-29: Quest progress handler
     QuestProgressEventHandler,
+    // Issue #32: Streak progress handler
+    StreakEventHandler,
     // Handler registry with multi-provider injection
     {
       provide: EVENT_HANDLERS,
@@ -83,6 +87,7 @@ import { RuleEngineService, EffectExecutorService } from './engine';
         purchaseHandler: PurchaseEventHandler,
         progressionHandler: ProgressionEventHandler,
         questProgressHandler: QuestProgressEventHandler,
+        streakHandler: StreakEventHandler,
       ) => [
         trackingHandler,
         userHandler,
@@ -90,6 +95,7 @@ import { RuleEngineService, EffectExecutorService } from './engine';
         purchaseHandler,
         progressionHandler,
         questProgressHandler,
+        streakHandler,
       ],
       inject: [
         TrackingEventHandler,
@@ -98,6 +104,7 @@ import { RuleEngineService, EffectExecutorService } from './engine';
         PurchaseEventHandler,
         ProgressionEventHandler,
         QuestProgressEventHandler,
+        StreakEventHandler,
       ],
     },
     EventHandlerRegistry,

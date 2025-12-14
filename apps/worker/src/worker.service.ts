@@ -1,7 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventRepository } from '@boost/database';
 import { RawEventMessage } from '@boost/common';
-import { EventHandlerRegistry, QuestProgressEventHandler } from './handlers';
+import {
+  EventHandlerRegistry,
+  QuestProgressEventHandler,
+  StreakEventHandler,
+} from './handlers';
 
 @Injectable()
 export class WorkerService {
@@ -11,6 +15,7 @@ export class WorkerService {
     private readonly eventRepository: EventRepository,
     private readonly handlerRegistry: EventHandlerRegistry,
     private readonly questProgressHandler: QuestProgressEventHandler,
+    private readonly streakEventHandler: StreakEventHandler,
   ) {}
 
   /**
@@ -51,6 +56,17 @@ export class WorkerService {
       } catch (questError) {
         // Log but don't fail the event processing if quest evaluation fails
         this.logger.warn(`Quest progress evaluation failed: ${questError}`);
+      }
+
+      // Issue #32: Check for streak progress on ALL events
+      // This runs separately from the main dispatch to evaluate streak triggers
+      try {
+        if (await this.streakEventHandler.shouldHandle(rawEvent)) {
+          await this.streakEventHandler.handle(rawEvent);
+        }
+      } catch (streakError) {
+        // Log but don't fail the event processing if streak evaluation fails
+        this.logger.warn(`Streak progress evaluation failed: ${streakError}`);
       }
 
       // Update event status to processed via repository

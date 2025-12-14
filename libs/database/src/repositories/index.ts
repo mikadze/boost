@@ -30,3 +30,8 @@ export * from './quest-definition.repository';
 export * from './quest-step.repository';
 export * from './user-quest-progress.repository';
 export * from './user-step-progress.repository';
+
+// Issue #32: Streak Engine Repositories
+export * from './streak-rule.repository';
+export * from './user-streak.repository';
+export * from './streak-history.repository';
