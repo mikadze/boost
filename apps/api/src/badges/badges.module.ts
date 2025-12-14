@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
+import { AuthModule } from '@boost/common';
 import { BadgesController, CustomerBadgesController } from './badges.controller';
 import { BadgesService } from './badges.service';
 
 @Module({
   imports: [
+    AuthModule,
     ClientsModule.registerAsync([
       {
         name: 'KAFKA_SERVICE',
