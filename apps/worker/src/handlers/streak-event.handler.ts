@@ -23,10 +23,17 @@ import { EventHandler } from './event-handler.interface';
  * 5. If older: trigger reset mechanics (freeze or break)
  * 6. Awards rewards at milestone thresholds (e.g., 7-day milestone)
  * 7. Emits streak events to Kafka for further processing
+ *
+ * NOTE: Only 'daily' frequency is currently implemented.
+ * TODO: Implement 'weekly' frequency support (Issue #32 Story 2.3)
  */
 @Injectable()
 export class StreakEventHandler implements EventHandler {
   private readonly logger = new Logger(StreakEventHandler.name);
+
+  // Cache for matching rules to avoid duplicate queries between shouldHandle and handle
+  private rulesCache = new Map<string, { rules: StreakRule[]; timestamp: number }>();
+  private readonly CACHE_TTL_MS = 5000; // 5 second cache
 
   constructor(
     @Inject('KAFKA_SERVICE')
@@ -47,6 +54,36 @@ export class StreakEventHandler implements EventHandler {
   }
 
   /**
+   * Get cache key for rules lookup
+   */
+  private getCacheKey(projectId: string, eventType: string): string {
+    return `${projectId}:${eventType}`;
+  }
+
+  /**
+   * Get matching rules with caching to avoid duplicate queries
+   */
+  private async getMatchingRules(
+    projectId: string,
+    eventType: string,
+  ): Promise<StreakRule[]> {
+    const cacheKey = this.getCacheKey(projectId, eventType);
+    const cached = this.rulesCache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
+      return cached.rules;
+    }
+
+    const rules = await this.streakRuleRepository.findByEventType(
+      projectId,
+      eventType,
+    );
+
+    this.rulesCache.set(cacheKey, { rules, timestamp: Date.now() });
+    return rules;
+  }
+
+  /**
    * Check if this event should trigger streak progress evaluation
    */
   async shouldHandle(event: RawEventMessage): Promise<boolean> {
@@ -55,7 +92,8 @@ export class StreakEventHandler implements EventHandler {
     }
 
     // Check if there are any active streak rules matching this event type
-    const matchingRules = await this.streakRuleRepository.findByEventType(
+    // Results are cached for use in handle()
+    const matchingRules = await this.getMatchingRules(
       event.projectId,
       event.event,
     );
@@ -84,8 +122,8 @@ export class StreakEventHandler implements EventHandler {
       return;
     }
 
-    // Find all active streak rules matching this event type
-    const matchingRules = await this.streakRuleRepository.findByEventType(
+    // Get matching rules from cache (populated by shouldHandle)
+    const matchingRules = await this.getMatchingRules(
       event.projectId,
       event.event,
     );
@@ -101,6 +139,13 @@ export class StreakEventHandler implements EventHandler {
 
     // Process each matching rule
     for (const rule of matchingRules) {
+      // Skip weekly frequency rules until implemented
+      if (rule.frequency === 'weekly') {
+        this.logger.warn(
+          `Weekly frequency not yet implemented for streak rule: ${rule.name}`,
+        );
+        continue;
+      }
       await this.processStreakRule(event, endUser.id, rule);
     }
   }
@@ -223,23 +268,32 @@ export class StreakEventHandler implements EventHandler {
       `User reached ${milestone.day}-day milestone for streak "${rule.name}"!`,
     );
 
+    // Award XP first if configured - if this fails, don't record the milestone
+    let xpAwarded = 0;
+    if (milestone.rewardXp && milestone.rewardXp > 0) {
+      const awarded = await this.awardMilestoneXp(
+        event,
+        endUserId,
+        rule,
+        milestone,
+      );
+      if (!awarded) {
+        // XP award failed - don't record milestone to maintain consistency
+        this.logger.warn(
+          `Skipping milestone recording due to XP award failure for streak "${rule.name}"`,
+        );
+        return;
+      }
+      xpAwarded = milestone.rewardXp;
+    }
+
     // Update last milestone day
     await this.userStreakRepository.updateLastMilestoneDay(
       userStreakId,
       milestone.day,
     );
 
-    // Award XP if configured
-    if (milestone.rewardXp && milestone.rewardXp > 0) {
-      await this.awardMilestoneXp(
-        event,
-        endUserId,
-        rule,
-        milestone,
-      );
-    }
-
-    // Record milestone in history
+    // Record milestone in history (only after successful XP award)
     await this.streakHistoryRepository.recordMilestone({
       projectId: event.projectId,
       endUserId,
@@ -247,7 +301,7 @@ export class StreakEventHandler implements EventHandler {
       userStreakId,
       streakCount: newStreak,
       milestoneDay: milestone.day,
-      xpAwarded: milestone.rewardXp,
+      xpAwarded,
       metadata: { badgeId: milestone.badgeId },
     });
 
@@ -257,13 +311,14 @@ export class StreakEventHandler implements EventHandler {
 
   /**
    * Award XP for reaching a milestone
+   * @returns true if XP was awarded successfully, false otherwise
    */
   private async awardMilestoneXp(
     event: RawEventMessage,
     endUserId: string,
     rule: StreakRule,
     milestone: StreakMilestone,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       await this.loyaltyLedgerRepository.addTransaction({
         projectId: event.projectId,
@@ -278,8 +333,10 @@ export class StreakEventHandler implements EventHandler {
       this.logger.log(
         `Awarded ${milestone.rewardXp} XP for ${milestone.day}-day streak milestone`,
       );
+      return true;
     } catch (error) {
       this.logger.error(`Failed to award streak milestone XP: ${error}`);
+      return false;
     }
   }
 
