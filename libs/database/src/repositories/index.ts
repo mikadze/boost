@@ -35,3 +35,7 @@ export * from './user-step-progress.repository';
 export * from './streak-rule.repository';
 export * from './user-streak.repository';
 export * from './streak-history.repository';
+
+// Issue #33: Badge System Repositories
+export * from './badge-definition.repository';
+export * from './user-badge.repository';
