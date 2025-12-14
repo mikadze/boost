@@ -1,4 +1,19 @@
-import type { GamifyConfig, GamifyEvent, UserTraits, StorageAdapter, CartItem, AffiliateStats, LeaderboardResponse } from './types.js';
+import type {
+  GamifyConfig,
+  GamifyEvent,
+  UserTraits,
+  StorageAdapter,
+  CartItem,
+  AffiliateStats,
+  LeaderboardResponse,
+  // Gamification types
+  QuestsResponse,
+  StreaksResponse,
+  FreezeResponse,
+  BadgesResponse,
+  RewardsStoreResponse,
+  RedemptionResult,
+} from './types.js';
 import { createStorage } from './storage/index.js';
 import { EventQueue } from './queue/index.js';
 import { HttpClient } from './network/index.js';
@@ -420,5 +435,132 @@ export class Gamify {
    */
   async getLeaderboard(limit = 10): Promise<LeaderboardResponse> {
     return this._affiliate.getLeaderboard(limit);
+  }
+
+  // ============================================
+  // Quests Module (Issue #25-28)
+  // ============================================
+
+  /**
+   * Get user's quest progress
+   */
+  async getQuests(): Promise<QuestsResponse> {
+    if (!this.userId) {
+      throw new Error('[Gamify] User must be identified before getting quests');
+    }
+    const response = await this.client.get<QuestsResponse>(
+      `/v1/customer/quests?userId=${encodeURIComponent(this.userId)}`
+    );
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to get quests');
+  }
+
+  // ============================================
+  // Streaks Module (Issue #32)
+  // ============================================
+
+  /**
+   * Get user's streaks with progress
+   */
+  async getStreaks(): Promise<StreaksResponse> {
+    if (!this.userId) {
+      throw new Error('[Gamify] User must be identified before getting streaks');
+    }
+    const response = await this.client.get<StreaksResponse>(
+      `/v1/customer/streaks?userId=${encodeURIComponent(this.userId)}`
+    );
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to get streaks');
+  }
+
+  /**
+   * Use a freeze token for a streak
+   */
+  async useStreakFreeze(ruleId: string): Promise<FreezeResponse> {
+    if (!this.userId) {
+      throw new Error('[Gamify] User must be identified before using freeze');
+    }
+    const response = await this.client.post<FreezeResponse>(
+      `/v1/customer/streaks/${encodeURIComponent(ruleId)}/freeze`,
+      { userId: this.userId }
+    );
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to use freeze');
+  }
+
+  // ============================================
+  // Badges Module (Issue #33)
+  // ============================================
+
+  /**
+   * Get user's badge collection
+   */
+  async getBadges(category?: string): Promise<BadgesResponse> {
+    if (!this.userId) {
+      throw new Error('[Gamify] User must be identified before getting badges');
+    }
+    let url = `/v1/customer/badges?userId=${encodeURIComponent(this.userId)}`;
+    if (category) {
+      url += `&category=${encodeURIComponent(category)}`;
+    }
+    const response = await this.client.get<BadgesResponse>(url);
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to get badges');
+  }
+
+  /**
+   * Get available badge categories
+   */
+  async getBadgeCategories(): Promise<string[]> {
+    const response = await this.client.get<string[]>('/v1/customer/badges/categories');
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to get badge categories');
+  }
+
+  // ============================================
+  // Rewards Module (Issue #34)
+  // ============================================
+
+  /**
+   * Get rewards store items
+   */
+  async getRewardsStore(): Promise<RewardsStoreResponse> {
+    if (!this.userId) {
+      throw new Error('[Gamify] User must be identified before getting rewards');
+    }
+    const response = await this.client.get<RewardsStoreResponse>(
+      `/v1/customer/store?userId=${encodeURIComponent(this.userId)}`
+    );
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to get rewards store');
+  }
+
+  /**
+   * Redeem a reward item
+   */
+  async redeemReward(itemId: string): Promise<RedemptionResult> {
+    if (!this.userId) {
+      throw new Error('[Gamify] User must be identified before redeeming rewards');
+    }
+    const response = await this.client.post<RedemptionResult>(
+      '/v1/customer/store/redeem',
+      { userId: this.userId, itemId }
+    );
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to redeem reward');
   }
 }

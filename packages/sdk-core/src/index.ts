@@ -32,6 +32,20 @@ export type {
   AffiliateStatsResponse,
   LeaderboardEntry,
   LeaderboardResponse,
+  // Gamification types (Issue #25-34)
+  QuestStep,
+  QuestWithProgress,
+  QuestsResponse,
+  StreakMilestone,
+  StreakWithProgress,
+  StreaksResponse,
+  FreezeResponse,
+  BadgeRarity,
+  BadgeWithStatus,
+  BadgesResponse,
+  RewardItem,
+  RewardsStoreResponse,
+  RedemptionResult,
 } from './types.js';
 
 // Re-export internals for advanced usage

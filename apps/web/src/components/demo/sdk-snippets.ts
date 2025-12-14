@@ -92,20 +92,20 @@ await gamify.purchase({
         label: 'Fetch loyalty data',
         code: `import { useLoyalty } from '@gamify/react';
 
-const {
-  points,
-  tier,
-  nextTier,
-  pointsToNextTier,
-  isLoading
-} = useLoyalty();
+const { profile, loading, refreshProfile } = useLoyalty();
 
-// Display current status
-<div>
-  <p>{points} points</p>
-  <p>Current tier: {tier.name}</p>
-  <p>{pointsToNextTier} points to {nextTier?.name}</p>
-</div>`,
+// profile contains:
+// - points, tier, nextTier
+// - summary: { totalEarned, totalRedeemed }`,
+      },
+      {
+        label: 'LevelProgress component',
+        code: `import { LevelProgress } from '@gamify/react';
+
+<LevelProgress
+  showNextTier
+  showBenefits
+/>`,
       },
     ],
   },
@@ -117,13 +117,55 @@ const {
         label: 'Fetch user quests',
         code: `import { useQuests } from '@gamify/react';
 
-const { quests, isLoading } = useQuests();
+const { quests, loading, error, refresh } = useQuests();
 
-// quests array contains:
+// quests[] contains:
 // - id, name, description
 // - status: 'not_started' | 'in_progress' | 'completed'
 // - percentComplete
 // - steps[] with progress`,
+      },
+      {
+        label: 'QuestProgress component',
+        code: `import { QuestProgress } from '@gamify/react';
+
+<QuestProgress
+  hideCompleted
+  onComplete={(quest) => {
+    toast.success(\`Completed: \${quest.name}\`);
+  }}
+/>`,
+      },
+    ],
+  },
+
+  streaks: {
+    featureName: 'Streaks',
+    frontend: [
+      {
+        label: 'Fetch user streaks',
+        code: `import { useStreaks } from '@gamify/react';
+
+const { streaks, stats, loading, freeze } = useStreaks();
+
+// streaks[] contains:
+// - id, name, currentCount, maxStreak
+// - status, freezeInventory, freezeUsedToday
+// - milestones[] with progress
+
+// Use freeze token
+await freeze(streakId);`,
+      },
+      {
+        label: 'StreakFlame component',
+        code: `import { StreakFlame } from '@gamify/react';
+
+<StreakFlame
+  showFreezeButton
+  onFreeze={(id, remaining) => {
+    console.log('Freeze used, remaining:', remaining);
+  }}
+/>`,
       },
     ],
   },
@@ -135,13 +177,53 @@ const { quests, isLoading } = useQuests();
         label: 'Fetch user badges',
         code: `import { useBadges } from '@gamify/react';
 
-const { badges, isLoading } = useBadges();
+const { badges, earned, locked, stats, loading } = useBadges();
 
-// badges array contains:
+// badges[] contains:
 // - id, name, description, iconUrl
-// - rarity: 'common' | 'rare' | 'epic' | 'legendary'
+// - rarity: 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
 // - isUnlocked, unlockedAt
-// - currentProgress, threshold`,
+// - category, visibility`,
+      },
+      {
+        label: 'BadgeGrid component',
+        code: `import { BadgeGrid } from '@gamify/react';
+
+<BadgeGrid
+  showLocked
+  showStats
+  onBadgeClick={(badge) => openBadgeModal(badge)}
+/>`,
+      },
+    ],
+  },
+
+  rewards: {
+    featureName: 'Rewards Store',
+    frontend: [
+      {
+        label: 'Fetch rewards store',
+        code: `import { useRewards } from '@gamify/react';
+
+const { items, userPoints, redeem, loading } = useRewards();
+
+// items[] contains:
+// - id, name, pointsCost, imageUrl
+// - canAfford, hasBadge, isAvailable
+
+// Redeem a reward
+const result = await redeem(itemId);`,
+      },
+      {
+        label: 'RewardStore component',
+        code: `import { RewardStore } from '@gamify/react';
+
+<RewardStore
+  showPointsHeader
+  onRedeem={(item, result) => {
+    if (result.success) toast.success(\`Redeemed \${item.name}!\`);
+  }}
+/>`,
       },
     ],
   },

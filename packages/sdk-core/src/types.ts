@@ -263,3 +263,179 @@ export interface LeaderboardResponse {
   total: number;
   currentUserRank?: number;
 }
+
+// ============================================
+// Issue #25-28: Quest Types
+// ============================================
+
+/**
+ * Quest step definition
+ */
+export interface QuestStep {
+  id: string;
+  name: string;
+  description?: string;
+  eventName: string;
+  requiredCount: number;
+  order: number;
+  currentCount: number;
+  completed: boolean;
+}
+
+/**
+ * Quest with user progress
+ */
+export interface QuestWithProgress {
+  id: string;
+  name: string;
+  description?: string;
+  xpReward: number;
+  badgeReward?: string;
+  status: 'not_started' | 'in_progress' | 'completed';
+  percentComplete: number;
+  steps: QuestStep[];
+  startedAt?: string;
+  completedAt?: string;
+}
+
+/**
+ * Quests response from API
+ */
+export interface QuestsResponse {
+  quests: QuestWithProgress[];
+}
+
+// ============================================
+// Issue #32: Streak Types
+// ============================================
+
+/**
+ * Streak milestone definition
+ */
+export interface StreakMilestone {
+  day: number;
+  rewardXp: number;
+  badgeId?: string;
+  reached: boolean;
+}
+
+/**
+ * User streak with progress
+ */
+export interface StreakWithProgress {
+  id: string;
+  name: string;
+  description?: string;
+  eventType: string;
+  frequency: string;
+  currentCount: number;
+  maxStreak: number;
+  status: string;
+  lastActivityDate?: string;
+  freezeInventory: number;
+  freezeUsedToday: boolean;
+  nextMilestone?: {
+    day: number;
+    rewardXp: number;
+    badgeId?: string;
+  };
+  milestones: StreakMilestone[];
+}
+
+/**
+ * Streaks response from API
+ */
+export interface StreaksResponse {
+  streaks: StreakWithProgress[];
+  stats: {
+    totalActive: number;
+    longestCurrent: number;
+    longestEver: number;
+  };
+}
+
+/**
+ * Freeze response
+ */
+export interface FreezeResponse {
+  success: boolean;
+  remainingFreezes: number;
+  message: string;
+}
+
+// ============================================
+// Issue #33: Badge Types
+// ============================================
+
+/**
+ * Badge rarity levels
+ */
+export type BadgeRarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
+
+/**
+ * Badge with unlock status
+ */
+export interface BadgeWithStatus {
+  id: string;
+  name: string;
+  description?: string;
+  iconUrl?: string;
+  imageUrl?: string;
+  rarity: BadgeRarity;
+  visibility: 'PUBLIC' | 'HIDDEN';
+  category?: string;
+  isUnlocked: boolean;
+  unlockedAt?: string;
+}
+
+/**
+ * Badges response from API
+ */
+export interface BadgesResponse {
+  badges: BadgeWithStatus[];
+  stats: {
+    total: number;
+    unlocked: number;
+    byRarity: Record<string, { total: number; unlocked: number }>;
+  };
+}
+
+// ============================================
+// Issue #34: Rewards Types
+// ============================================
+
+/**
+ * Reward item from store
+ */
+export interface RewardItem {
+  id: string;
+  name: string;
+  description?: string;
+  pointsCost: number;
+  imageUrl?: string;
+  category?: string;
+  stock?: number;
+  requiredBadgeId?: string;
+  requiredBadgeName?: string;
+  canAfford: boolean;
+  hasBadge: boolean;
+  isAvailable: boolean;
+}
+
+/**
+ * Rewards store response
+ */
+export interface RewardsStoreResponse {
+  items: RewardItem[];
+  userPoints: number;
+}
+
+/**
+ * Redemption result
+ */
+export interface RedemptionResult {
+  success: boolean;
+  transactionId?: string;
+  message: string;
+  remainingPoints?: number;
+}
