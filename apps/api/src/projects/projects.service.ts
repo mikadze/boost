@@ -1,6 +1,19 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { ProjectRepository, OrganizationRepository, ApiKeyRepository, ApiKeyType } from '@boost/database';
+import {
+  ProjectRepository,
+  OrganizationRepository,
+  ApiKeyRepository,
+  ApiKeyType,
+  EventRepository,
+  CampaignRepository,
+} from '@boost/database';
 import { ApiKeyService } from '@boost/common';
+
+export interface ProjectStatsSummary {
+  totalEvents: number;
+  firstEventAt: string | null;
+  activeCampaigns: number;
+}
 
 @Injectable()
 export class ProjectsService {
@@ -9,6 +22,8 @@ export class ProjectsService {
     private readonly organizationRepo: OrganizationRepository,
     private readonly apiKeyService: ApiKeyService,
     private readonly apiKeyRepo: ApiKeyRepository,
+    private readonly eventRepo: EventRepository,
+    private readonly campaignRepo: CampaignRepository,
   ) {}
 
   /**
@@ -102,5 +117,38 @@ export class ProjectsService {
 
     // Delete the key
     await this.apiKeyRepo.deleteById(keyId);
+  }
+
+  /**
+   * Get stats summary for a project.
+   * Used by the dashboard to determine whether to show the setup guide or analytics.
+   */
+  async getStatsSummary(projectId: string): Promise<ProjectStatsSummary> {
+    const [totalEvents, firstEventAt, activeCampaigns] = await Promise.all([
+      this.eventRepo.countByProjectId(projectId),
+      this.eventRepo.getFirstEventDate(projectId),
+      this.campaignRepo.countActiveCampaigns(projectId),
+    ]);
+
+    return {
+      totalEvents,
+      firstEventAt: firstEventAt ? firstEventAt.toISOString() : null,
+      activeCampaigns,
+    };
+  }
+
+  /**
+   * Get recent events for a project.
+   * Used by the setup guide to verify event ingestion.
+   */
+  async getRecentEvents(projectId: string, limit: number = 10) {
+    const events = await this.eventRepo.findRecentByProjectId(projectId, limit);
+    return events.map((event) => ({
+      id: event.id,
+      eventType: event.eventType,
+      userId: event.userId,
+      status: event.status,
+      createdAt: event.createdAt.toISOString(),
+    }));
   }
 }

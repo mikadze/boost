@@ -5,6 +5,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { SessionGuard, CurrentUser } from '@boost/common';
@@ -15,6 +16,36 @@ import { CreateApiKeyDto } from './dto/create-api-key.dto';
 @UseGuards(SessionGuard)
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
+
+  /**
+   * GET /projects/:projectId/stats/summary
+   * Get project stats summary (total events, first event date, active campaigns)
+   * Used by dashboard to determine whether to show setup guide or analytics
+   */
+  @Get(':projectId/stats/summary')
+  async getStatsSummary(
+    @CurrentUser() user: { id: string },
+    @Param('projectId') projectId: string,
+  ) {
+    await this.projectsService.verifyProjectAccess(user.id, projectId);
+    return this.projectsService.getStatsSummary(projectId);
+  }
+
+  /**
+   * GET /projects/:projectId/events/recent
+   * Get recent events for a project
+   * Used by setup guide to verify event ingestion
+   */
+  @Get(':projectId/events/recent')
+  async getRecentEvents(
+    @CurrentUser() user: { id: string },
+    @Param('projectId') projectId: string,
+    @Query('limit') limit?: string,
+  ) {
+    await this.projectsService.verifyProjectAccess(user.id, projectId);
+    const eventLimit = limit ? parseInt(limit, 10) : 10;
+    return this.projectsService.getRecentEvents(projectId, eventLimit);
+  }
 
   /**
    * GET /projects/:projectId/api-keys

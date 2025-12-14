@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { eq, and, lt } from 'drizzle-orm';
+import { eq, and, lt, sql, desc } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../schema';
 import { events, EventStatus } from '../schema';
@@ -110,5 +110,51 @@ export class EventRepository {
         errorDetails: 'Retried by sweeper job',
       })
       .where(eq(events.id, eventId));
+  }
+
+  /**
+   * Count total events for a project.
+   * Used for project stats summary.
+   */
+  async countByProjectId(projectId: string): Promise<number> {
+    const result = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(events)
+      .where(eq(events.projectId, projectId));
+
+    return result[0]?.count ?? 0;
+  }
+
+  /**
+   * Get the first event date for a project.
+   * Used for project stats summary.
+   */
+  async getFirstEventDate(projectId: string): Promise<Date | null> {
+    const result = await this.db
+      .select({ createdAt: events.createdAt })
+      .from(events)
+      .where(eq(events.projectId, projectId))
+      .orderBy(events.createdAt)
+      .limit(1);
+
+    return result[0]?.createdAt ?? null;
+  }
+
+  /**
+   * Get recent events for a project.
+   * Used for setup guide verification.
+   */
+  async findRecentByProjectId(
+    projectId: string,
+    limit: number = 10,
+  ): Promise<EventRecord[]> {
+    const result = await this.db
+      .select()
+      .from(events)
+      .where(eq(events.projectId, projectId))
+      .orderBy(desc(events.createdAt))
+      .limit(limit);
+
+    return result as EventRecord[];
   }
 }

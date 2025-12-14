@@ -20,12 +20,14 @@ interface DemoContextValue {
   apiKey: string;
   setApiKey: (key: string) => void;
   endpoint: string;
+  projectName: string | null;
+  isConnectedToProject: boolean;
 }
 
 const DemoContext = React.createContext<DemoContextValue | null>(null);
 
 const DEFAULT_API_KEY = 'pk_live_31d08b51fca1ec234f09279cbac1f82222e896bf593d755715423a034e7bc67f';
-const DEFAULT_ENDPOINT = 'http://localhost:3000';
+const DEFAULT_ENDPOINT = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 const STORAGE_KEY = 'boost_demo_api_key';
 
 export function useDemoContext() {
@@ -43,24 +45,36 @@ export function useAddLog() {
 
 interface DemoProviderProps {
   children: React.ReactNode;
+  initialApiKey?: string;
+  projectName?: string;
 }
 
-export function DemoProvider({ children }: DemoProviderProps) {
+export function DemoProvider({ children, initialApiKey, projectName }: DemoProviderProps) {
   const [logs, setLogs] = React.useState<LogEntry[]>([]);
-  const [apiKey, setApiKeyState] = React.useState(DEFAULT_API_KEY);
+  const [apiKey, setApiKeyState] = React.useState(initialApiKey || DEFAULT_API_KEY);
   const [isClient, setIsClient] = React.useState(false);
+  const [connectedProjectName, setConnectedProjectName] = React.useState<string | null>(projectName || null);
 
-  // Load API key from localStorage on client
+  // Load API key from localStorage on client, but prefer initialApiKey if provided
   React.useEffect(() => {
     setIsClient(true);
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      setApiKeyState(stored);
+    if (initialApiKey) {
+      // If initialApiKey is provided (from organization), use it
+      setApiKeyState(initialApiKey);
+      setConnectedProjectName(projectName || null);
+    } else {
+      // Otherwise, try to load from localStorage
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setApiKeyState(stored);
+        setConnectedProjectName(null);
+      }
     }
-  }, []);
+  }, [initialApiKey, projectName]);
 
   const setApiKey = React.useCallback((key: string) => {
     setApiKeyState(key);
+    setConnectedProjectName(null); // Clear project name when manually setting key
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, key);
     }
@@ -87,6 +101,8 @@ export function DemoProvider({ children }: DemoProviderProps) {
     debug: true,
   }), [apiKey]);
 
+  const isConnectedToProject = !!connectedProjectName && !!initialApiKey;
+
   const contextValue: DemoContextValue = React.useMemo(() => ({
     logs,
     addLog,
@@ -94,7 +110,9 @@ export function DemoProvider({ children }: DemoProviderProps) {
     apiKey,
     setApiKey,
     endpoint: DEFAULT_ENDPOINT,
-  }), [logs, addLog, clearLogs, apiKey, setApiKey]);
+    projectName: connectedProjectName,
+    isConnectedToProject,
+  }), [logs, addLog, clearLogs, apiKey, setApiKey, connectedProjectName, isConnectedToProject]);
 
   // Don't render GamifyProvider until client-side
   if (!isClient) {
