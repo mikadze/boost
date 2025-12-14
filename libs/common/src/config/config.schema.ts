@@ -22,6 +22,11 @@ const baseSchema = z.object({
   BETTER_AUTH_SECRET: z.string().min(32),
   BETTER_AUTH_URL: z.string().url(),
   TRUSTED_ORIGINS: z.string().transform((val) => val.split(',').map((s) => s.trim())),
+
+  // OpenRouter AI - optional
+  OPENROUTER_API_KEY: z.string().optional(),
+  OPENROUTER_MODEL: z.string().optional(),
+  OPENROUTER_MAX_TOKENS: z.coerce.number().optional(),
 });
 
 // Development schema - allows localhost defaults
@@ -42,6 +47,10 @@ const developmentSchema = z.object({
     .string()
     .default('http://localhost:3000,http://localhost:3001,http://localhost:3002')
     .transform((val) => val.split(',').map((s) => s.trim())),
+  // OpenRouter AI - optional
+  OPENROUTER_API_KEY: z.string().optional(),
+  OPENROUTER_MODEL: z.string().optional(),
+  OPENROUTER_MAX_TOKENS: z.coerce.number().optional(),
 });
 
 // Production schema - strict validation, no localhost allowed
@@ -67,6 +76,10 @@ const productionSchema = z.object({
     message: 'BETTER_AUTH_URL must not use localhost in production',
   }),
   TRUSTED_ORIGINS: z.string().transform((val) => val.split(',').map((s) => s.trim())),
+  // OpenRouter AI - optional
+  OPENROUTER_API_KEY: z.string().optional(),
+  OPENROUTER_MODEL: z.string().optional(),
+  OPENROUTER_MAX_TOKENS: z.coerce.number().optional(),
 });
 
 export type AppConfig = z.infer<typeof baseSchema>;

@@ -35,6 +35,8 @@ import { StreaksModule } from './streaks/streaks.module';
 import { BadgesModule } from './badges/badges.module';
 // Issue #34: Rewards Store
 import { RewardsModule } from './rewards/rewards.module';
+// AI Generation
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -90,6 +92,8 @@ import { RewardsModule } from './rewards/rewards.module';
     BadgesModule,
     // Issue #34: Rewards Store
     RewardsModule,
+    // AI Generation
+    AiModule,
   ],
   controllers: [AppController, EventsController, AuthController, BetterAuthController],
   providers: [AppService, EventsService],

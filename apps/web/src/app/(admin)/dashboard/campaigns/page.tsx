@@ -3,9 +3,9 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import {
-  Plus,
   MoreHorizontal,
   Pencil,
   Copy,
@@ -15,6 +15,8 @@ import {
   ArrowUpDown,
   Search,
   Filter,
+  Sparkles,
+  Loader2,
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/glass-card';
 import { GlowButton } from '@/components/ui/glow-button';
@@ -30,105 +32,29 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Progress } from '@/components/ui/progress';
+import { useOrganization } from '@/hooks/use-organization';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 interface Campaign {
   id: string;
   name: string;
-  status: 'active' | 'paused' | 'scheduled' | 'ended';
+  description?: string;
+  active: boolean;
   priority: number;
-  budget: number;
-  budgetUsed: number;
-  startDate: string;
-  endDate: string;
-  rules: number;
+  rulesCount?: number;
+  createdAt: string;
 }
-
-// Mock data
-const campaigns: Campaign[] = [
-  {
-    id: '1',
-    name: 'Summer Sale 2024',
-    status: 'active',
-    priority: 100,
-    budget: 10000,
-    budgetUsed: 6500,
-    startDate: '2024-06-01',
-    endDate: '2024-08-31',
-    rules: 5,
-  },
-  {
-    id: '2',
-    name: 'Welcome Bonus',
-    status: 'active',
-    priority: 90,
-    budget: 5000,
-    budgetUsed: 2100,
-    startDate: '2024-01-01',
-    endDate: '2024-12-31',
-    rules: 2,
-  },
-  {
-    id: '3',
-    name: 'Flash Friday',
-    status: 'scheduled',
-    priority: 85,
-    budget: 2000,
-    budgetUsed: 0,
-    startDate: '2024-07-12',
-    endDate: '2024-07-12',
-    rules: 3,
-  },
-  {
-    id: '4',
-    name: 'Loyalty Rewards',
-    status: 'active',
-    priority: 80,
-    budget: 15000,
-    budgetUsed: 8900,
-    startDate: '2024-01-01',
-    endDate: '2024-12-31',
-    rules: 8,
-  },
-  {
-    id: '5',
-    name: 'Easter Special',
-    status: 'ended',
-    priority: 75,
-    budget: 3000,
-    budgetUsed: 3000,
-    startDate: '2024-03-28',
-    endDate: '2024-04-01',
-    rules: 4,
-  },
-  {
-    id: '6',
-    name: 'Birthday Rewards',
-    status: 'paused',
-    priority: 70,
-    budget: 8000,
-    budgetUsed: 4200,
-    startDate: '2024-01-01',
-    endDate: '2024-12-31',
-    rules: 2,
-  },
-];
 
 const columns: ColumnDef<Campaign>[] = [
   {
-    accessorKey: 'status',
+    accessorKey: 'active',
     header: 'Status',
     cell: ({ row }) => {
-      const status = row.getValue('status') as string;
-      const variant = {
-        active: 'active' as const,
-        paused: 'warning' as const,
-        scheduled: 'info' as const,
-        ended: 'inactive' as const,
-      };
+      const active = row.getValue('active') as boolean;
       return (
-        <StatusBadge variant={variant[status as keyof typeof variant]} dot pulse={status === 'active'}>
-          {status.charAt(0).toUpperCase() + status.slice(1)}
+        <StatusBadge variant={active ? 'active' : 'inactive'} dot pulse={active}>
+          {active ? 'Active' : 'Inactive'}
         </StatusBadge>
       );
     },
@@ -155,6 +81,15 @@ const columns: ColumnDef<Campaign>[] = [
     ),
   },
   {
+    accessorKey: 'description',
+    header: 'Description',
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground truncate max-w-[200px] block">
+        {row.getValue('description') || '-'}
+      </span>
+    ),
+  },
+  {
     accessorKey: 'priority',
     header: ({ column }) => (
       <Button
@@ -167,49 +102,28 @@ const columns: ColumnDef<Campaign>[] = [
       </Button>
     ),
     cell: ({ row }) => (
-      <span className="font-mono text-sm">{row.getValue('priority')}</span>
+      <span className="font-mono text-sm">{row.getValue('priority') ?? 0}</span>
     ),
   },
   {
-    accessorKey: 'budget',
-    header: 'Budget',
-    cell: ({ row }) => {
-      const budget = row.getValue('budget') as number;
-      const budgetUsed = row.original.budgetUsed;
-      const percentage = Math.round((budgetUsed / budget) * 100);
-      return (
-        <div className="w-32">
-          <div className="flex justify-between text-xs mb-1">
-            <span className="text-muted-foreground">
-              ${budgetUsed.toLocaleString()}
-            </span>
-            <span className="text-muted-foreground">{percentage}%</span>
-          </div>
-          <Progress value={percentage} className="h-1.5" />
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'startDate',
-    header: 'Schedule',
-    cell: ({ row }) => (
-      <span className="text-sm text-muted-foreground">
-        {new Date(row.original.startDate).toLocaleDateString()} -{' '}
-        {new Date(row.original.endDate).toLocaleDateString()}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'rules',
+    accessorKey: 'rulesCount',
     header: 'Rules',
     cell: ({ row }) => (
       <Link
         href={`/dashboard/campaigns/${row.original.id}/rules`}
         className="text-sm text-primary hover:underline"
       >
-        {row.getValue('rules')} rules
+        {row.original.rulesCount ?? 0} rules
       </Link>
+    ),
+  },
+  {
+    accessorKey: 'createdAt',
+    header: 'Created',
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {new Date(row.getValue('createdAt')).toLocaleDateString()}
+      </span>
     ),
   },
   {
@@ -234,17 +148,17 @@ const columns: ColumnDef<Campaign>[] = [
               Duplicate
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            {campaign.status === 'active' ? (
+            {campaign.active ? (
               <DropdownMenuItem>
                 <Pause className="mr-2 h-4 w-4" />
                 Pause
               </DropdownMenuItem>
-            ) : campaign.status === 'paused' ? (
+            ) : (
               <DropdownMenuItem>
                 <Play className="mr-2 h-4 w-4" />
-                Resume
+                Activate
               </DropdownMenuItem>
-            ) : null}
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive">
               <Trash2 className="mr-2 h-4 w-4" />
@@ -259,6 +173,30 @@ const columns: ColumnDef<Campaign>[] = [
 
 export default function CampaignsPage() {
   const [searchValue, setSearchValue] = React.useState('');
+  const { projects, isLoading: orgLoading } = useOrganization();
+  const projectId = projects[0]?.id;
+
+  const { data: campaigns = [], isLoading } = useQuery({
+    queryKey: ['campaigns', projectId],
+    queryFn: async () => {
+      if (!projectId) return [];
+      const response = await fetch(
+        `${API_URL}/dashboard/projects/${projectId}/campaigns`,
+        { credentials: 'include' }
+      );
+      if (!response.ok) throw new Error('Failed to fetch campaigns');
+      return response.json() as Promise<Campaign[]>;
+    },
+    enabled: !!projectId,
+  });
+
+  if (orgLoading || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -274,9 +212,9 @@ export default function CampaignsPage() {
           </p>
         </div>
         <GlowButton variant="glow" asChild>
-          <Link href="/dashboard/campaigns/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New Campaign
+          <Link href="/dashboard/automations/new">
+            <Sparkles className="mr-2 h-4 w-4" />
+            New Automation
           </Link>
         </GlowButton>
       </motion.div>
@@ -303,12 +241,24 @@ export default function CampaignsPage() {
             </Button>
           </div>
           <div className="p-4">
-            <DataTable
-              columns={columns}
-              data={campaigns}
-              searchKey="name"
-              searchValue={searchValue}
-            />
+            {campaigns.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-4">No campaigns yet</p>
+                <GlowButton variant="glow" asChild>
+                  <Link href="/dashboard/automations/new">
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Create your first automation
+                  </Link>
+                </GlowButton>
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={campaigns}
+                searchKey="name"
+                searchValue={searchValue}
+              />
+            )}
           </div>
         </GlassCard>
       </motion.div>

@@ -49,8 +49,10 @@ export class CampaignsService {
     return campaign;
   }
 
-  async listCampaigns(projectId: string): Promise<Campaign[]> {
-    return this.campaignRepository.findByProjectId(projectId);
+  async listCampaigns(
+    projectId: string,
+  ): Promise<(Campaign & { rulesCount: number })[]> {
+    return this.campaignRepository.findByProjectIdWithRulesCount(projectId);
   }
 
   async getCampaign(

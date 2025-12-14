@@ -25,6 +25,7 @@ import {
   Database,
   Sliders,
   Code,
+  Plus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -58,6 +59,7 @@ const navigation = [
     name: 'Engine',
     icon: Zap,
     children: [
+      { name: 'New Automation', href: '/dashboard/automations/new', icon: Plus },
       { name: 'Automations', href: '/dashboard/campaigns', icon: Workflow },
       { name: 'Rewards', href: '/dashboard/coupons', icon: Ticket },
     ],

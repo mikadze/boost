@@ -82,6 +82,32 @@ export class CampaignRepository {
     return result;
   }
 
+  async findByProjectIdWithRulesCount(
+    projectId: string,
+  ): Promise<(Campaign & { rulesCount: number })[]> {
+    const result = await this.db
+      .select({
+        id: campaigns.id,
+        projectId: campaigns.projectId,
+        name: campaigns.name,
+        description: campaigns.description,
+        active: campaigns.active,
+        priority: campaigns.priority,
+        schedule: campaigns.schedule,
+        metadata: campaigns.metadata,
+        createdAt: campaigns.createdAt,
+        updatedAt: campaigns.updatedAt,
+        rulesCount: sql<number>`(
+          SELECT COUNT(*)::int FROM "rule" WHERE "rule"."campaign_id" = "campaign"."id"
+        )`,
+      })
+      .from(campaigns)
+      .where(eq(campaigns.projectId, projectId))
+      .orderBy(desc(campaigns.priority), campaigns.name);
+
+    return result;
+  }
+
   async findActiveCampaigns(projectId: string): Promise<CampaignWithRules[]> {
     const result = await this.db.query.campaigns.findMany({
       where: and(eq(campaigns.projectId, projectId), eq(campaigns.active, true)),
