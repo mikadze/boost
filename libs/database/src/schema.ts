@@ -1502,6 +1502,129 @@ export type NewBadgeDefinition = typeof badgeDefinitions.$inferInsert;
 export type UserBadge = typeof userBadges.$inferSelect;
 export type NewUserBadge = typeof userBadges.$inferInsert;
 
+// ============================================
+// Issue #34: Rewards Store Tables
+// ============================================
+
+// Fulfillment types for reward items
+export type RewardFulfillmentType = 'WEBHOOK' | 'PROMO_CODE' | 'MANUAL';
+export type RedemptionStatus = 'PROCESSING' | 'COMPLETED' | 'FAILED';
+
+// Reward Items table - items users can purchase with points
+export const rewardItems = pgTable('reward_item', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  /** Reward name */
+  name: varchar('name', { length: 255 }).notNull(),
+  /** Reward description */
+  description: text('description'),
+  /** Image URL for the reward */
+  imageUrl: text('image_url'),
+  /** SKU for inventory tracking */
+  sku: varchar('sku', { length: 100 }),
+  /** Points cost to redeem */
+  costPoints: integer('cost_points').notNull(),
+  /** Stock quantity (null for unlimited) */
+  stockQuantity: integer('stock_quantity'),
+  /** Badge ID required to purchase (optional gating) */
+  prerequisiteBadgeId: varchar('prerequisite_badge_id', { length: 255 }),
+  /** How the reward is fulfilled */
+  fulfillmentType: varchar('fulfillment_type', { length: 20 }).notNull(), // 'WEBHOOK' | 'PROMO_CODE' | 'MANUAL'
+  /** Fulfillment configuration (webhook URL, promo codes list, etc.) */
+  fulfillmentConfig: jsonb('fulfillment_config').default({}).notNull(),
+  /** Whether the reward is active/purchasable */
+  active: boolean('active').default(true).notNull(),
+  /** Display order for sorting */
+  displayOrder: integer('display_order').default(0).notNull(),
+  /** Additional metadata */
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => ({
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  projectIdx: index('reward_item_project_idx').on(t.projectId),
+  activeIdx: index('reward_item_active_idx').on(t.active),
+  skuIdx: uniqueIndex('reward_item_sku_idx').on(t.projectId, t.sku),
+}));
+
+// Redemption Transactions table - tracks purchases/redemptions
+export const redemptionTransactions = pgTable('redemption_transaction', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  /** End user who made the redemption */
+  endUserId: uuid('end_user_id').notNull(),
+  /** Reward item redeemed */
+  rewardItemId: uuid('reward_item_id').notNull(),
+  /** Points cost at time of redemption (snapshot) */
+  costAtTime: integer('cost_at_time').notNull(),
+  /** Redemption status */
+  status: varchar('status', { length: 20 }).default('PROCESSING').notNull(), // 'PROCESSING' | 'COMPLETED' | 'FAILED'
+  /** Error message if failed */
+  errorMessage: text('error_message'),
+  /** Fulfillment data (promo code, webhook response, etc.) */
+  fulfillmentData: jsonb('fulfillment_data'),
+  /** Webhook retry count */
+  webhookRetries: integer('webhook_retries').default(0).notNull(),
+  /** When the fulfillment was completed */
+  fulfilledAt: timestamp('fulfilled_at'),
+  /** Additional metadata */
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => ({
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  endUserFk: foreignKey({
+    columns: [t.endUserId],
+    foreignColumns: [endUsers.id],
+  }).onDelete('cascade'),
+  rewardItemFk: foreignKey({
+    columns: [t.rewardItemId],
+    foreignColumns: [rewardItems.id],
+  }).onDelete('restrict'),
+  projectIdx: index('redemption_transaction_project_idx').on(t.projectId),
+  endUserIdx: index('redemption_transaction_end_user_idx').on(t.endUserId),
+  rewardItemIdx: index('redemption_transaction_reward_item_idx').on(t.rewardItemId),
+  statusIdx: index('redemption_transaction_status_idx').on(t.status),
+  createdIdx: index('redemption_transaction_created_idx').on(t.createdAt),
+}));
+
+// Issue #34: Rewards Store Relations
+export const rewardItemRelations = relations(rewardItems, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [rewardItems.projectId],
+    references: [projects.id],
+  }),
+  redemptions: many(redemptionTransactions),
+}));
+
+export const redemptionTransactionRelations = relations(redemptionTransactions, ({ one }) => ({
+  project: one(projects, {
+    fields: [redemptionTransactions.projectId],
+    references: [projects.id],
+  }),
+  endUser: one(endUsers, {
+    fields: [redemptionTransactions.endUserId],
+    references: [endUsers.id],
+  }),
+  rewardItem: one(rewardItems, {
+    fields: [redemptionTransactions.rewardItemId],
+    references: [rewardItems.id],
+  }),
+}));
+
+// Issue #34: Rewards Store Types
+export type RewardItem = typeof rewardItems.$inferSelect;
+export type NewRewardItem = typeof rewardItems.$inferInsert;
+
+export type RedemptionTransaction = typeof redemptionTransactions.$inferSelect;
+export type NewRedemptionTransaction = typeof redemptionTransactions.$inferInsert;
+
 // Status types for type-safe handling
 export type EventStatus = 'pending' | 'processed' | 'failed';
 export type MemberRole = 'owner' | 'admin' | 'member';

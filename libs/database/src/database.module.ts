@@ -28,9 +28,16 @@ import { QuestDefinitionRepository } from './repositories/quest-definition.repos
 import { QuestStepRepository } from './repositories/quest-step.repository';
 import { UserQuestProgressRepository } from './repositories/user-quest-progress.repository';
 import { UserStepProgressRepository } from './repositories/user-step-progress.repository';
+// Issue #32: Streak Engine Repositories
+import { StreakRuleRepository } from './repositories/streak-rule.repository';
+import { UserStreakRepository } from './repositories/user-streak.repository';
+import { StreakHistoryRepository } from './repositories/streak-history.repository';
 // Issue #33: Badge System Repositories
 import { BadgeDefinitionRepository } from './repositories/badge-definition.repository';
 import { UserBadgeRepository } from './repositories/user-badge.repository';
+// Issue #34: Rewards Store Repositories
+import { RewardItemRepository } from './repositories/reward-item.repository';
+import { RedemptionTransactionRepository } from './repositories/redemption-transaction.repository';
 
 let pool: Pool;
 
@@ -87,9 +94,16 @@ export class DatabaseModule {
       QuestStepRepository,
       UserQuestProgressRepository,
       UserStepProgressRepository,
+      // Issue #32
+      StreakRuleRepository,
+      UserStreakRepository,
+      StreakHistoryRepository,
       // Issue #33
       BadgeDefinitionRepository,
       UserBadgeRepository,
+      // Issue #34
+      RewardItemRepository,
+      RedemptionTransactionRepository,
     ];
 
     return {
@@ -140,9 +154,16 @@ export class DatabaseModule {
       QuestStepRepository,
       UserQuestProgressRepository,
       UserStepProgressRepository,
+      // Issue #32
+      StreakRuleRepository,
+      UserStreakRepository,
+      StreakHistoryRepository,
       // Issue #33
       BadgeDefinitionRepository,
       UserBadgeRepository,
+      // Issue #34
+      RewardItemRepository,
+      RedemptionTransactionRepository,
     ];
 
     return {

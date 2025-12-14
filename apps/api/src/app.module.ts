@@ -31,6 +31,8 @@ import { LoyaltyModule } from './loyalty/loyalty.module';
 import { QuestsModule } from './quests/quests.module';
 // Issue #33: Badge System
 import { BadgesModule } from './badges/badges.module';
+// Issue #34: Rewards Store
+import { RewardsModule } from './rewards/rewards.module';
 
 @Module({
   imports: [
@@ -82,6 +84,8 @@ import { BadgesModule } from './badges/badges.module';
     QuestsModule,
     // Issue #33: Badge System
     BadgesModule,
+    // Issue #34: Rewards Store
+    RewardsModule,
   ],
   controllers: [AppController, EventsController, AuthController, BetterAuthController],
   providers: [AppService, EventsService],

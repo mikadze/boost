@@ -39,3 +39,7 @@ export * from './streak-history.repository';
 // Issue #33: Badge System Repositories
 export * from './badge-definition.repository';
 export * from './user-badge.repository';
+
+// Issue #34: Rewards Store Repositories
+export * from './reward-item.repository';
+export * from './redemption-transaction.repository';
