@@ -188,3 +188,18 @@ export class PromoCodeFulfillmentConfig {
   @IsString({ each: true })
   codes!: string[];
 }
+
+// Manual Fulfillment DTOs
+
+export class CompleteRedemptionDto {
+  @IsObject()
+  @IsOptional()
+  fulfillmentData?: Record<string, unknown>;
+}
+
+export class FailRedemptionDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  errorMessage!: string;
+}

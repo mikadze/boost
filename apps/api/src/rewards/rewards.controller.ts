@@ -18,6 +18,8 @@ import {
   UpdateRewardItemDto,
   RedeemRewardDto,
   QueryRedemptionsDto,
+  CompleteRedemptionDto,
+  FailRedemptionDto,
 } from './dto/rewards.dto';
 
 @Controller('rewards')
@@ -160,12 +162,12 @@ export class RewardsController {
   async completeRedemption(
     @CurrentProjectId() projectId: string,
     @Param('id') id: string,
-    @Body() body: { fulfillmentData?: Record<string, unknown> },
+    @Body() dto: CompleteRedemptionDto,
   ) {
     return this.rewardsService.markRedemptionCompleted(
       projectId,
       id,
-      body.fulfillmentData,
+      dto.fulfillmentData,
     );
   }
 
@@ -177,9 +179,9 @@ export class RewardsController {
   async failRedemption(
     @CurrentProjectId() projectId: string,
     @Param('id') id: string,
-    @Body() body: { errorMessage: string },
+    @Body() dto: FailRedemptionDto,
   ) {
-    return this.rewardsService.markRedemptionFailed(projectId, id, body.errorMessage);
+    return this.rewardsService.markRedemptionFailed(projectId, id, dto.errorMessage);
   }
 }
 

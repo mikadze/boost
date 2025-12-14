@@ -29,6 +29,8 @@ import { CouponsModule } from './coupons/coupons.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 // Issue #25-28: Quest Engine
 import { QuestsModule } from './quests/quests.module';
+// Issue #33: Badge System
+import { BadgesModule } from './badges/badges.module';
 // Issue #34: Rewards Store
 import { RewardsModule } from './rewards/rewards.module';
 
@@ -80,6 +82,8 @@ import { RewardsModule } from './rewards/rewards.module';
     LoyaltyModule,
     // Issue #25-28: Quest Engine
     QuestsModule,
+    // Issue #33: Badge System
+    BadgesModule,
     // Issue #34: Rewards Store
     RewardsModule,
   ],

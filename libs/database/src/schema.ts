@@ -585,6 +585,12 @@ export const projectRelations = relations(projects, ({ one, many }) => ({
   customerSessions: many(customerSessions),
   coupons: many(coupons),
   loyaltyTiers: many(loyaltyTiers),
+  // Issue #32: Streak Engine
+  streakRules: many(streakRules),
+  userStreaks: many(userStreaks),
+  streakHistory: many(streakHistory),
+  // Issue #33: Badge System
+  badgeDefinitions: many(badgeDefinitions),
 }));
 
 export const apiKeyRelations = relations(apiKeys, ({ one }) => ({
@@ -604,6 +610,11 @@ export const endUserRelations = relations(endUsers, ({ one, many }) => ({
     references: [loyaltyTiers.id],
   }),
   ledgerEntries: many(loyaltyLedger),
+  // Issue #32: Streak Engine
+  streaks: many(userStreaks),
+  streakHistory: many(streakHistory),
+  // Issue #33: Badge System
+  badges: many(userBadges),
 }));
 
 export const eventRelations = relations(events, ({ one }) => ({
@@ -1193,6 +1204,305 @@ export type UserStepProgress = typeof userStepProgress.$inferSelect;
 export type NewUserStepProgress = typeof userStepProgress.$inferInsert;
 
 // ============================================
+// Issue #32: Streak Engine Tables
+// ============================================
+
+// Streak Rules table - defines streak configurations (Story 2.3)
+export const streakRules = pgTable('streak_rule', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  /** Rule name (e.g., 'Daily Login Streak', 'Weekly Challenge') */
+  name: varchar('name', { length: 255 }).notNull(),
+  /** Description of the streak rule */
+  description: text('description'),
+  /** Event type that triggers the streak (e.g., 'lesson_completed', 'daily_login') */
+  eventType: varchar('event_type', { length: 255 }).notNull(),
+  /** Frequency of the streak: 'daily' or 'weekly' */
+  frequency: varchar('frequency', { length: 20 }).default('daily').notNull(),
+  /** Milestone configuration as JSONB - array of { day: number, rewardXp: number, badgeId?: string } */
+  milestones: jsonb('milestones').default([]).notNull(),
+  /** Default freeze inventory for new users */
+  defaultFreezeCount: integer('default_freeze_count').default(0).notNull(),
+  /** Whether rule is active */
+  active: boolean('active').default(true).notNull(),
+  /** User's timezone offset in minutes (for accurate day calculation) */
+  timezoneOffsetMinutes: integer('timezone_offset_minutes').default(0).notNull(),
+  /** Additional metadata */
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => ({
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  projectIdx: index('streak_rule_project_idx').on(t.projectId),
+  eventTypeIdx: index('streak_rule_event_type_idx').on(t.eventType),
+  activeIdx: index('streak_rule_active_idx').on(t.active),
+}));
+
+// User Streaks table - tracks individual user streak progress (Story 2.1)
+export const userStreaks = pgTable('user_streak', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  /** End user ID (FK to endUsers) */
+  endUserId: uuid('end_user_id').notNull(),
+  /** Streak rule this progress belongs to */
+  streakRuleId: uuid('streak_rule_id').notNull(),
+  /** Current consecutive count */
+  currentCount: integer('current_count').default(0).notNull(),
+  /** Maximum streak ever achieved */
+  maxStreak: integer('max_streak').default(0).notNull(),
+  /** Last date activity was logged (UTC, stored as DATE for day-level precision) */
+  lastActivityDate: timestamp('last_activity_date'),
+  /** Number of freeze tokens available */
+  freezeInventory: integer('freeze_inventory').default(0).notNull(),
+  /** Whether a freeze was used today (prevents double-freeze) */
+  freezeUsedToday: boolean('freeze_used_today').default(false).notNull(),
+  /** Streak status for UI display */
+  status: varchar('status', { length: 32 }).default('inactive').notNull(), // 'inactive' | 'active' | 'at_risk' | 'frozen' | 'broken'
+  /** Last milestone reached */
+  lastMilestoneDay: integer('last_milestone_day').default(0).notNull(),
+  /** Additional metadata */
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => ({
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  endUserFk: foreignKey({
+    columns: [t.endUserId],
+    foreignColumns: [endUsers.id],
+  }).onDelete('cascade'),
+  streakRuleFk: foreignKey({
+    columns: [t.streakRuleId],
+    foreignColumns: [streakRules.id],
+  }).onDelete('cascade'),
+  uniqueUserStreakIdx: uniqueIndex('user_streak_unique_idx').on(t.endUserId, t.streakRuleId),
+  projectIdx: index('user_streak_project_idx').on(t.projectId),
+  endUserIdx: index('user_streak_end_user_idx').on(t.endUserId),
+  streakRuleIdx: index('user_streak_rule_idx').on(t.streakRuleId),
+  statusIdx: index('user_streak_status_idx').on(t.status),
+}));
+
+// Streak History table - immutable log of streak events (for analytics)
+export const streakHistory = pgTable('streak_history', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  /** End user ID */
+  endUserId: uuid('end_user_id').notNull(),
+  /** Streak rule ID */
+  streakRuleId: uuid('streak_rule_id').notNull(),
+  /** User streak ID */
+  userStreakId: uuid('user_streak_id').notNull(),
+  /** Action type */
+  action: varchar('action', { length: 32 }).notNull(), // 'extended' | 'broken' | 'frozen' | 'milestone_reached' | 'started'
+  /** Streak count at time of action */
+  streakCount: integer('streak_count').notNull(),
+  /** Milestone reached (if applicable) */
+  milestoneDay: integer('milestone_day'),
+  /** XP awarded (if applicable) */
+  xpAwarded: integer('xp_awarded'),
+  /** Additional metadata (e.g., source event ID) */
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => ({
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  endUserFk: foreignKey({
+    columns: [t.endUserId],
+    foreignColumns: [endUsers.id],
+  }).onDelete('cascade'),
+  streakRuleFk: foreignKey({
+    columns: [t.streakRuleId],
+    foreignColumns: [streakRules.id],
+  }).onDelete('cascade'),
+  userStreakFk: foreignKey({
+    columns: [t.userStreakId],
+    foreignColumns: [userStreaks.id],
+  }).onDelete('cascade'),
+  projectIdx: index('streak_history_project_idx').on(t.projectId),
+  endUserIdx: index('streak_history_end_user_idx').on(t.endUserId),
+  userStreakIdx: index('streak_history_user_streak_idx').on(t.userStreakId),
+  actionIdx: index('streak_history_action_idx').on(t.action),
+  createdIdx: index('streak_history_created_idx').on(t.createdAt),
+}));
+
+// Issue #32: Streak Engine Relations
+export const streakRuleRelations = relations(streakRules, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [streakRules.projectId],
+    references: [projects.id],
+  }),
+  userStreaks: many(userStreaks),
+  history: many(streakHistory),
+}));
+
+export const userStreakRelations = relations(userStreaks, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [userStreaks.projectId],
+    references: [projects.id],
+  }),
+  endUser: one(endUsers, {
+    fields: [userStreaks.endUserId],
+    references: [endUsers.id],
+  }),
+  streakRule: one(streakRules, {
+    fields: [userStreaks.streakRuleId],
+    references: [streakRules.id],
+  }),
+  history: many(streakHistory),
+}));
+
+export const streakHistoryRelations = relations(streakHistory, ({ one }) => ({
+  project: one(projects, {
+    fields: [streakHistory.projectId],
+    references: [projects.id],
+  }),
+  endUser: one(endUsers, {
+    fields: [streakHistory.endUserId],
+    references: [endUsers.id],
+  }),
+  streakRule: one(streakRules, {
+    fields: [streakHistory.streakRuleId],
+    references: [streakRules.id],
+  }),
+  userStreak: one(userStreaks, {
+    fields: [streakHistory.userStreakId],
+    references: [userStreaks.id],
+  }),
+}));
+
+// Issue #32: Streak Engine Types
+export type StreakRule = typeof streakRules.$inferSelect;
+export type NewStreakRule = typeof streakRules.$inferInsert;
+
+export type UserStreak = typeof userStreaks.$inferSelect;
+export type NewUserStreak = typeof userStreaks.$inferInsert;
+
+export type StreakHistoryEntry = typeof streakHistory.$inferSelect;
+export type NewStreakHistoryEntry = typeof streakHistory.$inferInsert;
+
+// ============================================
+// Issue #33: Badge System Tables
+// ============================================
+
+// Badge Definitions table - defines badges/achievements
+export const badgeDefinitions = pgTable('badge_definition', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  /** Badge name */
+  name: varchar('name', { length: 255 }).notNull(),
+  /** Badge description */
+  description: text('description'),
+  /** Icon URL for the badge */
+  iconUrl: text('icon_url'),
+  /** Image URL for the badge (larger image) */
+  imageUrl: text('image_url'),
+  /** Badge rarity level */
+  rarity: varchar('rarity', { length: 20 }).default('COMMON').notNull(), // 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
+  /** Badge visibility */
+  visibility: varchar('visibility', { length: 20 }).default('PUBLIC').notNull(), // 'PUBLIC' | 'HIDDEN'
+  /** Badge category for grouping */
+  category: varchar('category', { length: 100 }),
+  /** Rule type for earning the badge */
+  ruleType: varchar('rule_type', { length: 50 }).default('METRIC_THRESHOLD').notNull(), // 'METRIC_THRESHOLD' | 'EVENT_COUNT' | 'MANUAL'
+  /** Metric name to track (e.g., 'purchases', 'referrals') */
+  triggerMetric: varchar('trigger_metric', { length: 100 }),
+  /** Threshold value to earn badge (for METRIC_THRESHOLD and EVENT_COUNT) */
+  threshold: integer('threshold'),
+  /** Whether badge is active */
+  active: boolean('active').default(true).notNull(),
+  /** Additional metadata */
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => ({
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  projectIdx: index('badge_definition_project_idx').on(t.projectId),
+  activeIdx: index('badge_definition_active_idx').on(t.active),
+  categoryIdx: index('badge_definition_category_idx').on(t.projectId, t.category),
+  rarityIdx: index('badge_definition_rarity_idx').on(t.rarity),
+  triggerMetricIdx: index('badge_definition_trigger_metric_idx').on(t.projectId, t.triggerMetric),
+}));
+
+// User Badges table - tracks badge ownership per user
+export const userBadges = pgTable('user_badge', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull(),
+  /** End user who earned the badge */
+  endUserId: uuid('end_user_id').notNull(),
+  /** Badge definition */
+  badgeId: uuid('badge_id').notNull(),
+  /** When the badge was unlocked/earned */
+  unlockedAt: timestamp('unlocked_at').defaultNow().notNull(),
+  /** Metadata snapshot at time of award (badge details, trigger info) */
+  metadata: jsonb('metadata'),
+  /** Source of the award */
+  awardSource: varchar('award_source', { length: 50 }).default('AUTOMATIC').notNull(), // 'AUTOMATIC' | 'MANUAL' | 'QUEST_REWARD'
+  /** User ID who manually awarded (for audit) */
+  awardedBy: varchar('awarded_by', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => ({
+  projectFk: foreignKey({
+    columns: [t.projectId],
+    foreignColumns: [projects.id],
+  }).onDelete('cascade'),
+  endUserFk: foreignKey({
+    columns: [t.endUserId],
+    foreignColumns: [endUsers.id],
+  }).onDelete('cascade'),
+  badgeFk: foreignKey({
+    columns: [t.badgeId],
+    foreignColumns: [badgeDefinitions.id],
+  }).onDelete('cascade'),
+  // Unique constraint: user can only earn each badge once
+  uniqueBadgeIdx: uniqueIndex('user_badge_unique_idx').on(t.endUserId, t.badgeId),
+  projectIdx: index('user_badge_project_idx').on(t.projectId),
+  endUserIdx: index('user_badge_end_user_idx').on(t.endUserId),
+  badgeIdx: index('user_badge_badge_idx').on(t.badgeId),
+  unlockedAtIdx: index('user_badge_unlocked_at_idx').on(t.unlockedAt),
+}));
+
+// Issue #33: Badge System Relations
+export const badgeDefinitionRelations = relations(badgeDefinitions, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [badgeDefinitions.projectId],
+    references: [projects.id],
+  }),
+  userBadges: many(userBadges),
+}));
+
+export const userBadgeRelations = relations(userBadges, ({ one }) => ({
+  project: one(projects, {
+    fields: [userBadges.projectId],
+    references: [projects.id],
+  }),
+  endUser: one(endUsers, {
+    fields: [userBadges.endUserId],
+    references: [endUsers.id],
+  }),
+  badge: one(badgeDefinitions, {
+    fields: [userBadges.badgeId],
+    references: [badgeDefinitions.id],
+  }),
+}));
+
+// Issue #33: Badge System Types
+export type BadgeDefinition = typeof badgeDefinitions.$inferSelect;
+export type NewBadgeDefinition = typeof badgeDefinitions.$inferInsert;
+
+export type UserBadge = typeof userBadges.$inferSelect;
+export type NewUserBadge = typeof userBadges.$inferInsert;
+
+// ============================================
 // Issue #34: Rewards Store Tables
 // ============================================
 
@@ -1326,3 +1636,10 @@ export type CommissionPlanType = 'PERCENTAGE' | 'FIXED';
 export type CommissionStatus = 'PENDING' | 'PAID' | 'REJECTED';
 export type QuestProgressStatus = 'not_started' | 'in_progress' | 'completed';
 export type ApiKeyType = 'publishable' | 'secret';
+export type StreakFrequency = 'daily' | 'weekly';
+export type StreakStatus = 'inactive' | 'active' | 'at_risk' | 'frozen' | 'broken';
+export type StreakAction = 'extended' | 'broken' | 'frozen' | 'milestone_reached' | 'started';
+export type BadgeRarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
+export type BadgeVisibility = 'PUBLIC' | 'HIDDEN';
+export type BadgeRuleType = 'METRIC_THRESHOLD' | 'EVENT_COUNT' | 'MANUAL';
+export type BadgeAwardSource = 'AUTOMATIC' | 'MANUAL' | 'QUEST_REWARD';

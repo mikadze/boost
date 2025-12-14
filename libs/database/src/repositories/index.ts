@@ -31,6 +31,15 @@ export * from './quest-step.repository';
 export * from './user-quest-progress.repository';
 export * from './user-step-progress.repository';
 
+// Issue #32: Streak Engine Repositories
+export * from './streak-rule.repository';
+export * from './user-streak.repository';
+export * from './streak-history.repository';
+
+// Issue #33: Badge System Repositories
+export * from './badge-definition.repository';
+export * from './user-badge.repository';
+
 // Issue #34: Rewards Store Repositories
 export * from './reward-item.repository';
 export * from './redemption-transaction.repository';
