@@ -21,6 +21,8 @@ import { DemoReferral } from '@/components/demo/demo-referral';
 import { DemoAffiliateStats } from '@/components/demo/demo-affiliate-stats';
 import { DemoLeaderboard } from '@/components/demo/demo-leaderboard';
 import { DemoQuests } from '@/components/demo/demo-quests';
+import { DemoBadges } from '@/components/demo/demo-badges';
+import { DemoCampaigns } from '@/components/demo/demo-campaigns';
 
 function PlaygroundHeader() {
   const { apiKey, setApiKey } = useDemoContext();
@@ -188,12 +190,34 @@ function PlaygroundContent() {
           </motion.div>
         )}
 
-        {/* Affiliate Section - Only show when user selected */}
+        {/* Badges/Achievements - Only show when user selected */}
+        {currentUser && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+          >
+            <DemoBadges userId={currentUser.id} />
+          </motion.div>
+        )}
+
+        {/* Campaigns/Automations - Only show when user selected */}
         {currentUser && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
+          >
+            <DemoCampaigns userId={currentUser.id} />
+          </motion.div>
+        )}
+
+        {/* Affiliate Section - Only show when user selected */}
+        {currentUser && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12 }}
           >
             <DemoReferral userId={currentUser.id} />
           </motion.div>
@@ -213,7 +237,7 @@ function PlaygroundContent() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.18 }}
         >
           <DemoLeaderboard currentUserId={currentUser?.id || null} />
         </motion.div>

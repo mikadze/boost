@@ -5,11 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
-  Megaphone,
   Target,
   Users,
-  Code,
-  FolderOpen,
   Key,
   Webhook,
   Bug,
@@ -18,39 +15,69 @@ import {
   ChevronDown,
   Sparkles,
   X,
+  Rocket,
+  Trophy,
+  Crown,
+  Medal,
+  Zap,
+  Workflow,
+  Ticket,
+  Database,
+  Sliders,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const navigation = [
   {
-    name: 'Dashboard',
+    name: 'Overview',
     href: '/dashboard',
     icon: LayoutDashboard,
   },
+  // Group: GROWTH (Acquisition & Activation)
   {
-    name: 'Campaigns',
-    href: '/dashboard/campaigns',
-    icon: Megaphone,
-  },
-  {
-    name: 'Quests',
-    href: '/dashboard/quests',
-    icon: Target,
-  },
-  {
-    name: 'Customers',
-    href: '/dashboard/customers',
-    icon: Users,
-  },
-  {
-    name: 'Developer',
-    icon: Code,
+    name: 'Growth',
+    icon: Rocket,
     children: [
-      { name: 'Projects', href: '/dashboard/developer/projects', icon: FolderOpen },
+      { name: 'Onboarding', href: '/dashboard/quests', icon: Target },
+      { name: 'Referrals', href: '/dashboard/referrals', icon: Users },
+    ],
+  },
+  // Group: LOYALTY (Retention & Status)
+  {
+    name: 'Loyalty',
+    icon: Trophy,
+    children: [
+      { name: 'Tiers & Points', href: '/dashboard/loyalty', icon: Crown },
+      { name: 'Achievements', href: '/dashboard/badges', icon: Medal },
+    ],
+  },
+  // Group: ENGINE (Logic & Habits)
+  {
+    name: 'Engine',
+    icon: Zap,
+    children: [
+      { name: 'Automations', href: '/dashboard/campaigns', icon: Workflow },
+      { name: 'Rewards', href: '/dashboard/coupons', icon: Ticket },
+    ],
+  },
+  // Group: DATA (Audience & Debugging)
+  {
+    name: 'Data',
+    icon: Database,
+    children: [
+      { name: 'Customers', href: '/dashboard/customers', icon: Users },
+      { name: 'Events Log', href: '/dashboard/developer/debugger', icon: Bug },
+    ],
+  },
+  // Group: CONFIG
+  {
+    name: 'Settings',
+    icon: Sliders,
+    children: [
       { name: 'API Keys', href: '/dashboard/developer/api-keys', icon: Key },
       { name: 'Webhooks', href: '/dashboard/developer/webhooks', icon: Webhook },
-      { name: 'Debugger', href: '/dashboard/developer/debugger', icon: Bug },
+      { name: 'General', href: '/dashboard/settings', icon: Settings },
     ],
   },
   {
@@ -91,7 +118,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
         <span className="text-xl font-bold gradient-text">Boost</span>
       </div>
-      <nav className="flex flex-col gap-1 p-4">
+      <nav className="flex flex-col gap-1 p-4 overflow-y-auto h-[calc(100vh-4rem)]">
         {navigation.map((item) =>
           item.children ? (
             <NavGroup key={item.name} item={item} pathname={pathname} />
@@ -107,11 +134,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           )
         )}
       </nav>
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
-        <NavItem href="/dashboard/settings" icon={Settings} active={pathname === '/dashboard/settings'}>
-          Settings
-        </NavItem>
-      </div>
     </aside>
   );
 }
