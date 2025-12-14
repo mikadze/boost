@@ -5,6 +5,7 @@ import {
   EventHandlerRegistry,
   QuestProgressEventHandler,
   StreakEventHandler,
+  BadgeEventHandler,
 } from './handlers';
 
 @Injectable()
@@ -16,6 +17,7 @@ export class WorkerService {
     private readonly handlerRegistry: EventHandlerRegistry,
     private readonly questProgressHandler: QuestProgressEventHandler,
     private readonly streakEventHandler: StreakEventHandler,
+    private readonly badgeEventHandler: BadgeEventHandler,
   ) {}
 
   /**
@@ -67,6 +69,17 @@ export class WorkerService {
       } catch (streakError) {
         // Log but don't fail the event processing if streak evaluation fails
         this.logger.warn(`Streak progress evaluation failed: ${streakError}`);
+      }
+
+      // Issue #33: Check for badge awards on ALL events
+      // Evaluates if any badges should be awarded based on event triggers
+      try {
+        if (await this.badgeEventHandler.shouldHandle(rawEvent)) {
+          await this.badgeEventHandler.handle(rawEvent);
+        }
+      } catch (badgeError) {
+        // Log but don't fail the event processing if badge evaluation fails
+        this.logger.warn(`Badge evaluation failed: ${badgeError}`);
       }
 
       // Update event status to processed via repository
