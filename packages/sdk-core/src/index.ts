@@ -46,7 +46,12 @@ export type {
   RewardItem,
   RewardsStoreResponse,
   RedemptionResult,
+  // Theme system
+  Theme,
 } from './types.js';
+
+// Theme default export
+export { defaultTheme } from './types.js';
 
 // Re-export internals for advanced usage
 export { createStorage } from './storage/index.js';

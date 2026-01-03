@@ -3,8 +3,8 @@
  * @packageDocumentation
  */
 
-// Context and Provider
-export { GamifyProvider, type GamifyProviderProps, type GamifyContextValue } from './context.js';
+// Context, Provider, and Theme
+export { GamifyProvider, useGamifyTheme, type GamifyProviderProps, type GamifyContextValue } from './context.js';
 
 // Hooks
 export {
@@ -84,4 +84,9 @@ export type {
   RewardItem,
   RewardsStoreResponse,
   RedemptionResult,
+  // Theme
+  Theme,
 } from '@gamifyio/core';
+
+// Re-export defaultTheme for convenience
+export { defaultTheme } from '@gamifyio/core';

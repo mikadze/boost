@@ -439,3 +439,90 @@ export interface RedemptionResult {
   message: string;
   remainingPoints?: number;
 }
+
+// ============================================
+// Theme System
+// ============================================
+
+/**
+ * Theme configuration for SDK components
+ * All colors should be valid CSS color values
+ */
+export interface Theme {
+  // Base colors
+  /** Card/container background color */
+  background: string;
+  /** Secondary background (inputs, nested elements) */
+  backgroundSecondary: string;
+  /** Primary text color */
+  foreground: string;
+  /** Secondary/muted text color */
+  foregroundSecondary: string;
+  /** Border color */
+  border: string;
+
+  // Accent colors
+  /** Primary accent color (buttons, highlights) */
+  primary: string;
+  /** Text on primary color */
+  primaryForeground: string;
+
+  // Status colors
+  /** Success/positive states */
+  success: string;
+  /** Warning/pending states */
+  warning: string;
+  /** Error states */
+  error: string;
+
+  // Rarity colors (for badges/achievements)
+  rarityCommon: string;
+  rarityRare: string;
+  rarityEpic: string;
+  rarityLegendary: string;
+
+  // Medal colors (for leaderboard)
+  medalGold: string;
+  medalSilver: string;
+  medalBronze: string;
+
+  // Component-specific (optional overrides)
+  cardBackground?: string;
+  cardBorder?: string;
+  inputBackground?: string;
+  inputBorder?: string;
+  buttonBackground?: string;
+  buttonForeground?: string;
+}
+
+/**
+ * Default dark theme matching the playground UI
+ */
+export const defaultTheme: Theme = {
+  // Base colors (dark theme with glass effect)
+  background: 'rgba(255, 255, 255, 0.05)',
+  backgroundSecondary: 'rgba(255, 255, 255, 0.1)',
+  foreground: '#ffffff',
+  foregroundSecondary: 'rgba(255, 255, 255, 0.7)',
+  border: 'rgba(255, 255, 255, 0.1)',
+
+  // Accent colors (purple like playground)
+  primary: '#8B5CF6',
+  primaryForeground: '#ffffff',
+
+  // Status colors
+  success: '#22C55E',
+  warning: '#F59E0B',
+  error: '#EF4444',
+
+  // Rarity colors (matching playground)
+  rarityCommon: '#9CA3AF',
+  rarityRare: '#3B82F6',
+  rarityEpic: '#8B5CF6',
+  rarityLegendary: '#F59E0B',
+
+  // Medal colors
+  medalGold: '#FFD700',
+  medalSilver: '#C0C0C0',
+  medalBronze: '#CD7F32',
+};

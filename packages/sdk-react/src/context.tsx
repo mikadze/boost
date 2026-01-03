@@ -8,7 +8,7 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import { Gamify, type GamifyConfig } from '@gamifyio/core';
+import { Gamify, type GamifyConfig, type Theme, defaultTheme } from '@gamifyio/core';
 
 /**
  * Context value for Gamify React SDK
@@ -31,11 +31,18 @@ export interface GamifyContextValue {
 const GamifyContext = createContext<GamifyContextValue | null>(null);
 
 /**
+ * Theme context for SDK components
+ */
+const ThemeContext = createContext<Theme>(defaultTheme);
+
+/**
  * Props for GamifyProvider
  */
 export interface GamifyProviderProps {
   /** Gamify SDK configuration */
   config: GamifyConfig;
+  /** Optional theme override (Partial<Theme>) */
+  theme?: Partial<Theme>;
   /** Child components */
   children: ReactNode;
 }
@@ -55,10 +62,24 @@ function isServer(): boolean {
  * <GamifyProvider config={{ apiKey: 'your-api-key' }}>
  *   <App />
  * </GamifyProvider>
+ *
+ * // With custom theme
+ * <GamifyProvider
+ *   config={{ apiKey: 'your-api-key' }}
+ *   theme={{ primary: '#00FF00' }}
+ * >
+ *   <App />
+ * </GamifyProvider>
  * ```
  */
-export function GamifyProvider({ config, children }: GamifyProviderProps) {
+export function GamifyProvider({ config, theme, children }: GamifyProviderProps) {
   const clientRef = useRef<Gamify | null>(null);
+
+  // Merge user theme with defaults
+  const mergedTheme = useMemo<Theme>(() => {
+    if (!theme) return defaultTheme;
+    return { ...defaultTheme, ...theme };
+  }, [theme]);
 
   // Initialize client only once and only on client-side
   const client = useMemo(() => {
@@ -101,15 +122,21 @@ export function GamifyProvider({ config, children }: GamifyProviderProps) {
     };
   }, [client]);
 
-  // During SSR, render children without context
+  // During SSR, render children without context but with theme
   if (!contextValue) {
-    return <>{children}</>;
+    return (
+      <ThemeContext.Provider value={mergedTheme}>
+        {children}
+      </ThemeContext.Provider>
+    );
   }
 
   return (
-    <GamifyContext.Provider value={contextValue}>
-      {children}
-    </GamifyContext.Provider>
+    <ThemeContext.Provider value={mergedTheme}>
+      <GamifyContext.Provider value={contextValue}>
+        {children}
+      </GamifyContext.Provider>
+    </ThemeContext.Provider>
   );
 }
 
@@ -118,4 +145,19 @@ export function GamifyProvider({ config, children }: GamifyProviderProps) {
  */
 export function useGamifyContext(): GamifyContextValue | null {
   return useContext(GamifyContext);
+}
+
+/**
+ * useGamifyTheme - Hook to access the current theme
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const theme = useGamifyTheme();
+ *   return <div style={{ color: theme.foreground }}>Themed content</div>;
+ * }
+ * ```
+ */
+export function useGamifyTheme(): Theme {
+  return useContext(ThemeContext);
 }

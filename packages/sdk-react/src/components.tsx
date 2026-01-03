@@ -12,6 +12,8 @@ import {
   useRewards,
   useLoyalty,
 } from './hooks.js';
+import { useGamifyTheme } from './context.js';
+import type { Theme } from '@gamifyio/core';
 import type {
   LeaderboardEntry,
   QuestWithProgress,
@@ -276,364 +278,370 @@ export function GamifyTrackClick({
 // ============================================
 
 /**
- * Default styles for affiliate components
+ * Create themed styles for SDK components
  * Uses CSS-in-JS for zero-dependency styling
  */
-const defaultStyles = {
-  statsContainer: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-    gap: '16px',
-    padding: '16px',
-  } as React.CSSProperties,
-  statsCard: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: '8px',
-    padding: '16px',
-    textAlign: 'center' as const,
-    border: '1px solid #e9ecef',
-  } as React.CSSProperties,
-  statsValue: {
-    fontSize: '24px',
-    fontWeight: 'bold',
-    color: '#212529',
-    marginBottom: '4px',
-  } as React.CSSProperties,
-  statsLabel: {
-    fontSize: '14px',
-    color: '#6c757d',
-  } as React.CSSProperties,
-  leaderboardContainer: {
-    padding: '16px',
-  } as React.CSSProperties,
-  leaderboardList: {
-    listStyle: 'none',
-    padding: 0,
-    margin: 0,
-  } as React.CSSProperties,
-  leaderboardRow: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '12px',
-    borderBottom: '1px solid #e9ecef',
-  } as React.CSSProperties,
-  leaderboardRowHighlighted: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '12px',
-    borderBottom: '1px solid #e9ecef',
-    backgroundColor: '#fff3cd',
-  } as React.CSSProperties,
-  leaderboardRank: {
-    fontWeight: 'bold',
-    width: '40px',
-    color: '#212529',
-  } as React.CSSProperties,
-  leaderboardName: {
-    flex: 1,
-    marginLeft: '12px',
-    color: '#212529',
-  } as React.CSSProperties,
-  leaderboardStats: {
-    color: '#6c757d',
-    fontSize: '14px',
-  } as React.CSSProperties,
-  leaderboardEmpty: {
-    textAlign: 'center' as const,
-    padding: '32px',
-    color: '#6c757d',
-  } as React.CSSProperties,
-  referralContainer: {
-    display: 'flex',
-    gap: '8px',
-    padding: '8px',
-  } as React.CSSProperties,
-  referralInput: {
-    flex: 1,
-    padding: '10px 12px',
-    border: '1px solid #ced4da',
-    borderRadius: '6px',
-    fontSize: '14px',
-    backgroundColor: '#f8f9fa',
-    color: '#212529',
-  } as React.CSSProperties,
-  referralButton: {
-    padding: '10px 16px',
-    border: 'none',
-    borderRadius: '6px',
-    backgroundColor: '#0d6efd',
-    color: 'white',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: '500',
-  } as React.CSSProperties,
-  // Tier badge styles
-  tierBadge: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '12px',
-    borderRadius: '8px',
-    marginBottom: '12px',
-  } as React.CSSProperties,
-  tierBadgeIcon: {
-    width: '20px',
-    height: '20px',
-  } as React.CSSProperties,
-  tierBadgeText: {
-    flex: 1,
-  } as React.CSSProperties,
-  tierBadgeName: {
-    fontWeight: '500',
-    fontSize: '14px',
-  } as React.CSSProperties,
-  tierBadgeRate: {
-    fontSize: '12px',
-    opacity: 0.8,
-  } as React.CSSProperties,
-  // Referral code row
-  referralCodeRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '12px',
-    backgroundColor: '#f8f9fa',
-    borderRadius: '8px',
-    marginBottom: '12px',
-  } as React.CSSProperties,
-  referralCodeLabel: {
-    fontSize: '12px',
-    color: '#6c757d',
-    marginBottom: '2px',
-  } as React.CSSProperties,
-  referralCodeValue: {
-    fontFamily: 'monospace',
-    fontWeight: '500',
-    fontSize: '14px',
-    color: '#212529',
-  } as React.CSSProperties,
-  referralCodeCopyButton: {
-    padding: '6px 10px',
-    border: 'none',
-    borderRadius: '4px',
-    backgroundColor: 'transparent',
-    color: '#6c757d',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  } as React.CSSProperties,
-  // 2-column stats grid
-  statsGrid2Col: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '12px',
-    marginBottom: '12px',
-  } as React.CSSProperties,
-  // Earnings breakdown
-  earningsBreakdown: {
-    borderTop: '1px solid #e9ecef',
-    paddingTop: '12px',
-    marginTop: '12px',
-  } as React.CSSProperties,
-  earningsTitle: {
-    fontSize: '14px',
-    fontWeight: '500',
-    color: '#212529',
-    marginBottom: '8px',
-  } as React.CSSProperties,
-  earningsRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '4px 0',
-  } as React.CSSProperties,
-  earningsLabel: {
-    fontSize: '14px',
-    color: '#6c757d',
-  } as React.CSSProperties,
-  earningsValue: {
-    fontFamily: 'monospace',
-    fontWeight: '500',
-    fontSize: '14px',
-  } as React.CSSProperties,
-  earningsValueGreen: {
-    fontFamily: 'monospace',
-    fontWeight: '500',
-    fontSize: '14px',
-    color: '#28a745',
-  } as React.CSSProperties,
-  earningsValueYellow: {
-    fontFamily: 'monospace',
-    fontWeight: '500',
-    fontSize: '14px',
-    color: '#ffc107',
-  } as React.CSSProperties,
-  // Medal styles for leaderboard
-  medalIcon: {
-    width: '24px',
-    height: '24px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '18px',
-  } as React.CSSProperties,
-  // Referrer attribution
-  referrerSection: {
-    borderTop: '1px solid #e9ecef',
-    paddingTop: '12px',
-    marginTop: '12px',
-  } as React.CSSProperties,
-  referrerTitle: {
-    fontSize: '14px',
-    fontWeight: '500',
-    color: '#212529',
-    marginBottom: '8px',
-  } as React.CSSProperties,
-  referrerBadge: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '12px',
-    backgroundColor: 'rgba(40, 167, 69, 0.1)',
-    border: '1px solid rgba(40, 167, 69, 0.2)',
-    borderRadius: '8px',
-  } as React.CSSProperties,
-  referrerBadgeInfo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    fontSize: '14px',
-    color: '#212529',
-  } as React.CSSProperties,
-  referrerBadgeIcon: {
-    color: '#28a745',
-  } as React.CSSProperties,
-  referrerClearButton: {
-    padding: '4px 8px',
-    border: 'none',
-    borderRadius: '4px',
-    backgroundColor: 'transparent',
-    color: '#6c757d',
-    cursor: 'pointer',
-  } as React.CSSProperties,
-  referrerInputRow: {
-    display: 'flex',
-    gap: '8px',
-    marginBottom: '8px',
-  } as React.CSSProperties,
-  referrerDetectButton: {
-    width: '100%',
-    padding: '10px 16px',
-    border: '1px solid #ced4da',
-    borderRadius: '6px',
-    backgroundColor: 'white',
-    color: '#212529',
-    cursor: 'pointer',
-    fontSize: '14px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-  } as React.CSSProperties,
-  // Filter tabs
-  filterTabs: {
-    display: 'flex',
-    gap: '8px',
-    marginBottom: '16px',
-  } as React.CSSProperties,
-  filterTab: {
-    padding: '6px 12px',
-    fontSize: '12px',
-    borderRadius: '9999px',
-    border: 'none',
-    cursor: 'pointer',
-    backgroundColor: '#f8f9fa',
-    color: '#6c757d',
-    transition: 'all 0.2s',
-  } as React.CSSProperties,
-  filterTabActive: {
-    padding: '6px 12px',
-    fontSize: '12px',
-    borderRadius: '9999px',
-    border: 'none',
-    cursor: 'pointer',
-    backgroundColor: '#0d6efd',
-    color: 'white',
-  } as React.CSSProperties,
-  // Progress summary for badges
-  progressSummary: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '12px',
-    backgroundColor: '#f8f9fa',
-    borderRadius: '8px',
-    marginBottom: '16px',
-  } as React.CSSProperties,
-  progressSummaryLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  } as React.CSSProperties,
-  progressSummaryIcon: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    backgroundColor: 'rgba(13, 110, 253, 0.1)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#0d6efd',
-    fontSize: '18px',
-  } as React.CSSProperties,
-  progressSummaryText: {
-    fontWeight: '500',
-    fontSize: '16px',
-    color: '#212529',
-  } as React.CSSProperties,
-  progressSummarySubtext: {
-    fontSize: '12px',
-    color: '#6c757d',
-  } as React.CSSProperties,
-  progressSummaryBar: {
-    width: '80px',
-    height: '8px',
-    backgroundColor: '#e9ecef',
-    borderRadius: '4px',
-    overflow: 'hidden',
-  } as React.CSSProperties,
-  progressSummaryBarFill: {
-    height: '100%',
-    backgroundColor: '#0d6efd',
-    borderRadius: '4px',
-  } as React.CSSProperties,
-  // Badge progress bar for locked badges
-  badgeProgressBar: {
-    width: '100%',
-    height: '4px',
-    backgroundColor: '#e9ecef',
-    borderRadius: '2px',
-    overflow: 'hidden',
-    marginTop: '8px',
-  } as React.CSSProperties,
-  badgeProgressFill: {
-    height: '100%',
-    backgroundColor: '#6c757d',
-    borderRadius: '2px',
-  } as React.CSSProperties,
-  badgeProgressText: {
-    fontSize: '10px',
-    color: '#6c757d',
-    marginTop: '4px',
-  } as React.CSSProperties,
-  badgeCheckmark: {
-    position: 'absolute' as const,
-    top: '8px',
-    right: '8px',
-    color: '#28a745',
-  } as React.CSSProperties,
-};
+function createThemedStyles(theme: Theme) {
+  return {
+    statsContainer: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+      gap: '16px',
+      padding: '16px',
+    } as React.CSSProperties,
+    statsCard: {
+      backgroundColor: theme.cardBackground ?? theme.background,
+      borderRadius: '8px',
+      padding: '16px',
+      textAlign: 'center' as const,
+      border: `1px solid ${theme.cardBorder ?? theme.border}`,
+    } as React.CSSProperties,
+    statsValue: {
+      fontSize: '24px',
+      fontWeight: 'bold',
+      color: theme.foreground,
+      marginBottom: '4px',
+    } as React.CSSProperties,
+    statsLabel: {
+      fontSize: '14px',
+      color: theme.foregroundSecondary,
+    } as React.CSSProperties,
+    leaderboardContainer: {
+      padding: '16px',
+    } as React.CSSProperties,
+    leaderboardList: {
+      listStyle: 'none',
+      padding: 0,
+      margin: 0,
+    } as React.CSSProperties,
+    leaderboardRow: {
+      display: 'flex',
+      alignItems: 'center',
+      padding: '12px',
+      borderBottom: `1px solid ${theme.border}`,
+    } as React.CSSProperties,
+    leaderboardRowHighlighted: {
+      display: 'flex',
+      alignItems: 'center',
+      padding: '12px',
+      borderBottom: `1px solid ${theme.border}`,
+      backgroundColor: `${theme.primary}20`,
+    } as React.CSSProperties,
+    leaderboardRank: {
+      fontWeight: 'bold',
+      width: '40px',
+      color: theme.foreground,
+    } as React.CSSProperties,
+    leaderboardName: {
+      flex: 1,
+      marginLeft: '12px',
+      color: theme.foreground,
+    } as React.CSSProperties,
+    leaderboardStats: {
+      color: theme.foregroundSecondary,
+      fontSize: '14px',
+    } as React.CSSProperties,
+    leaderboardEmpty: {
+      textAlign: 'center' as const,
+      padding: '32px',
+      color: theme.foregroundSecondary,
+    } as React.CSSProperties,
+    referralContainer: {
+      display: 'flex',
+      gap: '8px',
+      padding: '8px',
+    } as React.CSSProperties,
+    referralInput: {
+      flex: 1,
+      padding: '10px 12px',
+      border: `1px solid ${theme.inputBorder ?? theme.border}`,
+      borderRadius: '6px',
+      fontSize: '14px',
+      backgroundColor: theme.inputBackground ?? theme.backgroundSecondary,
+      color: theme.foreground,
+    } as React.CSSProperties,
+    referralButton: {
+      padding: '10px 16px',
+      border: 'none',
+      borderRadius: '6px',
+      backgroundColor: theme.buttonBackground ?? theme.primary,
+      color: theme.buttonForeground ?? theme.primaryForeground,
+      cursor: 'pointer',
+      fontSize: '14px',
+      fontWeight: '500',
+    } as React.CSSProperties,
+    // Tier badge styles
+    tierBadge: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '12px',
+      borderRadius: '8px',
+      marginBottom: '12px',
+    } as React.CSSProperties,
+    tierBadgeIcon: {
+      width: '20px',
+      height: '20px',
+    } as React.CSSProperties,
+    tierBadgeText: {
+      flex: 1,
+    } as React.CSSProperties,
+    tierBadgeName: {
+      fontWeight: '500',
+      fontSize: '14px',
+    } as React.CSSProperties,
+    tierBadgeRate: {
+      fontSize: '12px',
+      opacity: 0.8,
+    } as React.CSSProperties,
+    // Referral code row
+    referralCodeRow: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '12px',
+      backgroundColor: theme.backgroundSecondary,
+      borderRadius: '8px',
+      marginBottom: '12px',
+    } as React.CSSProperties,
+    referralCodeLabel: {
+      fontSize: '12px',
+      color: theme.foregroundSecondary,
+      marginBottom: '2px',
+    } as React.CSSProperties,
+    referralCodeValue: {
+      fontFamily: 'monospace',
+      fontWeight: '500',
+      fontSize: '14px',
+      color: theme.foreground,
+    } as React.CSSProperties,
+    referralCodeCopyButton: {
+      padding: '6px 10px',
+      border: 'none',
+      borderRadius: '4px',
+      backgroundColor: 'transparent',
+      color: theme.foregroundSecondary,
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    } as React.CSSProperties,
+    // 2-column stats grid
+    statsGrid2Col: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(2, 1fr)',
+      gap: '12px',
+      marginBottom: '12px',
+    } as React.CSSProperties,
+    // Earnings breakdown
+    earningsBreakdown: {
+      borderTop: `1px solid ${theme.border}`,
+      paddingTop: '12px',
+      marginTop: '12px',
+    } as React.CSSProperties,
+    earningsTitle: {
+      fontSize: '14px',
+      fontWeight: '500',
+      color: theme.foreground,
+      marginBottom: '8px',
+    } as React.CSSProperties,
+    earningsRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '4px 0',
+    } as React.CSSProperties,
+    earningsLabel: {
+      fontSize: '14px',
+      color: theme.foregroundSecondary,
+    } as React.CSSProperties,
+    earningsValue: {
+      fontFamily: 'monospace',
+      fontWeight: '500',
+      fontSize: '14px',
+      color: theme.foreground,
+    } as React.CSSProperties,
+    earningsValueGreen: {
+      fontFamily: 'monospace',
+      fontWeight: '500',
+      fontSize: '14px',
+      color: theme.success,
+    } as React.CSSProperties,
+    earningsValueYellow: {
+      fontFamily: 'monospace',
+      fontWeight: '500',
+      fontSize: '14px',
+      color: theme.warning,
+    } as React.CSSProperties,
+    // Medal styles for leaderboard
+    medalIcon: {
+      width: '24px',
+      height: '24px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '18px',
+    } as React.CSSProperties,
+    // Referrer attribution
+    referrerSection: {
+      borderTop: `1px solid ${theme.border}`,
+      paddingTop: '12px',
+      marginTop: '12px',
+    } as React.CSSProperties,
+    referrerTitle: {
+      fontSize: '14px',
+      fontWeight: '500',
+      color: theme.foreground,
+      marginBottom: '8px',
+    } as React.CSSProperties,
+    referrerBadge: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '12px',
+      backgroundColor: `${theme.success}15`,
+      border: `1px solid ${theme.success}30`,
+      borderRadius: '8px',
+    } as React.CSSProperties,
+    referrerBadgeInfo: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      fontSize: '14px',
+      color: theme.foreground,
+    } as React.CSSProperties,
+    referrerBadgeIcon: {
+      color: theme.success,
+    } as React.CSSProperties,
+    referrerClearButton: {
+      padding: '4px 8px',
+      border: 'none',
+      borderRadius: '4px',
+      backgroundColor: 'transparent',
+      color: theme.foregroundSecondary,
+      cursor: 'pointer',
+    } as React.CSSProperties,
+    referrerInputRow: {
+      display: 'flex',
+      gap: '8px',
+      marginBottom: '8px',
+    } as React.CSSProperties,
+    referrerDetectButton: {
+      width: '100%',
+      padding: '10px 16px',
+      border: `1px solid ${theme.border}`,
+      borderRadius: '6px',
+      backgroundColor: theme.backgroundSecondary,
+      color: theme.foreground,
+      cursor: 'pointer',
+      fontSize: '14px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
+    } as React.CSSProperties,
+    // Filter tabs
+    filterTabs: {
+      display: 'flex',
+      gap: '8px',
+      marginBottom: '16px',
+    } as React.CSSProperties,
+    filterTab: {
+      padding: '6px 12px',
+      fontSize: '12px',
+      borderRadius: '9999px',
+      border: 'none',
+      cursor: 'pointer',
+      backgroundColor: theme.backgroundSecondary,
+      color: theme.foregroundSecondary,
+      transition: 'all 0.2s',
+    } as React.CSSProperties,
+    filterTabActive: {
+      padding: '6px 12px',
+      fontSize: '12px',
+      borderRadius: '9999px',
+      border: 'none',
+      cursor: 'pointer',
+      backgroundColor: theme.primary,
+      color: theme.primaryForeground,
+    } as React.CSSProperties,
+    // Progress summary for badges
+    progressSummary: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '12px',
+      backgroundColor: theme.backgroundSecondary,
+      borderRadius: '8px',
+      marginBottom: '16px',
+    } as React.CSSProperties,
+    progressSummaryLeft: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+    } as React.CSSProperties,
+    progressSummaryIcon: {
+      width: '40px',
+      height: '40px',
+      borderRadius: '50%',
+      backgroundColor: `${theme.primary}20`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: theme.primary,
+      fontSize: '18px',
+    } as React.CSSProperties,
+    progressSummaryText: {
+      fontWeight: '500',
+      fontSize: '16px',
+      color: theme.foreground,
+    } as React.CSSProperties,
+    progressSummarySubtext: {
+      fontSize: '12px',
+      color: theme.foregroundSecondary,
+    } as React.CSSProperties,
+    progressSummaryBar: {
+      width: '80px',
+      height: '8px',
+      backgroundColor: theme.border,
+      borderRadius: '4px',
+      overflow: 'hidden',
+    } as React.CSSProperties,
+    progressSummaryBarFill: {
+      height: '100%',
+      backgroundColor: theme.primary,
+      borderRadius: '4px',
+    } as React.CSSProperties,
+    // Badge progress bar for locked badges
+    badgeProgressBar: {
+      width: '100%',
+      height: '4px',
+      backgroundColor: theme.border,
+      borderRadius: '2px',
+      overflow: 'hidden',
+      marginTop: '8px',
+    } as React.CSSProperties,
+    badgeProgressFill: {
+      height: '100%',
+      backgroundColor: theme.foregroundSecondary,
+      borderRadius: '2px',
+    } as React.CSSProperties,
+    badgeProgressText: {
+      fontSize: '10px',
+      color: theme.foregroundSecondary,
+      marginTop: '4px',
+    } as React.CSSProperties,
+    badgeCheckmark: {
+      position: 'absolute' as const,
+      top: '8px',
+      right: '8px',
+      color: theme.success,
+    } as React.CSSProperties,
+  };
+}
+
+// Type for themed styles
+type ThemedStyles = ReturnType<typeof createThemedStyles>;
 
 /**
  * Props for AffiliateStats component
@@ -683,7 +691,7 @@ export interface AffiliateStatsProps {
 function AffiliateStatsInner({
   className,
   style,
-  theme,
+  theme: themeOverride,
   autoRefresh = true,
   showTierBadge = true,
   showReferralCode = true,
@@ -691,6 +699,8 @@ function AffiliateStatsInner({
   renderLoading,
   renderError,
 }: AffiliateStatsProps) {
+  const globalTheme = useGamifyTheme();
+  const themedStyles = createThemedStyles(globalTheme);
   const { stats, loading, error, refreshStats } = useAffiliateStats({ autoRefresh });
   const [copied, setCopied] = useState(false);
 
@@ -701,11 +711,11 @@ function AffiliateStatsInner({
   }, [autoRefresh, refreshStats]);
 
   if (loading) {
-    return renderLoading ? renderLoading() : <div style={{ textAlign: 'center', padding: '16px' }}>Loading...</div>;
+    return renderLoading ? renderLoading() : <div style={{ textAlign: 'center', padding: '16px', color: globalTheme.foregroundSecondary }}>Loading...</div>;
   }
 
   if (error) {
-    return renderError ? renderError(error) : <div style={{ color: 'red', padding: '16px' }}>{error}</div>;
+    return renderError ? renderError(error) : <div style={{ color: globalTheme.error, padding: '16px' }}>{error}</div>;
   }
 
   if (!stats || !stats.earnings) {
@@ -713,14 +723,14 @@ function AffiliateStatsInner({
   }
 
   const cardStyle = {
-    ...defaultStyles.statsCard,
-    ...(theme?.cardBackground && { backgroundColor: theme.cardBackground }),
-    ...(theme?.cardBorder && { border: `1px solid ${theme.cardBorder}` }),
+    ...themedStyles.statsCard,
+    ...(themeOverride?.cardBackground && { backgroundColor: themeOverride.cardBackground }),
+    ...(themeOverride?.cardBorder && { border: `1px solid ${themeOverride.cardBorder}` }),
   };
 
   const valueStyle = {
-    ...defaultStyles.statsValue,
-    ...(theme?.valueColor && { color: theme.valueColor }),
+    ...themedStyles.statsValue,
+    ...(themeOverride?.valueColor && { color: themeOverride.valueColor }),
   };
 
   const formatCurrency = (cents: number) => {
@@ -756,8 +766,8 @@ function AffiliateStatsInner({
 
   const containerStyle: React.CSSProperties = {
     padding: '16px',
-    ...(theme?.cardBackground && { backgroundColor: theme.cardBackground }),
-    ...(theme?.cardBorder && { border: `1px solid ${theme.cardBorder}` }),
+    ...(themeOverride?.cardBackground && { backgroundColor: themeOverride.cardBackground }),
+    ...(themeOverride?.cardBorder && { border: `1px solid ${themeOverride.cardBorder}` }),
     ...style,
   };
 
@@ -767,16 +777,16 @@ function AffiliateStatsInner({
       {showTierBadge && (
         <div
           style={{
-            ...defaultStyles.tierBadge,
-            backgroundColor: stats.tier ? `${tierColor}20` : '#f8f9fa',
+            ...themedStyles.tierBadge,
+            backgroundColor: stats.tier ? `${tierColor}20` : globalTheme.backgroundSecondary,
           }}
         >
-          <span style={{ ...defaultStyles.tierBadgeIcon, color: tierColor }}>👑</span>
-          <div style={defaultStyles.tierBadgeText}>
-            <div style={{ ...defaultStyles.tierBadgeName, color: stats.tier ? tierColor : '#6c757d' }}>
+          <span style={{ ...themedStyles.tierBadgeIcon, color: tierColor }}>👑</span>
+          <div style={themedStyles.tierBadgeText}>
+            <div style={{ ...themedStyles.tierBadgeName, color: stats.tier ? tierColor : globalTheme.foregroundSecondary }}>
               {stats.tier ? `${stats.tier.name} Affiliate` : 'No Tier'}
             </div>
-            <div style={{ ...defaultStyles.tierBadgeRate, color: stats.tier ? tierColor : '#6c757d' }}>
+            <div style={{ ...themedStyles.tierBadgeRate, color: stats.tier ? tierColor : globalTheme.foregroundSecondary }}>
               {stats.tier
                 ? `${stats.tier.value}% commission rate`
                 : 'Refer users to unlock affiliate status'}
@@ -787,15 +797,15 @@ function AffiliateStatsInner({
 
       {/* Referral Code */}
       {showReferralCode && stats.referralCode && (
-        <div style={defaultStyles.referralCodeRow}>
+        <div style={themedStyles.referralCodeRow}>
           <div>
-            <div style={defaultStyles.referralCodeLabel}>Your referral code</div>
-            <div style={defaultStyles.referralCodeValue}>{stats.referralCode}</div>
+            <div style={themedStyles.referralCodeLabel}>Your referral code</div>
+            <div style={themedStyles.referralCodeValue}>{stats.referralCode}</div>
           </div>
           <button
             type="button"
             onClick={handleCopyCode}
-            style={defaultStyles.referralCodeCopyButton}
+            style={themedStyles.referralCodeCopyButton}
             aria-label="Copy referral code"
           >
             {copied ? '✓' : '📋'}
@@ -804,16 +814,16 @@ function AffiliateStatsInner({
       )}
 
       {/* 2-Column Stats Grid */}
-      <div style={defaultStyles.statsGrid2Col}>
+      <div style={themedStyles.statsGrid2Col}>
         <div style={cardStyle}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6c757d', marginBottom: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: globalTheme.foregroundSecondary, marginBottom: '4px' }}>
             <span>👥</span>
             <span style={{ fontSize: '12px' }}>Referrals</span>
           </div>
           <div style={{ ...valueStyle, fontFamily: 'monospace' }}>{stats.referralCount}</div>
         </div>
         <div style={cardStyle}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6c757d', marginBottom: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: globalTheme.foregroundSecondary, marginBottom: '4px' }}>
             <span>💰</span>
             <span style={{ fontSize: '12px' }}>Commissions</span>
           </div>
@@ -823,23 +833,23 @@ function AffiliateStatsInner({
 
       {/* Earnings Breakdown */}
       {showEarningsBreakdown && (
-        <div style={defaultStyles.earningsBreakdown}>
-          <div style={defaultStyles.earningsTitle}>Earnings</div>
-          <div style={defaultStyles.earningsRow}>
-            <span style={defaultStyles.earningsLabel}>Total Earned</span>
-            <span style={defaultStyles.earningsValueGreen}>
+        <div style={themedStyles.earningsBreakdown}>
+          <div style={themedStyles.earningsTitle}>Earnings</div>
+          <div style={themedStyles.earningsRow}>
+            <span style={themedStyles.earningsLabel}>Total Earned</span>
+            <span style={themedStyles.earningsValueGreen}>
               {formatCurrency(stats.earnings.totalEarned)}
             </span>
           </div>
-          <div style={defaultStyles.earningsRow}>
-            <span style={defaultStyles.earningsLabel}>Pending</span>
-            <span style={defaultStyles.earningsValueYellow}>
+          <div style={themedStyles.earningsRow}>
+            <span style={themedStyles.earningsLabel}>Pending</span>
+            <span style={themedStyles.earningsValueYellow}>
               {formatCurrency(stats.earnings.totalPending)}
             </span>
           </div>
-          <div style={defaultStyles.earningsRow}>
-            <span style={defaultStyles.earningsLabel}>Paid Out</span>
-            <span style={{ ...defaultStyles.earningsValue, color: '#6c757d' }}>
+          <div style={themedStyles.earningsRow}>
+            <span style={themedStyles.earningsLabel}>Paid Out</span>
+            <span style={{ ...themedStyles.earningsValue, color: globalTheme.foregroundSecondary }}>
               {formatCurrency(stats.earnings.totalPaid)}
             </span>
           </div>
@@ -915,11 +925,13 @@ function LeaderboardInner({
   showMedals = true,
   showTierInfo = true,
   showEarnings = true,
-  theme,
+  theme: themeOverride,
   renderRow,
   renderLoading,
   renderError,
 }: LeaderboardProps) {
+  const globalTheme = useGamifyTheme();
+  const themedStyles = createThemedStyles(globalTheme);
   const { leaderboard, loading, error, refresh } = useLeaderboard(limit);
 
   useEffect(() => {
@@ -927,16 +939,16 @@ function LeaderboardInner({
   }, [refresh]);
 
   if (loading) {
-    return renderLoading ? renderLoading() : <div style={{ textAlign: 'center', padding: '16px' }}>Loading...</div>;
+    return renderLoading ? renderLoading() : <div style={{ textAlign: 'center', padding: '16px', color: globalTheme.foregroundSecondary }}>Loading...</div>;
   }
 
   if (error) {
-    return renderError ? renderError(error) : <div style={{ color: 'red', padding: '16px' }}>{error}</div>;
+    return renderError ? renderError(error) : <div style={{ color: globalTheme.error, padding: '16px' }}>{error}</div>;
   }
 
   if (!leaderboard || leaderboard.entries.length === 0) {
     return (
-      <div className={className} style={{ ...defaultStyles.leaderboardEmpty, ...style }}>
+      <div className={className} style={{ ...themedStyles.leaderboardEmpty, ...style }}>
         {emptyMessage}
       </div>
     );
@@ -946,9 +958,9 @@ function LeaderboardInner({
   const getMedalColor = (rank: number): string | null => {
     if (!showMedals) return null;
     switch (rank) {
-      case 1: return '#FFD700'; // Gold
-      case 2: return '#C0C0C0'; // Silver
-      case 3: return '#CD7F32'; // Bronze
+      case 1: return globalTheme.medalGold;
+      case 2: return globalTheme.medalSilver;
+      case 3: return globalTheme.medalBronze;
       default: return null;
     }
   };
@@ -963,20 +975,20 @@ function LeaderboardInner({
   };
 
   const getRowStyle = (isCurrentUser: boolean): React.CSSProperties => ({
-    ...(isCurrentUser ? defaultStyles.leaderboardRowHighlighted : defaultStyles.leaderboardRow),
-    ...(theme?.rowBackground && !isCurrentUser && { backgroundColor: theme.rowBackground }),
-    ...(theme?.highlightBackground && isCurrentUser && { backgroundColor: theme.highlightBackground }),
+    ...(isCurrentUser ? themedStyles.leaderboardRowHighlighted : themedStyles.leaderboardRow),
+    ...(themeOverride?.rowBackground && !isCurrentUser && { backgroundColor: themeOverride.rowBackground }),
+    ...(themeOverride?.highlightBackground && isCurrentUser && { backgroundColor: themeOverride.highlightBackground }),
     ...(isCurrentUser && {
-      backgroundColor: 'rgba(13, 110, 253, 0.1)',
-      border: '1px solid rgba(13, 110, 253, 0.3)',
+      backgroundColor: `${globalTheme.primary}15`,
+      border: `1px solid ${globalTheme.primary}40`,
       borderRadius: '8px',
     }),
   });
 
-  const textStyle = theme?.textColor ? { color: theme.textColor } : {};
-  const secondaryStyle = theme?.secondaryColor
-    ? { ...defaultStyles.leaderboardStats, color: theme.secondaryColor }
-    : defaultStyles.leaderboardStats;
+  const textStyle = themeOverride?.textColor ? { color: themeOverride.textColor } : {};
+  const secondaryStyle = themeOverride?.secondaryColor
+    ? { ...themedStyles.leaderboardStats, color: themeOverride.secondaryColor }
+    : themedStyles.leaderboardStats;
 
   // Find current user rank
   const currentUserRank = currentUserId
@@ -984,7 +996,7 @@ function LeaderboardInner({
     : null;
 
   return (
-    <div className={className} style={{ ...defaultStyles.leaderboardContainer, ...style }}>
+    <div className={className} style={{ ...themedStyles.leaderboardContainer, ...style }}>
       {/* Current user rank badge */}
       {currentUserRank && (
         <div style={{
@@ -994,8 +1006,8 @@ function LeaderboardInner({
         }}>
           <span style={{
             fontSize: '12px',
-            backgroundColor: 'rgba(13, 110, 253, 0.2)',
-            color: '#0d6efd',
+            backgroundColor: `${globalTheme.primary}30`,
+            color: globalTheme.primary,
             padding: '4px 8px',
             borderRadius: '9999px',
           }}>
@@ -1017,11 +1029,11 @@ function LeaderboardInner({
             const rowContent = (
               <div style={getRowStyle(isCurrentUser)}>
                 {/* Rank / Medal */}
-                <div style={defaultStyles.medalIcon}>
+                <div style={themedStyles.medalIcon}>
                   {medalColor ? (
                     <span style={{ color: medalColor }}>🏅</span>
                   ) : (
-                    <span style={{ fontSize: '14px', fontFamily: 'monospace', color: '#6c757d' }}>
+                    <span style={{ fontSize: '14px', fontFamily: 'monospace', color: globalTheme.foregroundSecondary }}>
                       #{entry.rank}
                     </span>
                   )}
@@ -1030,15 +1042,15 @@ function LeaderboardInner({
                 {/* Name & Tier */}
                 <div style={{ flex: 1, marginLeft: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ ...defaultStyles.leaderboardName, ...textStyle, marginLeft: 0 }}>
+                    <span style={{ ...themedStyles.leaderboardName, ...textStyle, marginLeft: 0 }}>
                       {entry.displayName ?? `User ${entry.userId.slice(0, 8)}`}
                     </span>
                     {isCurrentUser && (
-                      <span style={{ fontSize: '12px', color: '#0d6efd' }}>(You)</span>
+                      <span style={{ fontSize: '12px', color: globalTheme.primary }}>(You)</span>
                     )}
                   </div>
                   {showTierInfo && entry.tier && (
-                    <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                    <div style={{ fontSize: '12px', color: globalTheme.foregroundSecondary }}>
                       {entry.tier.name} ({entry.tier.value}%)
                     </div>
                   )}
@@ -1046,7 +1058,7 @@ function LeaderboardInner({
 
                 {/* Stats */}
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontFamily: 'monospace', fontSize: '14px', fontWeight: '500' }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: '14px', fontWeight: '500', color: globalTheme.foreground }}>
                     {entry.referralCount} referrals
                   </div>
                   {showEarnings && entry.totalEarnings !== undefined && (
@@ -1168,10 +1180,12 @@ function ReferralLinkInner({
   onSetReferrer,
   onDetectFromUrl,
   onClearReferrer,
-  theme,
+  theme: themeOverride,
   onCopy,
   onShare,
 }: ReferralLinkProps) {
+  const globalTheme = useGamifyTheme();
+  const themedStyles = createThemedStyles(globalTheme);
   const { stats } = useAffiliateStats({ autoRefresh: true });
   const [copied, setCopied] = useState(false);
   const [referrerInput, setReferrerInput] = useState('');
@@ -1224,16 +1238,16 @@ function ReferralLinkInner({
   const canShare = typeof navigator !== 'undefined' && 'share' in navigator;
 
   const inputStyle = {
-    ...defaultStyles.referralInput,
-    ...(theme?.inputBackground && { backgroundColor: theme.inputBackground }),
-    ...(theme?.inputBorder && { border: `1px solid ${theme.inputBorder}` }),
-    ...(theme?.inputColor && { color: theme.inputColor }),
+    ...themedStyles.referralInput,
+    ...(themeOverride?.inputBackground && { backgroundColor: themeOverride.inputBackground }),
+    ...(themeOverride?.inputBorder && { border: `1px solid ${themeOverride.inputBorder}` }),
+    ...(themeOverride?.inputColor && { color: themeOverride.inputColor }),
   };
 
   const buttonStyle = {
-    ...defaultStyles.referralButton,
-    ...(theme?.buttonBackground && { backgroundColor: theme.buttonBackground }),
-    ...(theme?.buttonColor && { color: theme.buttonColor }),
+    ...themedStyles.referralButton,
+    ...(themeOverride?.buttonBackground && { backgroundColor: themeOverride.buttonBackground }),
+    ...(themeOverride?.buttonColor && { color: themeOverride.buttonColor }),
   };
 
   const containerStyle: React.CSSProperties = {
@@ -1245,10 +1259,10 @@ function ReferralLinkInner({
     <div className={className} style={containerStyle}>
       {/* Your Referral Link */}
       <div style={{ marginBottom: '8px' }}>
-        <p style={{ fontSize: '14px', color: '#6c757d', marginBottom: '8px' }}>
+        <p style={{ fontSize: '14px', color: globalTheme.foregroundSecondary, marginBottom: '8px' }}>
           Your unique referral link:
         </p>
-        <div style={defaultStyles.referralContainer}>
+        <div style={themedStyles.referralContainer}>
           <input
             type="text"
             readOnly
@@ -1265,20 +1279,20 @@ function ReferralLinkInner({
             </button>
           )}
         </div>
-        <p style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
-          Code: <span style={{ fontFamily: 'monospace', fontWeight: '500' }}>{userReferralCode}</span>
+        <p style={{ fontSize: '12px', color: globalTheme.foregroundSecondary, marginTop: '4px' }}>
+          Code: <span style={{ fontFamily: 'monospace', fontWeight: '500', color: globalTheme.foreground }}>{userReferralCode}</span>
         </p>
       </div>
 
       {/* Referrer Attribution */}
       {showReferrerAttribution && (
-        <div style={defaultStyles.referrerSection}>
-          <p style={defaultStyles.referrerTitle}>Referrer Attribution</p>
+        <div style={themedStyles.referrerSection}>
+          <p style={themedStyles.referrerTitle}>Referrer Attribution</p>
 
           {referrerCode ? (
-            <div style={defaultStyles.referrerBadge}>
-              <div style={defaultStyles.referrerBadgeInfo}>
-                <span style={defaultStyles.referrerBadgeIcon}>👤</span>
+            <div style={themedStyles.referrerBadge}>
+              <div style={themedStyles.referrerBadgeInfo}>
+                <span style={themedStyles.referrerBadgeIcon}>👤</span>
                 <span>
                   Referred by: <span style={{ fontFamily: 'monospace', fontWeight: '500' }}>{referrerCode}</span>
                 </span>
@@ -1287,7 +1301,7 @@ function ReferralLinkInner({
                 <button
                   type="button"
                   onClick={onClearReferrer}
-                  style={defaultStyles.referrerClearButton}
+                  style={themedStyles.referrerClearButton}
                   aria-label="Clear referrer"
                 >
                   ✕
@@ -1297,7 +1311,7 @@ function ReferralLinkInner({
           ) : (
             <div>
               {onSetReferrer && (
-                <div style={defaultStyles.referrerInputRow}>
+                <div style={themedStyles.referrerInputRow}>
                   <input
                     type="text"
                     value={referrerInput}
@@ -1323,7 +1337,7 @@ function ReferralLinkInner({
                 <button
                   type="button"
                   onClick={onDetectFromUrl}
-                  style={defaultStyles.referrerDetectButton}
+                  style={themedStyles.referrerDetectButton}
                 >
                   <span>🔗</span>
                   Detect from URL
@@ -2409,11 +2423,13 @@ function BadgeGridInner({
   showFilterTabs = true,
   showStats, // deprecated, use showProgressSummary
   onBadgeClick,
-  theme,
+  theme: themeOverride,
   renderLoading,
   renderError,
   renderBadge,
 }: BadgeGridProps) {
+  const globalTheme = useGamifyTheme();
+  const themedStyles = createThemedStyles(globalTheme);
   const { badges, stats, loading, error, refresh } = useBadges({ autoRefresh: true, category });
   const [filter, setFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
 
@@ -2425,11 +2441,11 @@ function BadgeGridInner({
   }, [refresh, category]);
 
   if (loading) {
-    return renderLoading ? renderLoading() : <div style={{ textAlign: 'center', padding: '16px' }}>Loading...</div>;
+    return renderLoading ? renderLoading() : <div style={{ textAlign: 'center', padding: '16px', color: globalTheme.foregroundSecondary }}>Loading...</div>;
   }
 
   if (error) {
-    return renderError ? renderError(error) : <div style={{ color: 'red', padding: '16px' }}>{error}</div>;
+    return renderError ? renderError(error) : <div style={{ color: globalTheme.error, padding: '16px' }}>{error}</div>;
   }
 
   // Filter badges based on tab selection
@@ -2442,18 +2458,18 @@ function BadgeGridInner({
     displayBadges = badges.filter((b) => b.isUnlocked);
   }
 
-  // Updated rarity color scheme matching playground
-  const getPlaygroundRarityColors = (rarity: BadgeRarity): { color: string; bg: string } => {
+  // Updated rarity color scheme from theme
+  const getRarityColors = (rarity: BadgeRarity): { color: string; bg: string } => {
     switch (rarity) {
       case 'LEGENDARY':
-        return { color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' };
+        return { color: globalTheme.rarityLegendary, bg: `${globalTheme.rarityLegendary}15` };
       case 'EPIC':
-        return { color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.1)' };
+        return { color: globalTheme.rarityEpic, bg: `${globalTheme.rarityEpic}15` };
       case 'RARE':
-        return { color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)' };
+        return { color: globalTheme.rarityRare, bg: `${globalTheme.rarityRare}15` };
       case 'COMMON':
       default:
-        return { color: '#9CA3AF', bg: 'rgba(156, 163, 175, 0.1)' };
+        return { color: globalTheme.rarityCommon, bg: `${globalTheme.rarityCommon}15` };
     }
   };
 
@@ -2472,18 +2488,18 @@ function BadgeGridInner({
     <div className={className} style={{ ...style, padding: '16px' }}>
       {/* Progress Summary */}
       {shouldShowSummary && (
-        <div style={defaultStyles.progressSummary}>
-          <div style={defaultStyles.progressSummaryLeft}>
-            <div style={defaultStyles.progressSummaryIcon}>✨</div>
+        <div style={themedStyles.progressSummary}>
+          <div style={themedStyles.progressSummaryLeft}>
+            <div style={themedStyles.progressSummaryIcon}>✨</div>
             <div>
-              <div style={defaultStyles.progressSummaryText}>{unlockedCount} / {totalCount}</div>
-              <div style={defaultStyles.progressSummarySubtext}>Badges Earned</div>
+              <div style={themedStyles.progressSummaryText}>{unlockedCount} / {totalCount}</div>
+              <div style={themedStyles.progressSummarySubtext}>Badges Earned</div>
             </div>
           </div>
-          <div style={defaultStyles.progressSummaryBar}>
+          <div style={themedStyles.progressSummaryBar}>
             <div
               style={{
-                ...defaultStyles.progressSummaryBarFill,
+                ...themedStyles.progressSummaryBarFill,
                 width: `${progressPercent}%`,
               }}
             />
@@ -2493,13 +2509,13 @@ function BadgeGridInner({
 
       {/* Filter Tabs */}
       {showFilterTabs && (
-        <div style={defaultStyles.filterTabs}>
+        <div style={themedStyles.filterTabs}>
           {(['all', 'unlocked', 'locked'] as const).map((f) => (
             <button
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              style={filter === f ? defaultStyles.filterTabActive : defaultStyles.filterTab}
+              style={filter === f ? themedStyles.filterTabActive : themedStyles.filterTab}
             >
               {f === 'all' ? 'All' : f === 'unlocked' ? 'Earned' : 'Locked'}
             </button>
@@ -2515,7 +2531,7 @@ function BadgeGridInner({
               return <div key={badge.id}>{renderBadge(badge)}</div>;
             }
 
-            const rarityColors = getPlaygroundRarityColors(badge.rarity);
+            const rarityColors = getRarityColors(badge.rarity);
 
             const badgeContent = (
               <div
@@ -2530,12 +2546,12 @@ function BadgeGridInner({
                     ? {
                         backgroundColor: rarityColors.bg,
                         borderColor: `${rarityColors.color}40`,
-                        ...(theme?.cardBackground && { backgroundColor: theme.cardBackground }),
-                        ...(theme?.cardBorder && { borderColor: theme.cardBorder }),
+                        ...(themeOverride?.cardBackground && { backgroundColor: themeOverride.cardBackground }),
+                        ...(themeOverride?.cardBorder && { borderColor: themeOverride.cardBorder }),
                       }
                     : {
-                        backgroundColor: 'rgba(0, 0, 0, 0.03)',
-                        borderColor: '#e9ecef',
+                        backgroundColor: globalTheme.backgroundSecondary,
+                        borderColor: globalTheme.border,
                         opacity: 0.6,
                       }),
                 }}
@@ -2546,7 +2562,7 @@ function BadgeGridInner({
               >
                 {/* Checkmark for unlocked */}
                 {badge.isUnlocked && (
-                  <div style={defaultStyles.badgeCheckmark}>✓</div>
+                  <div style={themedStyles.badgeCheckmark}>✓</div>
                 )}
 
                 {/* Badge Icon */}
@@ -2559,7 +2575,7 @@ function BadgeGridInner({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: badge.isUnlocked ? `${rarityColors.color}20` : '#f8f9fa',
+                      backgroundColor: badge.isUnlocked ? `${rarityColors.color}20` : globalTheme.backgroundSecondary,
                     }}
                   >
                     {badge.iconUrl ? (
@@ -2571,17 +2587,17 @@ function BadgeGridInner({
                     ) : badge.isUnlocked ? (
                       <span style={{ color: rarityColors.color }}>🏅</span>
                     ) : (
-                      <span style={{ color: '#6c757d' }}>🔒</span>
+                      <span style={{ color: globalTheme.foregroundSecondary }}>🔒</span>
                     )}
                   </div>
                 </div>
 
                 {/* Badge Info */}
-                <h4 style={{ fontSize: '14px', fontWeight: '500', marginBottom: '4px', color: '#212529' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: '500', marginBottom: '4px', color: globalTheme.foreground }}>
                   {badge.name}
                 </h4>
                 {badge.description && (
-                  <p style={{ fontSize: '12px', color: '#6c757d', marginBottom: '8px', lineHeight: 1.4 }}>
+                  <p style={{ fontSize: '12px', color: globalTheme.foregroundSecondary, marginBottom: '8px', lineHeight: 1.4 }}>
                     {badge.description}
                   </p>
                 )}
