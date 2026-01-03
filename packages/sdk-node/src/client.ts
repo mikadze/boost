@@ -19,7 +19,7 @@ const DEFAULT_RETRIES = 3;
  *
  * @example
  * ```typescript
- * import { GamifyClient } from '@gamify/node';
+ * import { GamifyClient } from '@gamifyio/node';
  *
  * const client = new GamifyClient({
  *   secretKey: 'sk_live_your_key_here',

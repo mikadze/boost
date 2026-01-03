@@ -931,7 +931,7 @@ export default function RewardsPage() {
   };
 
   // SDK code snippets
-  const rewardStoreCode = `import { RewardStore } from '@gamify/react';
+  const rewardStoreCode = `import { RewardStore } from '@gamifyio/react';
 
 // Display reward catalog with redemption functionality
 <RewardStore
@@ -950,7 +950,7 @@ export default function RewardsPage() {
   }}
 />`;
 
-  const useRewardsCode = `import { useRewards } from '@gamify/react';
+  const useRewardsCode = `import { useRewards } from '@gamifyio/react';
 
 function CustomRewardsStore() {
   const {

@@ -7,7 +7,7 @@
  *
  * @example
  * ```typescript
- * import { GamifyClient } from '@gamify/node';
+ * import { GamifyClient } from '@gamifyio/node';
  *
  * const gamify = new GamifyClient({
  *   secretKey: process.env.GAMIFY_SECRET_KEY!,

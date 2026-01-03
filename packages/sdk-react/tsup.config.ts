@@ -11,5 +11,5 @@ export default defineConfig({
   treeshake: true,
   target: 'es2020',
   outDir: 'dist',
-  external: ['react', '@gamify/core'],
+  external: ['react', '@gamifyio/core'],
 });

@@ -727,7 +727,7 @@ export default function LoyaltyPage() {
   };
 
   // SDK code snippets
-  const levelProgressCode = `import { LevelProgress } from '@gamify/react';
+  const levelProgressCode = `import { LevelProgress } from '@gamifyio/react';
 
 // Display current tier with progress to next level
 <LevelProgress
@@ -739,7 +739,7 @@ export default function LoyaltyPage() {
   }}
 />`;
 
-  const useLoyaltyCode = `import { useLoyalty } from '@gamify/react';
+  const useLoyaltyCode = `import { useLoyalty } from '@gamifyio/react';
 
 function LoyaltyWidget() {
   const { profile, loading, refreshProfile } = useLoyalty();
@@ -757,7 +757,7 @@ function LoyaltyWidget() {
   );
 }`;
 
-  const trackPurchaseCode = `import { GamifyClient } from '@gamify/node';
+  const trackPurchaseCode = `import { GamifyClient } from '@gamifyio/node';
 
 const gamify = new GamifyClient({ secretKey: 'sk_live_...' });
 

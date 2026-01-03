@@ -16,7 +16,7 @@ export const SDK_SNIPPETS = {
     frontend: [
       {
         label: 'Track product view',
-        code: `import { useGamify } from '@gamify/react';
+        code: `import { useGamify } from '@gamifyio/react';
 
 const { track } = useGamify();
 
@@ -46,7 +46,7 @@ track('add_to_cart', {
     frontend: [
       {
         label: 'Session tracking',
-        code: `import { useSession } from '@gamify/react';
+        code: `import { useSession } from '@gamifyio/react';
 
 const { session, addItem, applyCoupon } = useSession();
 
@@ -65,7 +65,7 @@ await applyCoupon('SAVE20');`,
     backend: [
       {
         label: 'Complete purchase (server-side)',
-        code: `import { GamifyClient } from '@gamify/node';
+        code: `import { GamifyClient } from '@gamifyio/node';
 
 const gamify = new GamifyClient({
   secretKey: process.env.GAMIFY_SECRET_KEY!,
@@ -90,7 +90,7 @@ await gamify.purchase({
     frontend: [
       {
         label: 'Fetch loyalty data',
-        code: `import { useLoyalty } from '@gamify/react';
+        code: `import { useLoyalty } from '@gamifyio/react';
 
 const { profile, loading, refreshProfile } = useLoyalty();
 
@@ -100,7 +100,7 @@ const { profile, loading, refreshProfile } = useLoyalty();
       },
       {
         label: 'LevelProgress component',
-        code: `import { LevelProgress } from '@gamify/react';
+        code: `import { LevelProgress } from '@gamifyio/react';
 
 <LevelProgress
   showNextTier
@@ -115,7 +115,7 @@ const { profile, loading, refreshProfile } = useLoyalty();
     frontend: [
       {
         label: 'Fetch user quests',
-        code: `import { useQuests } from '@gamify/react';
+        code: `import { useQuests } from '@gamifyio/react';
 
 const { quests, loading, error, refresh } = useQuests();
 
@@ -127,7 +127,7 @@ const { quests, loading, error, refresh } = useQuests();
       },
       {
         label: 'QuestProgress component',
-        code: `import { QuestProgress } from '@gamify/react';
+        code: `import { QuestProgress } from '@gamifyio/react';
 
 <QuestProgress
   hideCompleted
@@ -144,7 +144,7 @@ const { quests, loading, error, refresh } = useQuests();
     frontend: [
       {
         label: 'Fetch user streaks',
-        code: `import { useStreaks } from '@gamify/react';
+        code: `import { useStreaks } from '@gamifyio/react';
 
 const { streaks, stats, loading, freeze } = useStreaks();
 
@@ -158,7 +158,7 @@ await freeze(streakId);`,
       },
       {
         label: 'StreakFlame component',
-        code: `import { StreakFlame } from '@gamify/react';
+        code: `import { StreakFlame } from '@gamifyio/react';
 
 <StreakFlame
   showFreezeButton
@@ -175,7 +175,7 @@ await freeze(streakId);`,
     frontend: [
       {
         label: 'Fetch user badges',
-        code: `import { useBadges } from '@gamify/react';
+        code: `import { useBadges } from '@gamifyio/react';
 
 const { badges, earned, locked, stats, loading } = useBadges();
 
@@ -187,7 +187,7 @@ const { badges, earned, locked, stats, loading } = useBadges();
       },
       {
         label: 'BadgeGrid component',
-        code: `import { BadgeGrid } from '@gamify/react';
+        code: `import { BadgeGrid } from '@gamifyio/react';
 
 <BadgeGrid
   showLocked
@@ -203,7 +203,7 @@ const { badges, earned, locked, stats, loading } = useBadges();
     frontend: [
       {
         label: 'Fetch rewards store',
-        code: `import { useRewards } from '@gamify/react';
+        code: `import { useRewards } from '@gamifyio/react';
 
 const { items, userPoints, redeem, loading } = useRewards();
 
@@ -216,7 +216,7 @@ const result = await redeem(itemId);`,
       },
       {
         label: 'RewardStore component',
-        code: `import { RewardStore } from '@gamify/react';
+        code: `import { RewardStore } from '@gamifyio/react';
 
 <RewardStore
   showPointsHeader
@@ -233,7 +233,7 @@ const result = await redeem(itemId);`,
     frontend: [
       {
         label: 'Fetch campaign triggers',
-        code: `import { useCampaigns } from '@gamify/react';
+        code: `import { useCampaigns } from '@gamifyio/react';
 
 const {
   activeCampaigns,
@@ -252,7 +252,7 @@ const {
     frontend: [
       {
         label: 'Get referral link & set referrer',
-        code: `import { useReferral } from '@gamify/react';
+        code: `import { useReferral } from '@gamifyio/react';
 
 const {
   referralCode,
@@ -271,7 +271,7 @@ await detectFromUrl();`,
     backend: [
       {
         label: 'Record successful referral',
-        code: `import { GamifyClient } from '@gamify/node';
+        code: `import { GamifyClient } from '@gamifyio/node';
 
 const gamify = new GamifyClient({
   secretKey: process.env.GAMIFY_SECRET_KEY!,
@@ -296,7 +296,7 @@ await gamify.referralSuccess({
     frontend: [
       {
         label: 'Fetch affiliate statistics',
-        code: `import { useAffiliateStats } from '@gamify/react';
+        code: `import { useAffiliateStats } from '@gamifyio/react';
 
 const {
   referralCode,
@@ -318,7 +318,7 @@ const {
     frontend: [
       {
         label: 'Fetch leaderboard',
-        code: `import { useLeaderboard } from '@gamify/react';
+        code: `import { useLeaderboard } from '@gamifyio/react';
 
 const {
   entries,
@@ -340,7 +340,7 @@ const {
     frontend: [
       {
         label: 'Identify user',
-        code: `import { useIdentify } from '@gamify/react';
+        code: `import { useIdentify } from '@gamifyio/react';
 
 const identify = useIdentify();
 
@@ -355,7 +355,7 @@ identify('user_123', {
     backend: [
       {
         label: 'Identify user (server-side)',
-        code: `import { GamifyClient } from '@gamify/node';
+        code: `import { GamifyClient } from '@gamifyio/node';
 
 const gamify = new GamifyClient({
   secretKey: process.env.GAMIFY_SECRET_KEY!,

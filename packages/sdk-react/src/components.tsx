@@ -22,7 +22,7 @@ import type {
   BadgeRarity,
   RewardItem,
   RedemptionResult,
-} from '@gamify/core';
+} from '@gamifyio/core';
 
 /**
  * Props for GamifyPageView component

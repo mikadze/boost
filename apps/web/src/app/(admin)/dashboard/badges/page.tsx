@@ -804,7 +804,7 @@ export default function BadgesPage() {
   };
 
   // SDK code snippets
-  const badgeGridCode = `import { BadgeGrid } from '@gamify/react';
+  const badgeGridCode = `import { BadgeGrid } from '@gamifyio/react';
 
 // Display user's badge collection
 <BadgeGrid
@@ -820,7 +820,7 @@ export default function BadgesPage() {
   }}
 />`;
 
-  const useBadgesCode = `import { useBadges } from '@gamify/react';
+  const useBadgesCode = `import { useBadges } from '@gamifyio/react';
 
 function BadgeWall() {
   const { badges, earned, locked, stats, loading } = useBadges();

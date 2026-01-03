@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { GamifyProvider, type GamifyConfig } from '@gamify/react';
+import { GamifyProvider, type GamifyConfig } from '@gamifyio/react';
 
 export interface LogEntry {
   id: string;

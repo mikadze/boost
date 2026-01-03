@@ -20,7 +20,7 @@ import type {
   RewardItem,
   RewardsStoreResponse,
   RedemptionResult,
-} from '@gamify/core';
+} from '@gamifyio/core';
 
 /**
  * useGamify - Hook to access Gamify SDK methods

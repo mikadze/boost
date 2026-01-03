@@ -286,9 +286,9 @@ export function SetupGuide({ onComplete }: SetupGuideProps) {
   ];
 
   // Frontend SDK code examples
-  const frontendInstallCode = 'npm install @gamify/react';
+  const frontendInstallCode = 'npm install @gamifyio/react';
 
-  const frontendInitializeCode = `import { GamifyProvider } from '@gamify/react';
+  const frontendInitializeCode = `import { GamifyProvider } from '@gamifyio/react';
 
 export default function App({ children }) {
   return (
@@ -301,7 +301,7 @@ export default function App({ children }) {
   );
 }`;
 
-  const frontendTrackEventCode = `import { useGamify } from '@gamify/react';
+  const frontendTrackEventCode = `import { useGamify } from '@gamifyio/react';
 
 function MyComponent() {
   const { track } = useGamify();
@@ -317,9 +317,9 @@ function MyComponent() {
 }`;
 
   // Backend SDK code examples
-  const backendInstallCode = 'npm install @gamify/node';
+  const backendInstallCode = 'npm install @gamifyio/node';
 
-  const backendInitializeCode = `import { GamifyClient } from '@gamify/node';
+  const backendInitializeCode = `import { GamifyClient } from '@gamifyio/node';
 
 const gamify = new GamifyClient({
   secretKey: process.env.GAMIFY_SECRET_KEY!, // sk_live_...

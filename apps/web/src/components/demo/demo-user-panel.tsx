@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { useIdentify } from '@gamify/react';
+import { useIdentify } from '@gamifyio/react';
 import { useAddLog } from './demo-provider';
 import { DemoCodeToggle } from './sdk-code-snippet';
 import { SDK_SNIPPETS } from './sdk-snippets';

@@ -8,7 +8,7 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import { Gamify, type GamifyConfig } from '@gamify/core';
+import { Gamify, type GamifyConfig } from '@gamifyio/core';
 
 /**
  * Context value for Gamify React SDK

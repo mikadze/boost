@@ -1,5 +1,5 @@
 {
-  "name": "@gamify/core",
+  "name": "@gamifyio/core",
   "version": "0.1.0",
   "description": "Framework-agnostic TypeScript SDK for Gamify event tracking",
   "type": "module",

@@ -84,4 +84,4 @@ export type {
   RewardItem,
   RewardsStoreResponse,
   RedemptionResult,
-} from '@gamify/core';
+} from '@gamifyio/core';

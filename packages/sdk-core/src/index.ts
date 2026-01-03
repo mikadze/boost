@@ -1,5 +1,5 @@
 /**
- * @gamify/core - Framework-agnostic TypeScript SDK for event tracking
+ * @gamifyio/core - Framework-agnostic TypeScript SDK for event tracking
  * @packageDocumentation
  */
 

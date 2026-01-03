@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Plus, ShoppingBag, Headphones, Watch, Speaker, Monitor } from 'lucide-react';
 import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
-import { useTrack } from '@gamify/react';
+import { useTrack } from '@gamifyio/react';
 import { useAddLog } from './demo-provider';
 import { DemoCodeToggle } from './sdk-code-snippet';
 import { SDK_SNIPPETS } from './sdk-snippets';

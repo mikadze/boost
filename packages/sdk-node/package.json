@@ -1,5 +1,5 @@
 {
-  "name": "@gamify/node",
+  "name": "@gamifyio/node",
   "version": "0.1.0",
   "description": "Server-side Node.js SDK for Gamify - secure event tracking with secret keys",
   "type": "module",

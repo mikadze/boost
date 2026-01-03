@@ -763,7 +763,7 @@ export default function ReferralsPage() {
   };
 
   // SDK code snippets
-  const affiliateStatsCode = `import { AffiliateStats } from '@gamify/react';
+  const affiliateStatsCode = `import { AffiliateStats } from '@gamifyio/react';
 
 // Display affiliate dashboard with stats
 <AffiliateStats
@@ -774,7 +774,7 @@ export default function ReferralsPage() {
   }}
 />`;
 
-  const referralLinkCode = `import { ReferralLink } from '@gamify/react';
+  const referralLinkCode = `import { ReferralLink } from '@gamifyio/react';
 
 // Shareable referral link component
 <ReferralLink
@@ -784,7 +784,7 @@ export default function ReferralsPage() {
   onCopy={(link) => console.log('Copied:', link)}
 />`;
 
-  const leaderboardCode = `import { Leaderboard } from '@gamify/react';
+  const leaderboardCode = `import { Leaderboard } from '@gamifyio/react';
 
 // Top affiliates leaderboard
 <Leaderboard

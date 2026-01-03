@@ -80,7 +80,7 @@ export class Gamify {
       throw new Error(
         '[Gamify] Secret keys (sk_live_*) cannot be used in the browser. ' +
         'Use a publishable key (pk_live_*) for client-side tracking. ' +
-        'For server-side tracking, use @gamify/node instead.'
+        'For server-side tracking, use @gamifyio/node instead.'
       );
     }
 
@@ -224,7 +224,7 @@ export class Gamify {
     if ((TRUSTED_EVENTS as readonly string[]).includes(eventType)) {
       console.warn(
         `[Gamify] Event "${eventType}" requires a secret key and will be rejected. ` +
-        `Use @gamify/node on your server to track this event.`
+        `Use @gamifyio/node on your server to track this event.`
       );
     }
 
