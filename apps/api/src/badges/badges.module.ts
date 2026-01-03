@@ -11,18 +11,46 @@ import { BadgesService } from './badges.service';
     ClientsModule.registerAsync([
       {
         name: 'KAFKA_SERVICE',
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.KAFKA,
-          options: {
-            client: {
-              clientId: 'badges-producer',
-              brokers: [configService.get<string>('KAFKA_BROKER', 'localhost:9092')],
+        useFactory: (configService: ConfigService) => {
+          const kafkaApiKey = configService.get<string>('KAFKA_API_KEY');
+          const kafkaApiSecret = configService.get<string>('KAFKA_API_SECRET');
+          const brokers = [configService.get<string>('KAFKA_BROKER', 'localhost:9092')];
+
+          // Add SSL + SASL if credentials are provided (Confluent Cloud, etc.)
+          if (kafkaApiKey && kafkaApiSecret) {
+            return {
+              transport: Transport.KAFKA,
+              options: {
+                client: {
+                  clientId: 'badges-producer',
+                  brokers,
+                  ssl: true,
+                  sasl: {
+                    mechanism: 'plain' as const,
+                    username: kafkaApiKey,
+                    password: kafkaApiSecret,
+                  },
+                },
+                producer: {
+                  allowAutoTopicCreation: true,
+                },
+              },
+            };
+          }
+
+          return {
+            transport: Transport.KAFKA,
+            options: {
+              client: {
+                clientId: 'badges-producer',
+                brokers,
+              },
+              producer: {
+                allowAutoTopicCreation: true,
+              },
             },
-            producer: {
-              allowAutoTopicCreation: true,
-            },
-          },
-        }),
+          };
+        },
         inject: [ConfigService],
       },
     ]),

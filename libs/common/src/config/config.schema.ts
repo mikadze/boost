@@ -10,6 +10,8 @@ const baseSchema = z.object({
 
   // Kafka - required
   KAFKA_BROKER: z.string().min(1),
+  KAFKA_API_KEY: z.string().optional(),
+  KAFKA_API_SECRET: z.string().optional(),
   KAFKA_CLIENT_ID: z.string().optional(),
 
   // Redis - required
@@ -38,6 +40,8 @@ const developmentSchema = z.object({
     .url()
     .default('postgresql://postgres:postgres@localhost:5432/boost'),
   KAFKA_BROKER: z.string().default('localhost:9093'),
+  KAFKA_API_KEY: z.string().optional(),
+  KAFKA_API_SECRET: z.string().optional(),
   KAFKA_CLIENT_ID: z.string().optional(),
   REDIS_URL: z.string().default('redis://localhost:6379'),
   CACHE_TTL_MS: z.coerce.number().default(60000),
@@ -66,6 +70,8 @@ const productionSchema = z.object({
   KAFKA_BROKER: z.string().min(1).refine((val) => !val.includes('localhost'), {
     message: 'KAFKA_BROKER must not use localhost in production',
   }),
+  KAFKA_API_KEY: z.string().min(1),
+  KAFKA_API_SECRET: z.string().min(1),
   KAFKA_CLIENT_ID: z.string().optional(),
   REDIS_URL: z.string().min(1).refine((val) => !val.includes('localhost'), {
     message: 'REDIS_URL must not use localhost in production',

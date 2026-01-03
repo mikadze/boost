@@ -52,18 +52,46 @@ import { AiModule } from './ai/ai.module';
       {
         name: 'KAFKA_SERVICE',
         inject: [ConfigService],
-        useFactory: (config: ConfigService<AppConfig>) => ({
-          transport: Transport.KAFKA,
-          options: {
-            client: {
-              clientId: 'api-producer',
-              brokers: [config.get('KAFKA_BROKER', { infer: true })!],
+        useFactory: (config: ConfigService<AppConfig>) => {
+          const kafkaApiKey = config.get('KAFKA_API_KEY', { infer: true });
+          const kafkaApiSecret = config.get('KAFKA_API_SECRET', { infer: true });
+          const brokers = [config.get('KAFKA_BROKER', { infer: true })!];
+
+          // Add SSL + SASL if credentials are provided (Confluent Cloud, etc.)
+          if (kafkaApiKey && kafkaApiSecret) {
+            return {
+              transport: Transport.KAFKA,
+              options: {
+                client: {
+                  clientId: 'api-producer',
+                  brokers,
+                  ssl: true,
+                  sasl: {
+                    mechanism: 'plain' as const,
+                    username: kafkaApiKey,
+                    password: kafkaApiSecret,
+                  },
+                },
+                producer: {
+                  allowAutoTopicCreation: true,
+                },
+              },
+            };
+          }
+
+          return {
+            transport: Transport.KAFKA,
+            options: {
+              client: {
+                clientId: 'api-producer',
+                brokers,
+              },
+              producer: {
+                allowAutoTopicCreation: true,
+              },
             },
-            producer: {
-              allowAutoTopicCreation: true,
-            },
-          },
-        }),
+          };
+        },
       },
     ]),
     DatabaseModule.forRootAsync({
