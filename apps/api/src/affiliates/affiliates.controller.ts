@@ -297,4 +297,19 @@ export class CustomerAffiliateController {
       query.offset ? parseInt(query.offset, 10) : 0,
     );
   }
+
+  /**
+   * GET /v1/customer/affiliate/leaderboard
+   * Get top affiliates leaderboard
+   */
+  @Get('leaderboard')
+  async getLeaderboard(
+    @CurrentProjectId() projectId: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.affiliatesService.getLeaderboard(
+      projectId,
+      limit ? parseInt(limit, 10) : 10,
+    );
+  }
 }

@@ -126,4 +126,22 @@ export class ReferralTrackingRepository {
     const result = await this.findByReferredExternalId(projectId, referredExternalId);
     return result !== null;
   }
+
+  async getTopReferrers(
+    projectId: string,
+    limit: number = 10,
+  ): Promise<Array<{ referrerId: string; count: number }>> {
+    const result = await this.db
+      .select({
+        referrerId: referralTracking.referrerId,
+        count: sql<number>`COUNT(*)::int`,
+      })
+      .from(referralTracking)
+      .where(eq(referralTracking.projectId, projectId))
+      .groupBy(referralTracking.referrerId)
+      .orderBy(desc(sql`COUNT(*)`))
+      .limit(limit);
+
+    return result;
+  }
 }

@@ -393,4 +393,41 @@ export class AffiliatesService {
 
     return { commissions, total: count };
   }
+
+  async getLeaderboard(
+    projectId: string,
+    limit: number = 10,
+  ): Promise<{
+    entries: Array<{
+      rank: number;
+      referralCode: string | null;
+      referralCount: number;
+      totalEarned: number;
+    }>;
+  }> {
+    // Get top affiliates by referral count
+    const topAffiliates = await this.referralTrackingRepository.getTopReferrers(
+      projectId,
+      limit,
+    );
+
+    const entries = await Promise.all(
+      topAffiliates.map(async (affiliate, index) => {
+        const summary = await this.commissionLedgerRepository.getSummaryByEndUser(
+          affiliate.referrerId,
+        );
+
+        const endUser = await this.endUserRepository.findById(affiliate.referrerId);
+
+        return {
+          rank: index + 1,
+          referralCode: endUser?.referralCode ?? null,
+          referralCount: affiliate.count,
+          totalEarned: summary.totalEarned,
+        };
+      }),
+    );
+
+    return { entries };
+  }
 }

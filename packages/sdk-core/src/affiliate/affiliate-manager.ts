@@ -65,22 +65,33 @@ export class AffiliateManager {
     this.log('Fetching affiliate stats from API', { userId });
 
     try {
-      const response = await this.client.get<{ stats: AffiliateStats }>(
-        `/api/users/${userId}/affiliate-stats`
+      const response = await this.client.get<AffiliateStats>(
+        `/v1/customer/affiliate/profile?userId=${encodeURIComponent(userId)}`
       );
 
-      if (response.success && response.data?.stats) {
-        this.cachedStats = response.data.stats;
+      if (response.success && response.data) {
+        // Map API response to AffiliateStats shape
+        const stats: AffiliateStats = {
+          referralCode: response.data.referralCode,
+          referralCount: response.data.stats?.referralCount ?? 0,
+          earnings: {
+            totalEarned: response.data.stats?.totalEarned ?? 0,
+            totalPending: response.data.stats?.totalPending ?? 0,
+            totalPaid: response.data.stats?.totalPaid ?? 0,
+          },
+        };
+
+        this.cachedStats = stats;
         this.lastFetchTime = now;
 
         // Persist to storage
         this.storage.set(AFFILIATE_STATS_CACHE_KEY, {
-          stats: response.data.stats,
+          stats,
           fetchedAt: now,
         });
 
-        this.log('Affiliate stats fetched', response.data.stats);
-        return response.data.stats;
+        this.log('Affiliate stats fetched', stats);
+        return stats;
       }
 
       throw new Error(response.error ?? 'Invalid response from affiliate stats API');
@@ -106,7 +117,7 @@ export class AffiliateManager {
 
     try {
       const response = await this.client.get<LeaderboardResponse>(
-        `/api/affiliate/leaderboard?limit=${limit}`
+        `/v1/customer/affiliate/leaderboard?limit=${limit}`
       );
 
       if (response.success && response.data?.entries) {

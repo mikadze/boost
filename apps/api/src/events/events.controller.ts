@@ -64,4 +64,35 @@ export class EventsController {
     await this.eventsService.trackEvent(projectId, trackEventDto, source);
     return { status: 'accepted' };
   }
+
+  /**
+   * Batch track events
+   * Process multiple events in a single request for SDK efficiency
+   */
+  @Post('batch')
+  @HttpCode(HttpStatus.ACCEPTED)
+  async batch(
+    @Body() batchDto: { events: TrackEventDto[] },
+    @CurrentProjectId() projectId: string,
+    @CurrentApiKeyType() keyType: ApiKeyType,
+  ) {
+    const source: EventSource = getEventSource(keyType);
+
+    // Process each event, blocking trusted events from publishable keys
+    const results = await Promise.allSettled(
+      batchDto.events.map(async (event) => {
+        if (keyType === 'publishable' && isTrustedEvent(event.event)) {
+          throw new ForbiddenException(
+            `Event "${event.event}" requires a secret key`,
+          );
+        }
+        await this.eventsService.trackEvent(projectId, event, source);
+      }),
+    );
+
+    const accepted = results.filter((r) => r.status === 'fulfilled').length;
+    const rejected = results.filter((r) => r.status === 'rejected').length;
+
+    return { status: 'accepted', accepted, rejected };
+  }
 }
