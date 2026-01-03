@@ -36,7 +36,7 @@ import {
 import { useOrganization } from '@/hooks/use-organization';
 
 export default function ApiKeysPage() {
-  const { apiKeys, projects, createApiKey, revokeApiKey } = useOrganization();
+  const { apiKeys, projects, createApiKey, revokeApiKey, createProject, currentOrg } = useOrganization();
   const currentProject = projects[0];
 
   const [keyName, setKeyName] = React.useState('');
@@ -44,15 +44,31 @@ export default function ApiKeysPage() {
   const [newSecret, setNewSecret] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState(false);
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   const handleCreateKey = async () => {
-    if (!keyName.trim() || !currentProject) return;
+    if (!keyName.trim()) return;
+    if (!currentOrg) {
+      setError('No organization found. Please refresh the page.');
+      return;
+    }
+
     setIsCreating(true);
+    setError(null);
+
     try {
-      const result = await createApiKey(currentProject.id, keyName);
+      // Auto-create a default project if none exists
+      let projectId = currentProject?.id;
+      if (!projectId) {
+        const newProject = await createProject('Default Project');
+        projectId = newProject.id;
+      }
+
+      const result = await createApiKey(projectId, keyName);
       setNewSecret(result.secret);
     } catch (error) {
       console.error('Failed to create API key:', error);
+      setError('Failed to create API key. Please try again.');
     }
     setIsCreating(false);
   };
@@ -76,6 +92,7 @@ export default function ApiKeysPage() {
     setDialogOpen(false);
     setNewSecret(null);
     setKeyName('');
+    setError(null);
   };
 
   return (
@@ -142,6 +159,14 @@ export default function ApiKeysPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
+                  {error && (
+                    <Alert className="border-red-500/30 bg-red-500/10">
+                      <AlertTriangle className="h-4 w-4 text-red-400" />
+                      <AlertDescription className="text-red-400">
+                        {error}
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="key-name">Key Name</Label>
                     <Input
