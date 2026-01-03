@@ -35,6 +35,8 @@ import { StreaksModule } from './streaks/streaks.module';
 import { BadgesModule } from './badges/badges.module';
 // Issue #34: Rewards Store
 import { RewardsModule } from './rewards/rewards.module';
+// Issue #20: Affiliate Program
+import { AffiliatesModule } from './affiliates/affiliates.module';
 // AI Generation
 import { AiModule } from './ai/ai.module';
 
@@ -120,6 +122,8 @@ import { AiModule } from './ai/ai.module';
     BadgesModule,
     // Issue #34: Rewards Store
     RewardsModule,
+    // Issue #20: Affiliate Program
+    AffiliatesModule,
     // AI Generation
     AiModule,
   ],
