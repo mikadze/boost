@@ -1,497 +1,525 @@
-# Boost Integration Guide
+# Gamify Integration Guide
 
-This guide covers how to integrate Boost's gamification features into your application.
+This guide covers how to integrate Gamify's gamification features into your application using our official SDKs.
 
 ## Table of Contents
 
-1. [Authentication](#authentication)
-2. [Quests](#quests)
-3. [Badges](#badges)
-4. [Affiliate Program](#affiliate-program)
+1. [Installation](#installation)
+2. [Frontend Setup (React)](#frontend-setup-react)
+3. [Backend Setup (Node.js)](#backend-setup-nodejs)
+4. [Quests](#quests)
+5. [Badges](#badges)
+6. [Affiliate Program](#affiliate-program)
+7. [Streaks](#streaks)
+8. [Rewards Store](#rewards-store)
+9. [Loyalty & Levels](#loyalty--levels)
 
 ---
 
-## Authentication
-
-All API requests require an API key passed in the `Authorization` header.
+## Installation
 
 ```bash
-Authorization: Bearer your_api_key_here
+# Frontend (React)
+npm install @gamifyio/react
+
+# Backend (Node.js)
+npm install @gamifyio/node
 ```
 
-Your API key is scoped to a specific project. All data you create and query will be isolated to that project.
+### API Keys
 
-### Getting Your API Key
+You'll need two types of API keys from the Gamify dashboard:
 
-1. Log into the Boost dashboard
-2. Navigate to your project settings
-3. Create or copy your API key
+| Key Type | Prefix | Usage |
+|----------|--------|-------|
+| **Publishable** | `pk_live_` | Frontend SDK (safe to expose) |
+| **Secret** | `sk_live_` | Backend SDK (keep private) |
+
+---
+
+## Frontend Setup (React)
+
+### 1. Add the Provider
+
+Wrap your app with `GamifyProvider` to initialize the SDK:
+
+```tsx
+import { GamifyProvider } from '@gamifyio/react';
+
+function App() {
+  return (
+    <GamifyProvider config={{ apiKey: 'pk_live_your_key' }}>
+      <YourApp />
+    </GamifyProvider>
+  );
+}
+```
+
+### 2. Track Page Views
+
+Add automatic page view tracking (works with Next.js, React Router, etc.):
+
+```tsx
+import { GamifyPageView } from '@gamifyio/react';
+import { usePathname } from 'next/navigation'; // or your router
+
+function Layout({ children }) {
+  const pathname = usePathname();
+
+  return (
+    <>
+      <GamifyPageView pathname={pathname} />
+      {children}
+    </>
+  );
+}
+```
+
+### 3. Identify Users
+
+Call `identify` after login to associate events with the user:
+
+```tsx
+import { useIdentify } from '@gamifyio/react';
+
+function LoginButton() {
+  const identify = useIdentify();
+
+  const handleLogin = async () => {
+    const user = await loginUser();
+    identify(user.id, {
+      email: user.email,
+      name: user.name,
+    });
+  };
+
+  return <button onClick={handleLogin}>Login</button>;
+}
+```
+
+### 4. Track Custom Events
+
+Track events that trigger quest progress and badge awards:
+
+```tsx
+import { useTrack } from '@gamifyio/react';
+
+function ProfileForm() {
+  const track = useTrack();
+
+  const handleSubmit = async (data) => {
+    await saveProfile(data);
+    track('profile.updated', { fields: Object.keys(data) });
+  };
+
+  return <form onSubmit={handleSubmit}>...</form>;
+}
+```
+
+---
+
+## Backend Setup (Node.js)
+
+Use the Node SDK for **sensitive actions** that shouldn't be triggered from the client (purchases, referral completions, etc.).
+
+### Initialize the Client
+
+```typescript
+import { GamifyClient } from '@gamifyio/node';
+
+const gamify = new GamifyClient({
+  secretKey: process.env.GAMIFY_SECRET_KEY, // sk_live_xxx
+});
+```
+
+### Track Purchases (Server-Side Only)
+
+```typescript
+// In your checkout/payment webhook handler
+app.post('/api/checkout/complete', async (req, res) => {
+  const { userId, orderId, amount, items } = req.body;
+
+  // Track purchase - triggers commission calculations
+  await gamify.purchase({
+    userId,
+    orderId,
+    amount: amount * 100, // Convert to cents
+    currency: 'USD',
+    items: items.map(item => ({
+      productId: item.id,
+      name: item.name,
+      unitPrice: item.price * 100,
+      quantity: item.quantity,
+    })),
+  });
+
+  res.json({ success: true });
+});
+```
+
+### Track Referral Success
+
+```typescript
+// When a referred user completes a qualifying action
+app.post('/api/users/register', async (req, res) => {
+  const { userId, email, referralCode } = req.body;
+
+  // Create user...
+
+  // Track referral if they used a code
+  if (referralCode) {
+    await gamify.referralSuccess({
+      referredUserId: userId,
+      referralCode,
+    });
+  }
+
+  res.json({ success: true });
+});
+```
+
+### Identify Users (Server-Side)
+
+```typescript
+await gamify.identify('user_123', {
+  email: 'user@example.com',
+  name: 'John Doe',
+  plan: 'premium',
+});
+```
 
 ---
 
 ## Quests
 
-Quests are multi-step missions that users complete by triggering events. When completed, quests can award XP and badges.
+Quests are multi-step missions users complete by triggering events.
 
-### How Quests Work
+### Using the Component
 
-1. **Create a quest** with one or more steps
-2. **Define steps** with event triggers (e.g., `profile.updated`, `purchase.completed`)
-3. **Publish the quest** to make it available to users
-4. **Send events** from your app - steps complete automatically when matching events are received
-5. **Quest completes** when all steps are done, awarding XP and/or badges
+Drop in the pre-built quest progress component:
 
-### Admin Endpoints
+```tsx
+import { QuestProgress } from '@gamifyio/react';
 
-#### Create a Quest
-
-```bash
-POST /quests
-```
-
-```json
-{
-  "name": "Complete Your Profile",
-  "description": "Fill out your profile to earn rewards",
-  "rewardXp": 100,
-  "rewardBadgeId": "badge_123",
-  "steps": [
-    {
-      "eventName": "profile.avatar_uploaded",
-      "title": "Upload Avatar",
-      "requiredCount": 1
-    },
-    {
-      "eventName": "profile.bio_updated",
-      "title": "Add Bio",
-      "requiredCount": 1
-    }
-  ]
+function QuestsPage() {
+  return (
+    <QuestProgress
+      hideCompleted
+      onComplete={(quest) => {
+        toast.success(`Completed: ${quest.name}!`);
+      }}
+    />
+  );
 }
 ```
 
-#### List Quests
+### Using the Hook (Custom UI)
 
-```bash
-GET /quests          # All quests (drafts + published)
-GET /quests/active   # Published quests only
-```
+Build your own UI with the `useQuests` hook:
 
-#### Get Quest Details
+```tsx
+import { useQuests } from '@gamifyio/react';
 
-```bash
-GET /quests/:id
-```
+function CustomQuestList() {
+  const { quests, loading, error, refresh } = useQuests({ autoRefresh: true });
 
-#### Update Quest
+  if (loading) return <Spinner />;
+  if (error) return <Error message={error} />;
 
-```bash
-PUT /quests/:id
-```
+  return (
+    <div>
+      {quests.map((quest) => (
+        <div key={quest.id}>
+          <h3>{quest.name}</h3>
+          <p>{quest.description}</p>
+          <ProgressBar value={quest.percentComplete} />
+          <span>{quest.status}</span>
 
-```json
-{
-  "name": "Updated Quest Name",
-  "rewardXp": 200
+          <ul>
+            {quest.steps.map((step) => (
+              <li key={step.id}>
+                {step.completed ? '✓' : '○'} {step.name}
+                ({step.currentCount}/{step.requiredCount})
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
 }
-```
-
-#### Delete Quest
-
-```bash
-DELETE /quests/:id
-```
-
-#### Publish / Unpublish
-
-```bash
-POST /quests/:id/publish
-POST /quests/:id/unpublish
-```
-
-#### Manage Steps
-
-```bash
-GET /quests/:id/steps                    # List steps
-POST /quests/:id/steps                   # Add step
-PUT /quests/:questId/steps/:stepId       # Update step
-DELETE /quests/:questId/steps/:stepId    # Delete step
-```
-
-### SDK Endpoints
-
-Use these endpoints in your frontend to display quest progress.
-
-#### Get User's Quests with Progress
-
-```bash
-GET /v1/customer/quests?userId=user_123
-```
-
-Response:
-
-```json
-{
-  "quests": [
-    {
-      "id": "quest_abc",
-      "name": "Complete Your Profile",
-      "description": "Fill out your profile to earn rewards",
-      "rewardXp": 100,
-      "rewardBadgeId": "badge_123",
-      "status": "in_progress",
-      "percentComplete": 50,
-      "steps": [
-        {
-          "id": "step_1",
-          "title": "Upload Avatar",
-          "eventName": "profile.avatar_uploaded",
-          "requiredCount": 1,
-          "currentCount": 1,
-          "isComplete": true
-        },
-        {
-          "id": "step_2",
-          "title": "Add Bio",
-          "eventName": "profile.bio_updated",
-          "requiredCount": 1,
-          "currentCount": 0,
-          "isComplete": false
-        }
-      ]
-    }
-  ]
-}
-```
-
-#### Get Single Quest Progress
-
-```bash
-GET /v1/customer/quests/:questId?userId=user_123
 ```
 
 ### Triggering Quest Progress
 
-Send events to the `/events` endpoint. When the event type matches a quest step's `eventName`, progress is automatically tracked.
+Quest steps advance automatically when you track matching events:
 
-```bash
-POST /events
-```
+```tsx
+const track = useTrack();
 
-```json
-{
-  "userId": "user_123",
-  "eventType": "profile.bio_updated",
-  "payload": {
-    "bio": "Hello, I'm a developer!"
-  }
-}
-```
-
-### JavaScript Example
-
-```typescript
-// Fetch user's quests
-async function getUserQuests(userId: string) {
-  const response = await fetch(
-    `https://api.boost.dev/v1/customer/quests?userId=${userId}`,
-    {
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    }
-  );
-  return response.json();
-}
-
-// Track an event (triggers quest progress)
-async function trackEvent(userId: string, eventType: string, payload: object) {
-  await fetch('https://api.boost.dev/events', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ userId, eventType, payload }),
-  });
-}
-
-// Example: User updates their bio
-await trackEvent('user_123', 'profile.bio_updated', { bio: 'New bio text' });
-
-// Refresh quest progress
-const quests = await getUserQuests('user_123');
-console.log(quests);
+// This advances any quest step with eventName: "profile.avatar_uploaded"
+track('profile.avatar_uploaded', { avatarUrl: 'https://...' });
 ```
 
 ---
 
 ## Badges
 
-Badges are achievements that users can earn. They can be awarded automatically based on metrics or manually by admins.
+Badges are achievements users earn automatically or via admin award.
 
-### Badge Properties
+### Using the Component
 
-| Property | Description |
-|----------|-------------|
-| `rarity` | `COMMON`, `RARE`, `EPIC`, or `LEGENDARY` |
-| `visibility` | `PUBLIC` (always shown) or `HIDDEN` (revealed on unlock) |
-| `ruleType` | How the badge is earned (see below) |
-
-### Rule Types
-
-- **METRIC_THRESHOLD**: Awards when a metric reaches a threshold (e.g., 100 purchases)
-- **EVENT_COUNT**: Awards after N occurrences of an event
-- **MANUAL**: Only awarded via admin API
-
-### Admin Endpoints
-
-#### Create a Badge
-
-```bash
-POST /badges
-```
-
-```json
-{
-  "name": "First Purchase",
-  "description": "Complete your first purchase",
-  "iconUrl": "https://example.com/badges/first-purchase.png",
-  "rarity": "COMMON",
-  "visibility": "PUBLIC",
-  "category": "Shopping",
-  "ruleType": "EVENT_COUNT",
-  "triggerMetric": "purchase",
-  "threshold": 1
-}
-```
-
-#### List Badges
-
-```bash
-GET /badges          # All badges
-GET /badges/active   # Active badges only
-GET /badges/categories   # Get category list
-```
-
-#### Get Badge Details
-
-```bash
-GET /badges/:id
-```
-
-#### Update Badge
-
-```bash
-PUT /badges/:id
-```
-
-```json
-{
-  "name": "Updated Badge Name",
-  "threshold": 5
-}
-```
-
-#### Delete Badge
-
-```bash
-DELETE /badges/:id
-```
-
-#### Activate / Deactivate
-
-```bash
-POST /badges/:id/activate
-POST /badges/:id/deactivate
-```
-
-#### Manually Award Badge
-
-```bash
-POST /badges/:id/award
-```
-
-```json
-{
-  "userId": "user_123",
-  "awardedBy": "admin_456",
-  "metadata": {
-    "reason": "Special promotion winner"
-  }
-}
-```
-
-#### View Recent Awards
-
-```bash
-GET /badges/recent-awards?limit=10
-```
-
-### SDK Endpoints
-
-Use these endpoints to display a user's badge collection (Trophy Case).
-
-#### Get User's Badge Collection
-
-```bash
-GET /v1/customer/badges?userId=user_123
-GET /v1/customer/badges?userId=user_123&category=Shopping
-```
-
-Response:
-
-```json
-{
-  "badges": [
-    {
-      "id": "badge_abc",
-      "name": "First Purchase",
-      "description": "Complete your first purchase",
-      "iconUrl": "https://example.com/badges/first-purchase.png",
-      "imageUrl": null,
-      "rarity": "COMMON",
-      "visibility": "PUBLIC",
-      "category": "Shopping",
-      "isUnlocked": true,
-      "unlockedAt": "2024-01-15T10:30:00Z"
-    },
-    {
-      "id": "badge_def",
-      "name": "Power Shopper",
-      "description": "Make 100 purchases",
-      "iconUrl": "https://example.com/badges/power-shopper.png",
-      "rarity": "LEGENDARY",
-      "visibility": "PUBLIC",
-      "category": "Shopping",
-      "isUnlocked": false,
-      "unlockedAt": null
-    }
-  ],
-  "stats": {
-    "total": 10,
-    "unlocked": 3,
-    "byRarity": {
-      "COMMON": { "total": 4, "unlocked": 2 },
-      "RARE": { "total": 3, "unlocked": 1 },
-      "EPIC": { "total": 2, "unlocked": 0 },
-      "LEGENDARY": { "total": 1, "unlocked": 0 }
-    }
-  }
-}
-```
-
-#### Get Badge Categories
-
-```bash
-GET /v1/customer/badges/categories
-```
-
-### Automatic Badge Awards
-
-Badges with `ruleType: METRIC_THRESHOLD` or `EVENT_COUNT` are automatically awarded when matching events are received.
-
-**Example:** Badge with `triggerMetric: "purchase"` and `threshold: 1`:
-
-```bash
-POST /events
-```
-
-```json
-{
-  "userId": "user_123",
-  "eventType": "purchase.completed",
-  "payload": {
-    "orderId": "order_456",
-    "amount": 99.99
-  }
-}
-```
-
-The badge handler extracts `purchase` from the event type and checks if conditions are met.
-
-### JavaScript Example
-
-```typescript
-// Fetch user's badge collection
-async function getUserBadges(userId: string, category?: string) {
-  const params = new URLSearchParams({ userId });
-  if (category) params.append('category', category);
-
-  const response = await fetch(
-    `https://api.boost.dev/v1/customer/badges?${params}`,
-    {
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    }
-  );
-  return response.json();
-}
-
-// Display badge grid
-async function renderBadgeGrid(userId: string) {
-  const { badges, stats } = await getUserBadges(userId);
-
-  console.log(`Unlocked: ${stats.unlocked}/${stats.total}`);
-
-  badges.forEach(badge => {
-    const status = badge.isUnlocked ? 'Unlocked!' : 'Locked';
-    console.log(`${badge.name} (${badge.rarity}) - ${status}`);
-  });
-}
-
-// Manually award a badge (admin)
-async function awardBadge(badgeId: string, userId: string) {
-  await fetch(`https://api.boost.dev/badges/${badgeId}/award`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${ADMIN_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ userId }),
-  });
-}
-```
-
-### React Component Example
+Display a badge collection with the pre-built grid:
 
 ```tsx
-import { useEffect, useState } from 'react';
+import { BadgeGrid } from '@gamifyio/react';
 
-interface Badge {
-  id: string;
-  name: string;
-  iconUrl: string;
-  rarity: string;
-  isUnlocked: boolean;
+function BadgesPage() {
+  return (
+    <BadgeGrid
+      showLocked        // Show unearned badges (grayscale)
+      showStats         // Show "3/10 unlocked" header
+      onBadgeClick={(badge) => {
+        openBadgeModal(badge);
+      }}
+    />
+  );
 }
+```
 
-function BadgeGrid({ userId }: { userId: string }) {
-  const [badges, setBadges] = useState<Badge[]>([]);
+### Using the Hook (Custom UI)
 
-  useEffect(() => {
-    fetch(`/api/badges?userId=${userId}`)
-      .then(res => res.json())
-      .then(data => setBadges(data.badges));
-  }, [userId]);
+```tsx
+import { useBadges } from '@gamifyio/react';
+
+function CustomBadgeDisplay() {
+  const { badges, earned, locked, stats, loading } = useBadges({
+    autoRefresh: true,
+    category: 'Shopping', // Optional filter
+  });
+
+  if (loading) return <Spinner />;
 
   return (
-    <div className="badge-grid">
-      {badges.map(badge => (
-        <div
-          key={badge.id}
-          className={`badge ${badge.isUnlocked ? 'unlocked' : 'locked'}`}
-        >
-          <img
-            src={badge.iconUrl}
-            alt={badge.name}
-            style={{ filter: badge.isUnlocked ? 'none' : 'grayscale(100%)' }}
-          />
-          <span>{badge.name}</span>
-          <span className="rarity">{badge.rarity}</span>
+    <div>
+      <p>Unlocked: {stats.unlocked} / {stats.total}</p>
+
+      <div className="grid">
+        {badges.map((badge) => (
+          <div
+            key={badge.id}
+            className={badge.isUnlocked ? '' : 'opacity-50 grayscale'}
+          >
+            <img src={badge.iconUrl} alt={badge.name} />
+            <span>{badge.name}</span>
+            <span className={`rarity-${badge.rarity.toLowerCase()}`}>
+              {badge.rarity}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+### Badge Rarity
+
+Badges have four rarity levels for visual distinction:
+
+- `COMMON` - Easy to earn
+- `RARE` - Moderate difficulty
+- `EPIC` - Challenging
+- `LEGENDARY` - Very difficult
+
+---
+
+## Affiliate Program
+
+Let users earn commissions by referring new customers.
+
+### Displaying Affiliate Stats
+
+```tsx
+import { AffiliateStats } from '@gamifyio/react';
+
+function AffiliateDashboard() {
+  return <AffiliateStats autoRefresh />;
+}
+```
+
+### Referral Link Component
+
+Display and copy the user's referral link:
+
+```tsx
+import { ReferralLink } from '@gamifyio/react';
+
+function ShareSection() {
+  return (
+    <ReferralLink
+      baseUrl="https://myapp.com/signup"
+      shareTitle="Join MyApp!"
+      shareText="Sign up using my link and we both earn rewards"
+      onCopy={(link) => toast.success('Copied!')}
+    />
+  );
+}
+```
+
+### Leaderboard
+
+Show top affiliates:
+
+```tsx
+import { Leaderboard } from '@gamifyio/react';
+
+function LeaderboardPage() {
+  return (
+    <Leaderboard
+      limit={10}
+      currentUserId={userId} // Highlights current user
+    />
+  );
+}
+```
+
+### Using Hooks (Custom UI)
+
+```tsx
+import { useAffiliateStats, useReferral, useLeaderboard } from '@gamifyio/react';
+
+function CustomAffiliateDashboard() {
+  const { stats, loading } = useAffiliateStats({ autoRefresh: true });
+  const { referrerCode, hasReferrer } = useReferral();
+  const { leaderboard } = useLeaderboard(10);
+
+  if (loading) return <Spinner />;
+
+  return (
+    <div>
+      <p>Your referral code: {stats?.referralCode}</p>
+      <p>Total referrals: {stats?.referralCount}</p>
+      <p>Earnings: ${(stats?.earnings.totalEarned / 100).toFixed(2)}</p>
+      <p>Pending: ${(stats?.earnings.totalPending / 100).toFixed(2)}</p>
+
+      {hasReferrer && (
+        <p>You were referred by: {referrerCode}</p>
+      )}
+    </div>
+  );
+}
+```
+
+### Detecting Referrals from URL
+
+The SDK automatically detects `?ref=CODE` in the URL:
+
+```tsx
+import { useReferral } from '@gamifyio/react';
+
+function SignupPage() {
+  const { referrerCode, hasReferrer } = useReferral();
+
+  // referrerCode is automatically captured from ?ref=CODE
+  // Pass it to your backend when user signs up
+
+  return (
+    <form>
+      {hasReferrer && (
+        <p>Using referral code: {referrerCode}</p>
+      )}
+      {/* ... */}
+    </form>
+  );
+}
+```
+
+### Backend: Recording Referrals & Purchases
+
+```typescript
+import { GamifyClient } from '@gamifyio/node';
+
+const gamify = new GamifyClient({
+  secretKey: process.env.GAMIFY_SECRET_KEY,
+});
+
+// When referred user signs up
+app.post('/api/signup', async (req, res) => {
+  const { email, referralCode } = req.body;
+  const user = await createUser(email);
+
+  if (referralCode) {
+    await gamify.referralSuccess({
+      referredUserId: user.id,
+      referralCode,
+    });
+  }
+
+  res.json({ userId: user.id });
+});
+
+// When referred user makes a purchase (triggers commission)
+app.post('/api/checkout', async (req, res) => {
+  const { userId, orderId, amount } = req.body;
+
+  await gamify.purchase({
+    userId,
+    orderId,
+    amount: amount * 100,
+    currency: 'USD',
+  });
+
+  res.json({ success: true });
+});
+```
+
+---
+
+## Streaks
+
+Track daily/weekly activity streaks with freeze mechanics.
+
+### Using the Component
+
+```tsx
+import { StreakFlame } from '@gamifyio/react';
+
+function StreakDisplay() {
+  return (
+    <StreakFlame
+      showFreezeButton
+      onFreeze={(ruleId, remaining) => {
+        toast.success(`Freeze used! ${remaining} left`);
+      }}
+    />
+  );
+}
+```
+
+### Using the Hook
+
+```tsx
+import { useStreaks } from '@gamifyio/react';
+
+function CustomStreakDisplay() {
+  const { streaks, stats, loading, freeze } = useStreaks({ autoRefresh: true });
+
+  return (
+    <div>
+      <p>Active streaks: {stats?.totalActive}</p>
+      <p>Longest current: {stats?.longestCurrent}</p>
+
+      {streaks.map((streak) => (
+        <div key={streak.id}>
+          <span>🔥 {streak.currentCount}</span>
+          <span>{streak.name}</span>
+
+          {streak.freezeInventory > 0 && (
+            <button onClick={() => freeze(streak.id)}>
+              Use Freeze ({streak.freezeInventory} left)
+            </button>
+          )}
         </div>
       ))}
     </div>
@@ -501,388 +529,148 @@ function BadgeGrid({ userId }: { userId: string }) {
 
 ---
 
-## Affiliate Program
+## Rewards Store
 
-The affiliate program lets you set up referral tracking and commission-based rewards for users who bring in new customers.
+Let users redeem points for rewards.
 
-### Commission Plans
+### Using the Component
 
-Commission plans define how affiliates earn. There are two types:
+```tsx
+import { RewardStore } from '@gamifyio/react';
 
-- **PERCENTAGE**: Commission as a percentage of the transaction (value in basis points, e.g., 1000 = 10%)
-- **FIXED**: Fixed amount per transaction (value in cents)
-
-### Admin Endpoints
-
-#### Create a Commission Plan
-
-```bash
-POST /affiliates/plans
-```
-
-```json
-{
-  "name": "Standard Affiliate",
-  "description": "10% commission on all referral purchases",
-  "type": "PERCENTAGE",
-  "value": 1000,
-  "currency": "USD",
-  "isDefault": true,
-  "active": true
-}
-```
-
-#### List Commission Plans
-
-```bash
-GET /affiliates/plans          # All plans
-GET /affiliates/plans/active   # Active plans only
-```
-
-#### Get Plan Details
-
-```bash
-GET /affiliates/plans/:id
-```
-
-#### Update Plan
-
-```bash
-PUT /affiliates/plans/:id
-```
-
-```json
-{
-  "name": "Gold Affiliate",
-  "value": 1500
-}
-```
-
-#### Delete Plan
-
-```bash
-DELETE /affiliates/plans/:id
-```
-
-#### Set Default Plan
-
-```bash
-POST /affiliates/plans/:id/set-default
-```
-
-### Referral Tracking
-
-#### Record a Referral
-
-When a new user signs up via a referral link, record the referral:
-
-```bash
-POST /affiliates/referrals
-```
-
-```json
-{
-  "referrerId": "end_user_uuid",
-  "referredExternalId": "new_user_123",
-  "referralCode": "JOHN2024",
-  "source": "url_param"
-}
-```
-
-#### List Referrals
-
-```bash
-GET /affiliates/referrals
-GET /affiliates/referrals?limit=50&offset=0
-```
-
-#### Get Referrals by Referrer
-
-```bash
-GET /affiliates/referrals/by-referrer/:userId
-```
-
-### Commission Management
-
-#### Record a Commission
-
-When a referred user makes a purchase, record the commission:
-
-```bash
-POST /affiliates/commissions
-```
-
-```json
-{
-  "userId": "affiliate_user_123",
-  "commissionPlanId": "plan_abc",
-  "amount": 500,
-  "sourceAmount": 5000,
-  "orderId": "order_789",
-  "referredUserId": "referred_user_456",
-  "currency": "USD",
-  "notes": "Commission for order #789"
-}
-```
-
-#### List Commissions
-
-```bash
-GET /affiliates/commissions
-GET /affiliates/commissions?status=PENDING
-GET /affiliates/commissions?status=PAID
-```
-
-#### Get Commissions by User
-
-```bash
-GET /affiliates/commissions/by-user/:userId
-```
-
-#### Mark Commission as Paid
-
-```bash
-POST /affiliates/commissions/:id/pay
-```
-
-```json
-{
-  "notes": "Paid via PayPal on 2024-01-15"
-}
-```
-
-#### Reject Commission
-
-```bash
-POST /affiliates/commissions/:id/reject
-```
-
-```json
-{
-  "notes": "Order was refunded"
-}
-```
-
-### SDK Endpoints
-
-Use these endpoints in your frontend to display affiliate dashboards.
-
-#### Get Affiliate Profile
-
-```bash
-GET /v1/customer/affiliate/profile?userId=user_123
-```
-
-Response:
-
-```json
-{
-  "userId": "user_123",
-  "referralCode": "JOHN2024",
-  "commissionPlan": {
-    "id": "plan_abc",
-    "name": "Standard Affiliate",
-    "type": "PERCENTAGE",
-    "value": 1000
-  },
-  "stats": {
-    "totalEarned": 15000,
-    "totalPending": 2500,
-    "totalPaid": 12500,
-    "referralCount": 15
-  }
-}
-```
-
-#### Get User's Referrals
-
-```bash
-GET /v1/customer/affiliate/referrals?userId=user_123
-```
-
-Response:
-
-```json
-{
-  "referrals": [
-    {
-      "id": "ref_abc",
-      "referredExternalId": "new_user_456",
-      "referralCode": "JOHN2024",
-      "source": "url_param",
-      "createdAt": "2024-01-10T12:00:00Z"
-    }
-  ],
-  "total": 15
-}
-```
-
-#### Get User's Commission History
-
-```bash
-GET /v1/customer/affiliate/commissions?userId=user_123
-```
-
-Response:
-
-```json
-{
-  "commissions": [
-    {
-      "id": "comm_xyz",
-      "amount": 500,
-      "sourceAmount": 5000,
-      "status": "PAID",
-      "orderId": "order_789",
-      "currency": "USD",
-      "createdAt": "2024-01-12T14:30:00Z",
-      "paidAt": "2024-01-15T10:00:00Z"
-    }
-  ],
-  "total": 25
-}
-```
-
-### JavaScript Example
-
-```typescript
-// Fetch affiliate dashboard data
-async function getAffiliateDashboard(userId: string) {
-  const response = await fetch(
-    `https://api.boost.dev/v1/customer/affiliate/profile?userId=${userId}`,
-    {
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    }
+function RewardsPage() {
+  return (
+    <RewardStore
+      showPointsHeader
+      onRedeem={(item, result) => {
+        if (result.success) {
+          toast.success(`Redeemed ${item.name}!`);
+        }
+      }}
+    />
   );
-  return response.json();
-}
-
-// Display affiliate stats
-async function renderAffiliateDashboard(userId: string) {
-  const profile = await getAffiliateDashboard(userId);
-
-  console.log(`Referral Code: ${profile.referralCode}`);
-  console.log(`Total Earned: $${(profile.stats.totalEarned / 100).toFixed(2)}`);
-  console.log(`Pending: $${(profile.stats.totalPending / 100).toFixed(2)}`);
-  console.log(`Referrals: ${profile.stats.referralCount}`);
-}
-
-// Track a referral when new user signs up
-async function trackReferral(
-  referrerId: string,
-  newUserId: string,
-  referralCode: string
-) {
-  await fetch('https://api.boost.dev/affiliates/referrals', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      referrerId,
-      referredExternalId: newUserId,
-      referralCode,
-      source: 'url_param',
-    }),
-  });
-}
-
-// Record commission when referred user makes a purchase
-async function recordCommission(
-  affiliateUserId: string,
-  planId: string,
-  orderAmount: number,
-  orderId: string
-) {
-  // Calculate commission (e.g., 10% = 1000 basis points)
-  const commissionAmount = Math.floor(orderAmount * 0.10);
-
-  await fetch('https://api.boost.dev/affiliates/commissions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      userId: affiliateUserId,
-      commissionPlanId: planId,
-      amount: commissionAmount,
-      sourceAmount: orderAmount,
-      orderId,
-    }),
-  });
 }
 ```
 
-### Typical Integration Flow
+### Using the Hook
 
-1. **User generates referral link**: Use their unique `referralCode` from their profile
-2. **New user signs up**: Extract referral code from URL, call `/affiliates/referrals` to record
-3. **Referred user makes purchase**: Calculate commission, call `/affiliates/commissions` to record
-4. **Admin reviews**: View pending commissions in dashboard
-5. **Admin pays**: Mark commissions as paid via `/affiliates/commissions/:id/pay`
-6. **Affiliate views earnings**: Frontend fetches `/v1/customer/affiliate/profile`
+```tsx
+import { useRewards } from '@gamifyio/react';
+
+function CustomRewardsStore() {
+  const { items, userPoints, loading, redeem } = useRewards({ autoRefresh: true });
+
+  const handleRedeem = async (itemId: string) => {
+    const result = await redeem(itemId);
+    if (result?.success) {
+      toast.success('Reward redeemed!');
+    }
+  };
+
+  return (
+    <div>
+      <p>Your points: {userPoints}</p>
+
+      <div className="grid">
+        {items.map((item) => (
+          <div key={item.id}>
+            <img src={item.imageUrl} alt={item.name} />
+            <h3>{item.name}</h3>
+            <p>{item.pointsCost} points</p>
+
+            <button
+              disabled={!item.isAvailable}
+              onClick={() => handleRedeem(item.id)}
+            >
+              {item.canAfford ? 'Redeem' : `Need ${item.pointsCost - userPoints} more`}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
 
 ---
 
-## Event Tracking
+## Loyalty & Levels
 
-All gamification features are powered by events. Send events to trigger quest progress, badge awards, and more.
+Display tier progression and points.
 
-```bash
-POST /events
-```
+### Using the Component
 
-```json
-{
-  "userId": "user_123",
-  "eventType": "purchase.completed",
-  "payload": {
-    "orderId": "order_456",
-    "amount": 99.99,
-    "items": ["item_a", "item_b"]
-  }
+```tsx
+import { LevelProgress } from '@gamifyio/react';
+
+function LoyaltySection() {
+  return (
+    <LevelProgress
+      showNextTier
+      showBenefits
+    />
+  );
 }
 ```
 
-### Event Naming Conventions
+### Using the Hook
 
-Use dot notation for event types:
+```tsx
+import { useLoyalty } from '@gamifyio/react';
 
-- `profile.updated`
-- `profile.avatar_uploaded`
-- `purchase.completed`
-- `referral.signup`
+function CustomLoyaltyDisplay() {
+  const { profile, history, loading } = useLoyalty({ autoRefresh: true });
 
-The text before the first dot is used as the metric name for badge triggers.
+  if (loading) return <Spinner />;
+
+  return (
+    <div>
+      <p>Points: {profile?.points}</p>
+      <p>Tier: {profile?.tier?.name || 'None'}</p>
+
+      {profile?.nextTier && (
+        <div>
+          <p>Next tier: {profile.nextTier.name}</p>
+          <p>{profile.nextTier.pointsNeeded} points needed</p>
+          <ProgressBar
+            value={profile.points}
+            max={profile.nextTier.minPoints}
+          />
+        </div>
+      )}
+
+      <h3>Recent Activity</h3>
+      <ul>
+        {history?.transactions.map((tx) => (
+          <li key={tx.id}>
+            {tx.type}: {tx.amount > 0 ? '+' : ''}{tx.amount} points
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
 
 ---
 
-## Error Handling
+## Summary
 
-All endpoints return standard HTTP status codes:
+| Feature | Frontend Component | Frontend Hook | Backend Method |
+|---------|-------------------|---------------|----------------|
+| **Quests** | `<QuestProgress />` | `useQuests()` | - |
+| **Badges** | `<BadgeGrid />` | `useBadges()` | - |
+| **Affiliate** | `<AffiliateStats />`, `<ReferralLink />`, `<Leaderboard />` | `useAffiliateStats()`, `useReferral()` | `referralSuccess()` |
+| **Streaks** | `<StreakFlame />` | `useStreaks()` | - |
+| **Rewards** | `<RewardStore />` | `useRewards()` | - |
+| **Loyalty** | `<LevelProgress />` | `useLoyalty()` | - |
+| **Purchases** | - | - | `purchase()` |
+| **Identity** | `useIdentify()` | `useIdentify()` | `identify()` |
+| **Events** | `useTrack()` | `useTrack()` | `track()` |
 
-| Code | Description |
-|------|-------------|
-| 200 | Success |
-| 201 | Created |
-| 204 | No Content (successful delete) |
-| 400 | Bad Request (validation error) |
-| 401 | Unauthorized (invalid API key) |
-| 403 | Forbidden (wrong project) |
-| 404 | Not Found |
-| 500 | Internal Server Error |
+### Key Rules
 
-Error response format:
-
-```json
-{
-  "statusCode": 400,
-  "message": ["name must be a string"],
-  "error": "Bad Request"
-}
-```
+1. **Use frontend SDK** for displaying data and tracking non-sensitive events
+2. **Use backend SDK** for purchases, referral completions, and sensitive actions
+3. **Never expose your secret key** (`sk_live_`) in client-side code
+4. **Always identify users** after login to associate events with their profile
