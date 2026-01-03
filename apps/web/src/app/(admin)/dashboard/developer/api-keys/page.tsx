@@ -33,13 +33,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useOrganization } from '@/hooks/use-organization';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useOrganization, type ApiKeyType } from '@/hooks/use-organization';
 
 export default function ApiKeysPage() {
   const { apiKeys, projects, createApiKey, revokeApiKey } = useOrganization();
   const currentProject = projects[0];
 
   const [keyName, setKeyName] = React.useState('');
+  const [keyType, setKeyType] = React.useState<ApiKeyType>('secret');
   const [isCreating, setIsCreating] = React.useState(false);
   const [newSecret, setNewSecret] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState(false);
@@ -53,7 +61,7 @@ export default function ApiKeysPage() {
     setError(null);
 
     try {
-      const result = await createApiKey(currentProject.id, keyName);
+      const result = await createApiKey(currentProject.id, keyName, keyType);
       setNewSecret(result.secret);
     } catch (error) {
       console.error('Failed to create API key:', error);
@@ -81,6 +89,7 @@ export default function ApiKeysPage() {
     setDialogOpen(false);
     setNewSecret(null);
     setKeyName('');
+    setKeyType('secret');
     setError(null);
   };
 
@@ -166,6 +175,28 @@ export default function ApiKeysPage() {
                       className="bg-surface-1"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="key-type">Key Type</Label>
+                    <Select value={keyType} onValueChange={(value: ApiKeyType) => setKeyType(value)}>
+                      <SelectTrigger className="bg-surface-1">
+                        <SelectValue placeholder="Select key type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="secret">
+                          <div className="flex flex-col items-start">
+                            <span>Secret Key</span>
+                            <span className="text-xs text-muted-foreground">For backend/server use (sk_live_*)</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="publishable">
+                          <div className="flex flex-col items-start">
+                            <span>Publishable Key</span>
+                            <span className="text-xs text-muted-foreground">For frontend/browser use (pk_live_*)</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button
@@ -239,6 +270,13 @@ export default function ApiKeysPage() {
                         <StatusBadge variant="active" size="sm">
                           Active
                         </StatusBadge>
+                        <span className={`text-xs px-2 py-0.5 rounded ${
+                          key.type === 'publishable'
+                            ? 'bg-blue-400/10 text-blue-400'
+                            : 'bg-purple-400/10 text-purple-400'
+                        }`}>
+                          {key.type || 'secret'}
+                        </span>
                       </div>
                       <code className="text-xs text-muted-foreground">
                         {key.keyPrefix}...

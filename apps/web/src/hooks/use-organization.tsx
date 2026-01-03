@@ -17,11 +17,14 @@ export interface Project {
   createdAt: string;
 }
 
+export type ApiKeyType = 'publishable' | 'secret';
+
 export interface ApiKey {
   id: string;
   name: string;
   projectId: string;
   keyPrefix: string;
+  type: ApiKeyType;
   createdAt: string;
   lastUsedAt?: string;
 }
@@ -35,7 +38,7 @@ interface OrganizationContextValue {
   projects: Project[];
   createProject: (name: string) => Promise<Project>;
   apiKeys: ApiKey[];
-  createApiKey: (projectId: string, name: string) => Promise<{ key: ApiKey; secret: string }>;
+  createApiKey: (projectId: string, name: string, type?: ApiKeyType) => Promise<{ key: ApiKey; secret: string }>;
   revokeApiKey: (keyId: string) => Promise<void>;
 }
 
@@ -132,10 +135,10 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
   });
 
   const createApiKeyMutation = useMutation({
-    mutationFn: ({ projectId, name }: { projectId: string; name: string }) =>
+    mutationFn: ({ projectId, name, type }: { projectId: string; name: string; type?: ApiKeyType }) =>
       fetchApi<{ key: ApiKey; secret: string }>(`/projects/${projectId}/api-keys`, {
         method: 'POST',
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, type }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['apiKeys', currentOrg?.id] });
@@ -159,8 +162,8 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
     projects,
     createProject: (name: string) => createProjectMutation.mutateAsync(name),
     apiKeys,
-    createApiKey: (projectId: string, name: string) =>
-      createApiKeyMutation.mutateAsync({ projectId, name }),
+    createApiKey: (projectId: string, name: string, type?: ApiKeyType) =>
+      createApiKeyMutation.mutateAsync({ projectId, name, type }),
     revokeApiKey: (keyId: string) => revokeApiKeyMutation.mutateAsync(keyId),
   }), [
     organizations,

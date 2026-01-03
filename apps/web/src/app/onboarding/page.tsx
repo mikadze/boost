@@ -32,8 +32,11 @@ export default function OnboardingPage() {
 
   const [step, setStep] = useState<Step>('organization');
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKeySecret, setApiKeySecret] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [apiKeySecrets, setApiKeySecrets] = useState<{
+    publishable: string | null;
+    secret: string | null;
+  }>({ publishable: null, secret: null });
+  const [copiedKey, setCopiedKey] = useState<'publishable' | 'secret' | null>(null);
 
   // Skip completed steps on mount
   useEffect(() => {
@@ -81,19 +84,26 @@ export default function OnboardingPage() {
     if (!projects[0]) return;
     setIsLoading(true);
     try {
-      const result = await createApiKey(projects[0].id, 'Default API Key');
-      setApiKeySecret(result.secret);
+      const [publishableResult, secretResult] = await Promise.all([
+        createApiKey(projects[0].id, 'Frontend Key', 'publishable'),
+        createApiKey(projects[0].id, 'Backend Key', 'secret'),
+      ]);
+      setApiKeySecrets({
+        publishable: publishableResult.secret,
+        secret: secretResult.secret,
+      });
       setStep('complete');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCopy = async () => {
-    if (!apiKeySecret) return;
-    await navigator.clipboard.writeText(apiKeySecret);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async (keyType: 'publishable' | 'secret') => {
+    const secret = apiKeySecrets[keyType];
+    if (!secret) return;
+    await navigator.clipboard.writeText(secret);
+    setCopiedKey(keyType);
+    setTimeout(() => setCopiedKey(null), 2000);
   };
 
   const steps = [
@@ -232,30 +242,59 @@ export default function OnboardingPage() {
                 You&apos;re All Set!
               </CardTitle>
               <CardDescription>
-                Save your API key and choose how you&apos;d like to get started
+                Save your API keys and choose how you&apos;d like to get started
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Alert variant="warning">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Save your API key</AlertTitle>
+                <AlertTitle>Save your API keys</AlertTitle>
                 <AlertDescription>
-                  This is the only time your API key will be displayed. Store it securely.
+                  This is the only time your API keys will be displayed. Store them securely.
                 </AlertDescription>
               </Alert>
 
-              {apiKeySecret && (
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 p-3 bg-muted rounded-md text-sm font-mono break-all">
-                    {apiKeySecret}
-                  </code>
-                  <Button size="icon" variant="outline" onClick={handleCopy}>
-                    {copied ? (
-                      <Check className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
+              {apiKeySecrets.publishable && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Frontend Key</span>
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">publishable</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Use this in your React/browser SDK</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 p-3 bg-muted rounded-md text-sm font-mono break-all">
+                      {apiKeySecrets.publishable}
+                    </code>
+                    <Button size="icon" variant="outline" onClick={() => handleCopy('publishable')}>
+                      {copiedKey === 'publishable' ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {apiKeySecrets.secret && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Backend Key</span>
+                    <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">secret</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Use this in your Node.js/server SDK</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 p-3 bg-muted rounded-md text-sm font-mono break-all">
+                      {apiKeySecrets.secret}
+                    </code>
+                    <Button size="icon" variant="outline" onClick={() => handleCopy('secret')}>
+                      {copiedKey === 'secret' ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               )}
 
