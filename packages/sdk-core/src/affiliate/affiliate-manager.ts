@@ -2,6 +2,7 @@ import type {
   GamifyConfig,
   StorageAdapter,
   AffiliateStats,
+  AffiliateStatsResponse,
   LeaderboardResponse,
 } from '../types.js';
 import type { HttpClient } from '../network/index.js';
@@ -65,21 +66,12 @@ export class AffiliateManager {
     this.log('Fetching affiliate stats from API', { userId });
 
     try {
-      const response = await this.client.get<AffiliateStats>(
+      const response = await this.client.get<AffiliateStatsResponse>(
         `/v1/customer/affiliate/profile?userId=${encodeURIComponent(userId)}`
       );
 
-      if (response.success && response.data) {
-        // Map API response to AffiliateStats shape
-        const stats: AffiliateStats = {
-          referralCode: response.data.referralCode,
-          referralCount: response.data.stats?.referralCount ?? 0,
-          earnings: {
-            totalEarned: response.data.stats?.totalEarned ?? 0,
-            totalPending: response.data.stats?.totalPending ?? 0,
-            totalPaid: response.data.stats?.totalPaid ?? 0,
-          },
-        };
+      if (response.success && response.data?.stats) {
+        const stats = response.data.stats;
 
         this.cachedStats = stats;
         this.lastFetchTime = now;

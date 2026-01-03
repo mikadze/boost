@@ -11,6 +11,7 @@ import {
   CorrelationIdMiddleware,
 } from '@boost/common';
 import { EventsController } from './events/events.controller';
+import { DashboardEventsController } from './events/dashboard-events.controller';
 import { EventsService } from './events/events.service';
 import { AuthController } from './auth/auth.controller';
 import { BetterAuthController } from './better-auth/better-auth.controller';
@@ -127,7 +128,7 @@ import { AiModule } from './ai/ai.module';
     // AI Generation
     AiModule,
   ],
-  controllers: [AppController, EventsController, AuthController, BetterAuthController],
+  controllers: [AppController, EventsController, DashboardEventsController, AuthController, BetterAuthController],
   providers: [AppService, EventsService],
 })
 export class AppModule implements NestModule {
