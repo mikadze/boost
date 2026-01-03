@@ -24,6 +24,47 @@ import type {
 } from '@gamifyio/core';
 
 // ============================================
+// Optional framer-motion support
+// ============================================
+
+type MotionComponent = React.ComponentType<{
+  initial?: Record<string, unknown>;
+  animate?: Record<string, unknown>;
+  exit?: Record<string, unknown>;
+  transition?: Record<string, unknown>;
+  style?: React.CSSProperties;
+  className?: string;
+  children?: React.ReactNode;
+  key?: string | number;
+  onClick?: () => void;
+}>;
+
+type AnimatePresenceComponent = React.ComponentType<{
+  children?: React.ReactNode;
+  mode?: 'sync' | 'wait' | 'popLayout';
+}>;
+
+let MotionDiv: MotionComponent | 'div' = 'div';
+let AnimatePresenceWrapper: AnimatePresenceComponent = ({ children }: { children?: React.ReactNode }) => <>{children}</>;
+
+// Try to import framer-motion (will fail gracefully if not installed)
+try {
+  // Dynamic import at module level for bundlers that support it
+  const framerMotion = require('framer-motion');
+  if (framerMotion?.motion?.div) {
+    MotionDiv = framerMotion.motion.div;
+  }
+  if (framerMotion?.AnimatePresence) {
+    AnimatePresenceWrapper = framerMotion.AnimatePresence;
+  }
+} catch {
+  // framer-motion not installed, use fallbacks
+}
+
+// Helper to check if animations are available
+const hasAnimations = MotionDiv !== 'div';
+
+// ============================================
 // Error Boundary for SDK Components
 // ============================================
 
@@ -326,6 +367,272 @@ const defaultStyles = {
     fontSize: '14px',
     fontWeight: '500',
   } as React.CSSProperties,
+  // Tier badge styles
+  tierBadge: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '12px',
+    borderRadius: '8px',
+    marginBottom: '12px',
+  } as React.CSSProperties,
+  tierBadgeIcon: {
+    width: '20px',
+    height: '20px',
+  } as React.CSSProperties,
+  tierBadgeText: {
+    flex: 1,
+  } as React.CSSProperties,
+  tierBadgeName: {
+    fontWeight: '500',
+    fontSize: '14px',
+  } as React.CSSProperties,
+  tierBadgeRate: {
+    fontSize: '12px',
+    opacity: 0.8,
+  } as React.CSSProperties,
+  // Referral code row
+  referralCodeRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '8px',
+    marginBottom: '12px',
+  } as React.CSSProperties,
+  referralCodeLabel: {
+    fontSize: '12px',
+    color: '#6c757d',
+    marginBottom: '2px',
+  } as React.CSSProperties,
+  referralCodeValue: {
+    fontFamily: 'monospace',
+    fontWeight: '500',
+    fontSize: '14px',
+    color: '#212529',
+  } as React.CSSProperties,
+  referralCodeCopyButton: {
+    padding: '6px 10px',
+    border: 'none',
+    borderRadius: '4px',
+    backgroundColor: 'transparent',
+    color: '#6c757d',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as React.CSSProperties,
+  // 2-column stats grid
+  statsGrid2Col: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '12px',
+    marginBottom: '12px',
+  } as React.CSSProperties,
+  // Earnings breakdown
+  earningsBreakdown: {
+    borderTop: '1px solid #e9ecef',
+    paddingTop: '12px',
+    marginTop: '12px',
+  } as React.CSSProperties,
+  earningsTitle: {
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#212529',
+    marginBottom: '8px',
+  } as React.CSSProperties,
+  earningsRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '4px 0',
+  } as React.CSSProperties,
+  earningsLabel: {
+    fontSize: '14px',
+    color: '#6c757d',
+  } as React.CSSProperties,
+  earningsValue: {
+    fontFamily: 'monospace',
+    fontWeight: '500',
+    fontSize: '14px',
+  } as React.CSSProperties,
+  earningsValueGreen: {
+    fontFamily: 'monospace',
+    fontWeight: '500',
+    fontSize: '14px',
+    color: '#28a745',
+  } as React.CSSProperties,
+  earningsValueYellow: {
+    fontFamily: 'monospace',
+    fontWeight: '500',
+    fontSize: '14px',
+    color: '#ffc107',
+  } as React.CSSProperties,
+  // Medal styles for leaderboard
+  medalIcon: {
+    width: '24px',
+    height: '24px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '18px',
+  } as React.CSSProperties,
+  // Referrer attribution
+  referrerSection: {
+    borderTop: '1px solid #e9ecef',
+    paddingTop: '12px',
+    marginTop: '12px',
+  } as React.CSSProperties,
+  referrerTitle: {
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#212529',
+    marginBottom: '8px',
+  } as React.CSSProperties,
+  referrerBadge: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px',
+    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+    border: '1px solid rgba(40, 167, 69, 0.2)',
+    borderRadius: '8px',
+  } as React.CSSProperties,
+  referrerBadgeInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    color: '#212529',
+  } as React.CSSProperties,
+  referrerBadgeIcon: {
+    color: '#28a745',
+  } as React.CSSProperties,
+  referrerClearButton: {
+    padding: '4px 8px',
+    border: 'none',
+    borderRadius: '4px',
+    backgroundColor: 'transparent',
+    color: '#6c757d',
+    cursor: 'pointer',
+  } as React.CSSProperties,
+  referrerInputRow: {
+    display: 'flex',
+    gap: '8px',
+    marginBottom: '8px',
+  } as React.CSSProperties,
+  referrerDetectButton: {
+    width: '100%',
+    padding: '10px 16px',
+    border: '1px solid #ced4da',
+    borderRadius: '6px',
+    backgroundColor: 'white',
+    color: '#212529',
+    cursor: 'pointer',
+    fontSize: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+  } as React.CSSProperties,
+  // Filter tabs
+  filterTabs: {
+    display: 'flex',
+    gap: '8px',
+    marginBottom: '16px',
+  } as React.CSSProperties,
+  filterTab: {
+    padding: '6px 12px',
+    fontSize: '12px',
+    borderRadius: '9999px',
+    border: 'none',
+    cursor: 'pointer',
+    backgroundColor: '#f8f9fa',
+    color: '#6c757d',
+    transition: 'all 0.2s',
+  } as React.CSSProperties,
+  filterTabActive: {
+    padding: '6px 12px',
+    fontSize: '12px',
+    borderRadius: '9999px',
+    border: 'none',
+    cursor: 'pointer',
+    backgroundColor: '#0d6efd',
+    color: 'white',
+  } as React.CSSProperties,
+  // Progress summary for badges
+  progressSummary: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '8px',
+    marginBottom: '16px',
+  } as React.CSSProperties,
+  progressSummaryLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  } as React.CSSProperties,
+  progressSummaryIcon: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#0d6efd',
+    fontSize: '18px',
+  } as React.CSSProperties,
+  progressSummaryText: {
+    fontWeight: '500',
+    fontSize: '16px',
+    color: '#212529',
+  } as React.CSSProperties,
+  progressSummarySubtext: {
+    fontSize: '12px',
+    color: '#6c757d',
+  } as React.CSSProperties,
+  progressSummaryBar: {
+    width: '80px',
+    height: '8px',
+    backgroundColor: '#e9ecef',
+    borderRadius: '4px',
+    overflow: 'hidden',
+  } as React.CSSProperties,
+  progressSummaryBarFill: {
+    height: '100%',
+    backgroundColor: '#0d6efd',
+    borderRadius: '4px',
+  } as React.CSSProperties,
+  // Badge progress bar for locked badges
+  badgeProgressBar: {
+    width: '100%',
+    height: '4px',
+    backgroundColor: '#e9ecef',
+    borderRadius: '2px',
+    overflow: 'hidden',
+    marginTop: '8px',
+  } as React.CSSProperties,
+  badgeProgressFill: {
+    height: '100%',
+    backgroundColor: '#6c757d',
+    borderRadius: '2px',
+  } as React.CSSProperties,
+  badgeProgressText: {
+    fontSize: '10px',
+    color: '#6c757d',
+    marginTop: '4px',
+  } as React.CSSProperties,
+  badgeCheckmark: {
+    position: 'absolute' as const,
+    top: '8px',
+    right: '8px',
+    color: '#28a745',
+  } as React.CSSProperties,
 };
 
 /**
@@ -345,6 +652,12 @@ export interface AffiliateStatsProps {
   };
   /** Auto-refresh stats on mount */
   autoRefresh?: boolean;
+  /** Show tier badge with commission rate (default: true) */
+  showTierBadge?: boolean;
+  /** Show referral code with copy button (default: true) */
+  showReferralCode?: boolean;
+  /** Show earnings breakdown section (default: true) */
+  showEarningsBreakdown?: boolean;
   /** Custom render for loading state */
   renderLoading?: () => React.ReactNode;
   /** Custom render for error state */
@@ -372,10 +685,14 @@ function AffiliateStatsInner({
   style,
   theme,
   autoRefresh = true,
+  showTierBadge = true,
+  showReferralCode = true,
+  showEarningsBreakdown = true,
   renderLoading,
   renderError,
 }: AffiliateStatsProps) {
   const { stats, loading, error, refreshStats } = useAffiliateStats({ autoRefresh });
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (autoRefresh) {
@@ -406,29 +723,128 @@ function AffiliateStatsInner({
     ...(theme?.valueColor && { color: theme.valueColor }),
   };
 
-  const labelStyle = {
-    ...defaultStyles.statsLabel,
-    ...(theme?.labelColor && { color: theme.labelColor }),
+  const formatCurrency = (cents: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: stats.earnings?.currency ?? 'USD',
+    }).format(cents / 100);
   };
 
-  const formatCurrency = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
+  const handleCopyCode = async () => {
+    if (!stats.referralCode) return;
+    try {
+      await navigator.clipboard.writeText(stats.referralCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  // Get tier color based on tier name (common tier naming conventions)
+  const getTierColor = (tierName?: string): string => {
+    if (!tierName) return '#6c757d';
+    const name = tierName.toLowerCase();
+    if (name.includes('elite') || name.includes('diamond') || name.includes('platinum')) return '#FFD700';
+    if (name.includes('gold') || name.includes('vip')) return '#FFD700';
+    if (name.includes('silver') || name.includes('pro')) return '#C0C0C0';
+    if (name.includes('bronze') || name.includes('starter')) return '#CD7F32';
+    return '#0d6efd'; // Default blue
+  };
+
+  const tierColor = getTierColor(stats.tier?.name);
+
+  const containerStyle: React.CSSProperties = {
+    padding: '16px',
+    ...(theme?.cardBackground && { backgroundColor: theme.cardBackground }),
+    ...(theme?.cardBorder && { border: `1px solid ${theme.cardBorder}` }),
+    ...style,
   };
 
   return (
-    <div className={className} style={{ ...defaultStyles.statsContainer, ...style }}>
-      <div style={cardStyle}>
-        <div style={valueStyle}>{stats.referralCount}</div>
-        <div style={labelStyle}>Referrals</div>
+    <div className={className} style={containerStyle}>
+      {/* Tier Badge */}
+      {showTierBadge && (
+        <div
+          style={{
+            ...defaultStyles.tierBadge,
+            backgroundColor: stats.tier ? `${tierColor}20` : '#f8f9fa',
+          }}
+        >
+          <span style={{ ...defaultStyles.tierBadgeIcon, color: tierColor }}>👑</span>
+          <div style={defaultStyles.tierBadgeText}>
+            <div style={{ ...defaultStyles.tierBadgeName, color: stats.tier ? tierColor : '#6c757d' }}>
+              {stats.tier ? `${stats.tier.name} Affiliate` : 'No Tier'}
+            </div>
+            <div style={{ ...defaultStyles.tierBadgeRate, color: stats.tier ? tierColor : '#6c757d' }}>
+              {stats.tier
+                ? `${stats.tier.value}% commission rate`
+                : 'Refer users to unlock affiliate status'}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Referral Code */}
+      {showReferralCode && stats.referralCode && (
+        <div style={defaultStyles.referralCodeRow}>
+          <div>
+            <div style={defaultStyles.referralCodeLabel}>Your referral code</div>
+            <div style={defaultStyles.referralCodeValue}>{stats.referralCode}</div>
+          </div>
+          <button
+            type="button"
+            onClick={handleCopyCode}
+            style={defaultStyles.referralCodeCopyButton}
+            aria-label="Copy referral code"
+          >
+            {copied ? '✓' : '📋'}
+          </button>
+        </div>
+      )}
+
+      {/* 2-Column Stats Grid */}
+      <div style={defaultStyles.statsGrid2Col}>
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6c757d', marginBottom: '4px' }}>
+            <span>👥</span>
+            <span style={{ fontSize: '12px' }}>Referrals</span>
+          </div>
+          <div style={{ ...valueStyle, fontFamily: 'monospace' }}>{stats.referralCount}</div>
+        </div>
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6c757d', marginBottom: '4px' }}>
+            <span>💰</span>
+            <span style={{ fontSize: '12px' }}>Commissions</span>
+          </div>
+          <div style={{ ...valueStyle, fontFamily: 'monospace' }}>{stats.earnings.transactionCount}</div>
+        </div>
       </div>
-      <div style={cardStyle}>
-        <div style={valueStyle}>{stats.earnings.transactionCount}</div>
-        <div style={labelStyle}>Commissions</div>
-      </div>
-      <div style={cardStyle}>
-        <div style={valueStyle}>{formatCurrency(stats.earnings.totalEarned)}</div>
-        <div style={labelStyle}>Earnings</div>
-      </div>
+
+      {/* Earnings Breakdown */}
+      {showEarningsBreakdown && (
+        <div style={defaultStyles.earningsBreakdown}>
+          <div style={defaultStyles.earningsTitle}>Earnings</div>
+          <div style={defaultStyles.earningsRow}>
+            <span style={defaultStyles.earningsLabel}>Total Earned</span>
+            <span style={defaultStyles.earningsValueGreen}>
+              {formatCurrency(stats.earnings.totalEarned)}
+            </span>
+          </div>
+          <div style={defaultStyles.earningsRow}>
+            <span style={defaultStyles.earningsLabel}>Pending</span>
+            <span style={defaultStyles.earningsValueYellow}>
+              {formatCurrency(stats.earnings.totalPending)}
+            </span>
+          </div>
+          <div style={defaultStyles.earningsRow}>
+            <span style={defaultStyles.earningsLabel}>Paid Out</span>
+            <span style={{ ...defaultStyles.earningsValue, color: '#6c757d' }}>
+              {formatCurrency(stats.earnings.totalPaid)}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -449,6 +865,12 @@ export interface LeaderboardProps {
   currentUserId?: string;
   /** Custom empty state message */
   emptyMessage?: string;
+  /** Show medal icons for top 3 positions (default: true) */
+  showMedals?: boolean;
+  /** Show tier info with percentage (default: true) */
+  showTierInfo?: boolean;
+  /** Show earnings column (default: true) */
+  showEarnings?: boolean;
   /** Theme customization */
   theme?: {
     rowBackground?: string;
@@ -490,6 +912,9 @@ function LeaderboardInner({
   style,
   currentUserId,
   emptyMessage = 'No leaderboard data available yet.',
+  showMedals = true,
+  showTierInfo = true,
+  showEarnings = true,
   theme,
   renderRow,
   renderLoading,
@@ -517,10 +942,35 @@ function LeaderboardInner({
     );
   }
 
-  const getRowStyle = (isCurrentUser: boolean) => ({
+  // Medal colors for top 3
+  const getMedalColor = (rank: number): string | null => {
+    if (!showMedals) return null;
+    switch (rank) {
+      case 1: return '#FFD700'; // Gold
+      case 2: return '#C0C0C0'; // Silver
+      case 3: return '#CD7F32'; // Bronze
+      default: return null;
+    }
+  };
+
+  const formatCurrency = (cents: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(cents / 100);
+  };
+
+  const getRowStyle = (isCurrentUser: boolean): React.CSSProperties => ({
     ...(isCurrentUser ? defaultStyles.leaderboardRowHighlighted : defaultStyles.leaderboardRow),
     ...(theme?.rowBackground && !isCurrentUser && { backgroundColor: theme.rowBackground }),
     ...(theme?.highlightBackground && isCurrentUser && { backgroundColor: theme.highlightBackground }),
+    ...(isCurrentUser && {
+      backgroundColor: 'rgba(13, 110, 253, 0.1)',
+      border: '1px solid rgba(13, 110, 253, 0.3)',
+      borderRadius: '8px',
+    }),
   });
 
   const textStyle = theme?.textColor ? { color: theme.textColor } : {};
@@ -528,29 +978,111 @@ function LeaderboardInner({
     ? { ...defaultStyles.leaderboardStats, color: theme.secondaryColor }
     : defaultStyles.leaderboardStats;
 
+  // Find current user rank
+  const currentUserRank = currentUserId
+    ? leaderboard.entries.find((e) => e.userId === currentUserId)?.rank
+    : null;
+
   return (
     <div className={className} style={{ ...defaultStyles.leaderboardContainer, ...style }}>
-      <ol style={defaultStyles.leaderboardList}>
-        {leaderboard.entries.map((entry) => {
-          const isCurrentUser = currentUserId === entry.userId;
+      {/* Current user rank badge */}
+      {currentUserRank && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginBottom: '8px'
+        }}>
+          <span style={{
+            fontSize: '12px',
+            backgroundColor: 'rgba(13, 110, 253, 0.2)',
+            color: '#0d6efd',
+            padding: '4px 8px',
+            borderRadius: '9999px',
+          }}>
+            Your rank: #{currentUserRank}
+          </span>
+        </div>
+      )}
 
-          if (renderRow) {
-            return <li key={entry.userId}>{renderRow(entry, isCurrentUser)}</li>;
-          }
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <AnimatePresenceWrapper mode="popLayout">
+          {leaderboard.entries.map((entry, index) => {
+            const isCurrentUser = currentUserId === entry.userId;
+            const medalColor = getMedalColor(entry.rank);
 
-          return (
-            <li key={entry.userId} style={getRowStyle(isCurrentUser)}>
-              <span style={{ ...defaultStyles.leaderboardRank, ...textStyle }}>#{entry.rank}</span>
-              <span style={{ ...defaultStyles.leaderboardName, ...textStyle }}>
-                {entry.displayName ?? `User ${entry.userId.slice(0, 8)}`}
-              </span>
-              <span style={secondaryStyle}>
-                {entry.referralCount} referrals
-              </span>
-            </li>
-          );
-        })}
-      </ol>
+            if (renderRow) {
+              return <div key={entry.userId}>{renderRow(entry, isCurrentUser)}</div>;
+            }
+
+            const rowContent = (
+              <div style={getRowStyle(isCurrentUser)}>
+                {/* Rank / Medal */}
+                <div style={defaultStyles.medalIcon}>
+                  {medalColor ? (
+                    <span style={{ color: medalColor }}>🏅</span>
+                  ) : (
+                    <span style={{ fontSize: '14px', fontFamily: 'monospace', color: '#6c757d' }}>
+                      #{entry.rank}
+                    </span>
+                  )}
+                </div>
+
+                {/* Name & Tier */}
+                <div style={{ flex: 1, marginLeft: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ ...defaultStyles.leaderboardName, ...textStyle, marginLeft: 0 }}>
+                      {entry.displayName ?? `User ${entry.userId.slice(0, 8)}`}
+                    </span>
+                    {isCurrentUser && (
+                      <span style={{ fontSize: '12px', color: '#0d6efd' }}>(You)</span>
+                    )}
+                  </div>
+                  {showTierInfo && entry.tier && (
+                    <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                      {entry.tier.name} ({entry.tier.value}%)
+                    </div>
+                  )}
+                </div>
+
+                {/* Stats */}
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: '14px', fontWeight: '500' }}>
+                    {entry.referralCount} referrals
+                  </div>
+                  {showEarnings && entry.totalEarnings !== undefined && (
+                    <div style={{ ...secondaryStyle, fontFamily: 'monospace' }}>
+                      {formatCurrency(entry.totalEarnings)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+
+            // Wrap with motion if available
+            if (MotionDiv !== 'div') {
+              const Motion = MotionDiv as MotionComponent;
+              return (
+                <Motion
+                  key={entry.userId}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  {rowContent}
+                </Motion>
+              );
+            }
+
+            return <div key={entry.userId}>{rowContent}</div>;
+          })}
+        </AnimatePresenceWrapper>
+      </div>
+
+      {/* Footer */}
+      <p style={{ fontSize: '12px', color: '#6c757d', textAlign: 'center', marginTop: '12px' }}>
+        Rankings based on total referrals
+      </p>
     </div>
   );
 }
@@ -579,6 +1111,16 @@ export interface ReferralLinkProps {
   shareText?: string;
   /** Show share button on mobile */
   showShareButton?: boolean;
+  /** Show referrer attribution section (default: true) */
+  showReferrerAttribution?: boolean;
+  /** Current referrer code (who referred this user) */
+  referrerCode?: string | null;
+  /** Callback when referrer is set */
+  onSetReferrer?: (code: string) => void;
+  /** Callback to detect referrer from URL */
+  onDetectFromUrl?: () => void;
+  /** Callback when referrer is cleared */
+  onClearReferrer?: () => void;
   /** Theme customization */
   theme?: {
     inputBackground?: string;
@@ -621,21 +1163,27 @@ function ReferralLinkInner({
   shareTitle = 'Check this out!',
   shareText = 'Join using my referral link',
   showShareButton = true,
+  showReferrerAttribution = true,
+  referrerCode,
+  onSetReferrer,
+  onDetectFromUrl,
+  onClearReferrer,
   theme,
   onCopy,
   onShare,
 }: ReferralLinkProps) {
   const { stats } = useAffiliateStats({ autoRefresh: true });
   const [copied, setCopied] = useState(false);
+  const [referrerInput, setReferrerInput] = useState('');
 
-  const referralCode = stats?.referralCode;
+  const userReferralCode = stats?.referralCode;
 
-  if (!referralCode) {
+  if (!userReferralCode) {
     return null;
   }
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const referralLink = `${baseUrl ?? origin}?ref=${referralCode}`;
+  const referralLink = `${baseUrl ?? origin}?ref=${userReferralCode}`;
 
   const handleCopy = async () => {
     try {
@@ -666,6 +1214,13 @@ function ReferralLinkInner({
     }
   };
 
+  const handleSetReferrer = () => {
+    if (referrerInput.trim() && onSetReferrer) {
+      onSetReferrer(referrerInput.trim());
+      setReferrerInput('');
+    }
+  };
+
   const canShare = typeof navigator !== 'undefined' && 'share' in navigator;
 
   const inputStyle = {
@@ -681,22 +1236,102 @@ function ReferralLinkInner({
     ...(theme?.buttonColor && { color: theme.buttonColor }),
   };
 
+  const containerStyle: React.CSSProperties = {
+    padding: '16px',
+    ...style,
+  };
+
   return (
-    <div className={className} style={{ ...defaultStyles.referralContainer, ...style }}>
-      <input
-        type="text"
-        readOnly
-        value={referralLink}
-        style={inputStyle}
-        onClick={(e) => (e.target as HTMLInputElement).select()}
-      />
-      <button type="button" onClick={handleCopy} style={buttonStyle}>
-        {copied ? copiedText : copyButtonText}
-      </button>
-      {showShareButton && canShare && (
-        <button type="button" onClick={handleShare} style={buttonStyle}>
-          {shareButtonText}
-        </button>
+    <div className={className} style={containerStyle}>
+      {/* Your Referral Link */}
+      <div style={{ marginBottom: '8px' }}>
+        <p style={{ fontSize: '14px', color: '#6c757d', marginBottom: '8px' }}>
+          Your unique referral link:
+        </p>
+        <div style={defaultStyles.referralContainer}>
+          <input
+            type="text"
+            readOnly
+            value={referralLink}
+            style={{ ...inputStyle, fontFamily: 'monospace', fontSize: '12px' }}
+            onClick={(e) => (e.target as HTMLInputElement).select()}
+          />
+          <button type="button" onClick={handleCopy} style={buttonStyle}>
+            {copied ? '✓' : '📋'}
+          </button>
+          {showShareButton && canShare && (
+            <button type="button" onClick={handleShare} style={buttonStyle}>
+              {shareButtonText}
+            </button>
+          )}
+        </div>
+        <p style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+          Code: <span style={{ fontFamily: 'monospace', fontWeight: '500' }}>{userReferralCode}</span>
+        </p>
+      </div>
+
+      {/* Referrer Attribution */}
+      {showReferrerAttribution && (
+        <div style={defaultStyles.referrerSection}>
+          <p style={defaultStyles.referrerTitle}>Referrer Attribution</p>
+
+          {referrerCode ? (
+            <div style={defaultStyles.referrerBadge}>
+              <div style={defaultStyles.referrerBadgeInfo}>
+                <span style={defaultStyles.referrerBadgeIcon}>👤</span>
+                <span>
+                  Referred by: <span style={{ fontFamily: 'monospace', fontWeight: '500' }}>{referrerCode}</span>
+                </span>
+              </div>
+              {onClearReferrer && (
+                <button
+                  type="button"
+                  onClick={onClearReferrer}
+                  style={defaultStyles.referrerClearButton}
+                  aria-label="Clear referrer"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ) : (
+            <div>
+              {onSetReferrer && (
+                <div style={defaultStyles.referrerInputRow}>
+                  <input
+                    type="text"
+                    value={referrerInput}
+                    onChange={(e) => setReferrerInput(e.target.value)}
+                    placeholder="Enter referrer code..."
+                    style={{ ...inputStyle, fontFamily: 'monospace', fontSize: '12px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSetReferrer}
+                    disabled={!referrerInput.trim()}
+                    style={{
+                      ...buttonStyle,
+                      opacity: referrerInput.trim() ? 1 : 0.5,
+                      cursor: referrerInput.trim() ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    Set
+                  </button>
+                </div>
+              )}
+              {onDetectFromUrl && (
+                <button
+                  type="button"
+                  onClick={onDetectFromUrl}
+                  style={defaultStyles.referrerDetectButton}
+                >
+                  <span>🔗</span>
+                  Detect from URL
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -1108,6 +1743,71 @@ const gamificationStyles = {
     fontWeight: 'bold',
     color: '#212529',
   } as React.CSSProperties,
+
+  // Accordion/Expandable quest styles
+  questAccordion: {
+    borderRadius: '8px',
+    overflow: 'hidden',
+    marginBottom: '8px',
+  } as React.CSSProperties,
+  questAccordionHeader: {
+    width: '100%',
+    padding: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    border: 'none',
+    backgroundColor: 'transparent',
+    cursor: 'pointer',
+    textAlign: 'left' as const,
+  } as React.CSSProperties,
+  questAccordionIcon: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '20px',
+    flexShrink: 0,
+  } as React.CSSProperties,
+  questAccordionInfo: {
+    flex: 1,
+    minWidth: 0,
+  } as React.CSSProperties,
+  questAccordionTitle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '4px',
+  } as React.CSSProperties,
+  questAccordionName: {
+    fontWeight: '500',
+    fontSize: '14px',
+    color: '#212529',
+  } as React.CSSProperties,
+  questAccordionStatusBadge: {
+    fontSize: '11px',
+    padding: '2px 8px',
+    borderRadius: '9999px',
+    fontWeight: '500',
+  } as React.CSSProperties,
+  questAccordionMeta: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '12px',
+    color: '#6c757d',
+  } as React.CSSProperties,
+  questAccordionChevron: {
+    color: '#6c757d',
+    transition: 'transform 0.2s',
+    flexShrink: 0,
+  } as React.CSSProperties,
+  questAccordionContent: {
+    padding: '0 12px 12px',
+    overflow: 'hidden',
+  } as React.CSSProperties,
 };
 
 /**
@@ -1162,6 +1862,12 @@ export interface QuestProgressProps {
   className?: string;
   /** Custom styles override */
   style?: React.CSSProperties;
+  /** Enable expandable accordion mode (default: true) */
+  expandable?: boolean;
+  /** Default expanded quest ID (defaults to first in-progress) */
+  defaultExpandedId?: string;
+  /** Show XP reward in header (default: true) */
+  showXpReward?: boolean;
   /** Callback when a quest is completed */
   onComplete?: (quest: QuestWithProgress) => void;
   /** Theme customization */
@@ -1194,6 +1900,9 @@ function QuestProgressInner({
   hideCompleted = false,
   className,
   style,
+  expandable = true,
+  defaultExpandedId,
+  showXpReward = true,
   onComplete,
   theme,
   renderLoading,
@@ -1202,6 +1911,7 @@ function QuestProgressInner({
 }: QuestProgressProps) {
   const { quests, loading, error, refresh } = useQuests({ autoRefresh: true });
   const previousQuests = useRef<Map<string, QuestWithProgress>>(new Map());
+  const [expandedQuestId, setExpandedQuestId] = useState<string | null>(null);
 
   useEffect(() => {
     void refresh();
@@ -1223,6 +1933,18 @@ function QuestProgressInner({
     previousQuests.current = newMap;
   }, [quests, onComplete]);
 
+  // Set default expanded quest (first in-progress or provided ID)
+  useEffect(() => {
+    if (quests.length > 0 && expandedQuestId === null) {
+      if (defaultExpandedId) {
+        setExpandedQuestId(defaultExpandedId);
+      } else {
+        const inProgressQuest = quests.find((q) => q.status === 'in_progress');
+        setExpandedQuestId(inProgressQuest?.id ?? null);
+      }
+    }
+  }, [quests, defaultExpandedId, expandedQuestId]);
+
   if (loading) {
     return renderLoading ? renderLoading() : <div style={{ textAlign: 'center', padding: '16px' }}>Loading...</div>;
   }
@@ -1240,94 +1962,223 @@ function QuestProgressInner({
   }
 
   if (filteredQuests.length === 0) {
-    return <div style={{ textAlign: 'center', padding: '16px', color: '#6c757d' }}>No quests available</div>;
+    return (
+      <div style={{ textAlign: 'center', padding: '24px', color: '#6c757d' }}>
+        <span style={{ fontSize: '40px', display: 'block', marginBottom: '8px', opacity: 0.5 }}>🎯</span>
+        <p>No quests available</p>
+      </div>
+    );
   }
 
-  const cardStyle = {
-    ...gamificationStyles.questContainer,
-    ...(theme?.cardBackground && { backgroundColor: theme.cardBackground }),
-    ...(theme?.cardBorder && { border: `1px solid ${theme.cardBorder}` }),
+  const getStatusBadgeStyle = (status: string): React.CSSProperties => {
+    switch (status) {
+      case 'completed':
+        return { backgroundColor: 'rgba(40, 167, 69, 0.2)', color: '#28a745' };
+      case 'in_progress':
+        return { backgroundColor: 'rgba(13, 110, 253, 0.2)', color: '#0d6efd' };
+      default:
+        return { backgroundColor: '#f8f9fa', color: '#6c757d' };
+    }
+  };
+
+  const getQuestBgStyle = (status: string): React.CSSProperties => {
+    switch (status) {
+      case 'completed':
+        return { backgroundColor: 'rgba(40, 167, 69, 0.05)', borderColor: 'rgba(40, 167, 69, 0.2)' };
+      case 'in_progress':
+        return { backgroundColor: 'rgba(13, 110, 253, 0.05)', borderColor: 'rgba(13, 110, 253, 0.2)' };
+      default:
+        return { backgroundColor: '#f8f9fa', borderColor: '#e9ecef' };
+    }
+  };
+
+  const toggleExpand = (id: string) => {
+    if (!expandable) return;
+    setExpandedQuestId(expandedQuestId === id ? null : id);
   };
 
   return (
-    <div className={className} style={style}>
-      {filteredQuests.map((quest) => {
-        if (renderQuest) {
-          return <div key={quest.id}>{renderQuest(quest)}</div>;
-        }
+    <div className={className} style={{ ...style, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <AnimatePresenceWrapper mode="popLayout">
+        {filteredQuests.map((quest) => {
+          if (renderQuest) {
+            return <div key={quest.id}>{renderQuest(quest)}</div>;
+          }
 
-        const statusColors = getStatusColors(quest.status);
+          const isExpanded = !expandable || expandedQuestId === quest.id;
+          const statusBadgeStyle = getStatusBadgeStyle(quest.status);
+          const questBgStyle = getQuestBgStyle(quest.status);
 
-        return (
-          <div key={quest.id} style={cardStyle}>
-            <div style={gamificationStyles.questHeader}>
-              <div>
-                <h3 style={{ ...gamificationStyles.questTitle, ...(theme?.textColor && { color: theme.textColor }) }}>
-                  {quest.name}
-                </h3>
-                {quest.description && (
-                  <p style={gamificationStyles.questDescription}>{quest.description}</p>
-                )}
-              </div>
-              <span
+          const questContent = (
+            <div
+              style={{
+                ...gamificationStyles.questAccordion,
+                border: '1px solid',
+                ...questBgStyle,
+                ...(theme?.cardBackground && { backgroundColor: theme.cardBackground }),
+                ...(theme?.cardBorder && { borderColor: theme.cardBorder }),
+              }}
+            >
+              {/* Quest Header */}
+              <button
+                type="button"
+                onClick={() => toggleExpand(quest.id)}
                 style={{
-                  ...gamificationStyles.questBadge,
-                  backgroundColor: statusColors.bg,
-                  color: statusColors.color,
+                  ...gamificationStyles.questAccordionHeader,
+                  cursor: expandable ? 'pointer' : 'default',
                 }}
               >
-                {quest.status.replace('_', ' ')}
-              </span>
-            </div>
+                {/* Icon */}
+                <div
+                  style={{
+                    ...gamificationStyles.questAccordionIcon,
+                    backgroundColor: quest.status === 'completed' ? 'rgba(40, 167, 69, 0.2)' : 'rgba(13, 110, 253, 0.2)',
+                  }}
+                >
+                  {quest.status === 'completed' ? (
+                    <span style={{ color: '#28a745' }}>✓</span>
+                  ) : (
+                    <span style={{ color: '#0d6efd' }}>🎯</span>
+                  )}
+                </div>
 
-            <div style={gamificationStyles.questProgressBar}>
-              <div
-                style={{
-                  ...gamificationStyles.questProgressFill,
-                  width: `${quest.percentComplete}%`,
-                  ...(theme?.progressColor && { backgroundColor: theme.progressColor }),
-                }}
-              />
-            </div>
+                {/* Title & Meta */}
+                <div style={gamificationStyles.questAccordionInfo}>
+                  <div style={gamificationStyles.questAccordionTitle}>
+                    <span style={{ ...gamificationStyles.questAccordionName, ...(theme?.textColor && { color: theme.textColor }) }}>
+                      {quest.name}
+                    </span>
+                    <span
+                      style={{
+                        ...gamificationStyles.questAccordionStatusBadge,
+                        ...statusBadgeStyle,
+                      }}
+                    >
+                      {quest.status === 'completed'
+                        ? 'Complete'
+                        : quest.status === 'in_progress'
+                        ? `${quest.percentComplete}%`
+                        : 'Not Started'}
+                    </span>
+                  </div>
+                  <div style={gamificationStyles.questAccordionMeta}>
+                    {showXpReward && quest.xpReward > 0 && (
+                      <>
+                        <span>⭐</span>
+                        <span>+{quest.xpReward} XP</span>
+                        <span style={{ color: '#e9ecef' }}>|</span>
+                      </>
+                    )}
+                    <span>{quest.steps.length} steps</span>
+                  </div>
+                </div>
 
-            <ul style={gamificationStyles.questStepList}>
-              {quest.steps.map((step) => (
-                <li key={step.id} style={gamificationStyles.questStep}>
+                {/* Chevron */}
+                {expandable && (
                   <span
                     style={{
-                      ...gamificationStyles.questStepIcon,
-                      backgroundColor: step.completed ? '#d4edda' : '#e9ecef',
-                      color: step.completed ? '#155724' : '#6c757d',
+                      ...gamificationStyles.questAccordionChevron,
+                      transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
                     }}
                   >
-                    {step.completed ? '✓' : step.order}
+                    ▶
                   </span>
-                  <span
-                    style={{
-                      ...gamificationStyles.questStepText,
-                      textDecoration: step.completed ? 'line-through' : 'none',
-                      color: step.completed ? '#6c757d' : '#212529',
-                    }}
-                  >
-                    {step.name}
-                  </span>
-                  <span style={gamificationStyles.questStepCount}>
-                    {step.currentCount}/{step.requiredCount}
-                  </span>
-                </li>
-              ))}
-            </ul>
+                )}
+              </button>
 
-            {quest.xpReward > 0 && (
-              <div style={gamificationStyles.questReward}>
-                <span style={{ marginRight: '6px' }}>⭐</span>
-                {quest.xpReward} XP reward
-                {quest.badgeReward && ` + Badge`}
-              </div>
-            )}
-          </div>
-        );
-      })}
+              {/* Expandable Content */}
+              {isExpanded && (
+                <div style={gamificationStyles.questAccordionContent}>
+                  {/* Progress Bar */}
+                  {quest.status !== 'completed' && (
+                    <div style={{ ...gamificationStyles.questProgressBar, marginBottom: '12px', height: '6px' }}>
+                      <div
+                        style={{
+                          ...gamificationStyles.questProgressFill,
+                          width: `${quest.percentComplete}%`,
+                          ...(theme?.progressColor && { backgroundColor: theme.progressColor }),
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Steps */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {quest.steps.map((step, index) => (
+                      <div
+                        key={step.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '8px',
+                          padding: '8px',
+                          borderRadius: '6px',
+                          opacity: step.completed ? 0.6 : 1,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            flexShrink: 0,
+                            backgroundColor: step.completed ? 'rgba(40, 167, 69, 0.2)' : '#f8f9fa',
+                            color: step.completed ? '#28a745' : '#6c757d',
+                          }}
+                        >
+                          {step.completed ? '✓' : index + 1}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              textDecoration: step.completed ? 'line-through' : 'none',
+                              color: step.completed ? '#6c757d' : '#212529',
+                            }}
+                          >
+                            {step.name}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                            {step.currentCount}/{step.requiredCount}
+                            {step.requiredCount > 1 && !step.completed && (
+                              <span style={{ marginLeft: '8px' }}>
+                                ({Math.round((step.currentCount / step.requiredCount) * 100)}%)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+
+          // Wrap with motion if available
+          if (MotionDiv !== 'div') {
+            const Motion = MotionDiv as MotionComponent;
+            return (
+              <Motion
+                key={quest.id}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+              >
+                {questContent}
+              </Motion>
+            );
+          }
+
+          return <div key={quest.id}>{questContent}</div>;
+        })}
+      </AnimatePresenceWrapper>
     </div>
   );
 }
@@ -1517,7 +2368,11 @@ export interface BadgeGridProps {
   className?: string;
   /** Custom styles override */
   style?: React.CSSProperties;
-  /** Show stats header */
+  /** Show progress summary header (default: true) */
+  showProgressSummary?: boolean;
+  /** Show filter tabs (All/Earned/Locked) (default: true) */
+  showFilterTabs?: boolean;
+  /** @deprecated Use showProgressSummary instead */
   showStats?: boolean;
   /** Callback when a badge is clicked */
   onBadgeClick?: (badge: BadgeWithStatus) => void;
@@ -1547,10 +2402,12 @@ export interface BadgeGridProps {
 function BadgeGridInner({
   showLocked = true,
   category,
-  columns = 4,
+  columns = 2,
   className,
   style,
-  showStats = true,
+  showProgressSummary = true,
+  showFilterTabs = true,
+  showStats, // deprecated, use showProgressSummary
   onBadgeClick,
   theme,
   renderLoading,
@@ -1558,6 +2415,10 @@ function BadgeGridInner({
   renderBadge,
 }: BadgeGridProps) {
   const { badges, stats, loading, error, refresh } = useBadges({ autoRefresh: true, category });
+  const [filter, setFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
+
+  // Handle deprecated prop
+  const shouldShowSummary = showProgressSummary ?? showStats ?? true;
 
   useEffect(() => {
     void refresh(category);
@@ -1571,82 +2432,204 @@ function BadgeGridInner({
     return renderError ? renderError(error) : <div style={{ color: 'red', padding: '16px' }}>{error}</div>;
   }
 
+  // Filter badges based on tab selection
   let displayBadges = badges;
-  if (!showLocked) {
+  if (filter === 'unlocked') {
+    displayBadges = badges.filter((b) => b.isUnlocked);
+  } else if (filter === 'locked') {
+    displayBadges = badges.filter((b) => !b.isUnlocked);
+  } else if (!showLocked) {
     displayBadges = badges.filter((b) => b.isUnlocked);
   }
 
-  const gridStyle = {
-    ...gamificationStyles.badgeGrid,
-    gridTemplateColumns: `repeat(${columns}, 1fr)`,
+  // Updated rarity color scheme matching playground
+  const getPlaygroundRarityColors = (rarity: BadgeRarity): { color: string; bg: string } => {
+    switch (rarity) {
+      case 'LEGENDARY':
+        return { color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' };
+      case 'EPIC':
+        return { color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.1)' };
+      case 'RARE':
+        return { color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)' };
+      case 'COMMON':
+      default:
+        return { color: '#9CA3AF', bg: 'rgba(156, 163, 175, 0.1)' };
+    }
   };
 
+  const gridStyle: React.CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: `repeat(${columns}, 1fr)`,
+    gap: '12px',
+    padding: '0',
+  };
+
+  const unlockedCount = stats?.unlocked ?? badges.filter((b) => b.isUnlocked).length;
+  const totalCount = stats?.total ?? badges.length;
+  const progressPercent = totalCount > 0 ? (unlockedCount / totalCount) * 100 : 0;
+
   return (
-    <div className={className} style={style}>
-      {showStats && stats && (
-        <div style={gamificationStyles.badgeStats}>
-          <div style={gamificationStyles.badgeStat}>
-            <div style={gamificationStyles.badgeStatValue}>{stats.unlocked}</div>
-            <div style={gamificationStyles.badgeStatLabel}>Unlocked</div>
-          </div>
-          <div style={gamificationStyles.badgeStat}>
-            <div style={gamificationStyles.badgeStatValue}>{stats.total}</div>
-            <div style={gamificationStyles.badgeStatLabel}>Total</div>
-          </div>
-          <div style={gamificationStyles.badgeStat}>
-            <div style={gamificationStyles.badgeStatValue}>
-              {stats.total > 0 ? Math.round((stats.unlocked / stats.total) * 100) : 0}%
+    <div className={className} style={{ ...style, padding: '16px' }}>
+      {/* Progress Summary */}
+      {shouldShowSummary && (
+        <div style={defaultStyles.progressSummary}>
+          <div style={defaultStyles.progressSummaryLeft}>
+            <div style={defaultStyles.progressSummaryIcon}>✨</div>
+            <div>
+              <div style={defaultStyles.progressSummaryText}>{unlockedCount} / {totalCount}</div>
+              <div style={defaultStyles.progressSummarySubtext}>Badges Earned</div>
             </div>
-            <div style={gamificationStyles.badgeStatLabel}>Progress</div>
+          </div>
+          <div style={defaultStyles.progressSummaryBar}>
+            <div
+              style={{
+                ...defaultStyles.progressSummaryBarFill,
+                width: `${progressPercent}%`,
+              }}
+            />
           </div>
         </div>
       )}
 
-      <div style={gridStyle}>
-        {displayBadges.map((badge) => {
-          if (renderBadge) {
-            return <div key={badge.id}>{renderBadge(badge)}</div>;
-          }
-
-          const rarityColors = getRarityColors(badge.rarity);
-          const cardStyle = badge.isUnlocked
-            ? {
-                ...gamificationStyles.badgeCard,
-                ...(theme?.cardBackground && { backgroundColor: theme.cardBackground }),
-                ...(theme?.cardBorder && { border: `1px solid ${theme.cardBorder}` }),
-              }
-            : gamificationStyles.badgeCardLocked;
-
-          return (
-            <div
-              key={badge.id}
-              style={cardStyle}
-              onClick={() => onBadgeClick?.(badge)}
-              onKeyDown={(e) => e.key === 'Enter' && onBadgeClick?.(badge)}
-              role="button"
-              tabIndex={0}
+      {/* Filter Tabs */}
+      {showFilterTabs && (
+        <div style={defaultStyles.filterTabs}>
+          {(['all', 'unlocked', 'locked'] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFilter(f)}
+              style={filter === f ? defaultStyles.filterTabActive : defaultStyles.filterTab}
             >
-              {badge.iconUrl ? (
-                <img src={badge.iconUrl} alt={badge.name} style={gamificationStyles.badgeIcon} />
-              ) : (
-                <div style={gamificationStyles.badgeIcon}>
-                  {badge.isUnlocked ? '🏆' : '🔒'}
-                </div>
-              )}
-              <span style={gamificationStyles.badgeName}>{badge.name}</span>
-              <span
+              {f === 'all' ? 'All' : f === 'unlocked' ? 'Earned' : 'Locked'}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Badge Grid */}
+      <div style={gridStyle}>
+        <AnimatePresenceWrapper mode="popLayout">
+          {displayBadges.map((badge) => {
+            if (renderBadge) {
+              return <div key={badge.id}>{renderBadge(badge)}</div>;
+            }
+
+            const rarityColors = getPlaygroundRarityColors(badge.rarity);
+
+            const badgeContent = (
+              <div
                 style={{
-                  ...gamificationStyles.badgeRarity,
-                  backgroundColor: rarityColors.bg,
-                  color: rarityColors.color,
+                  position: 'relative',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid',
+                  cursor: onBadgeClick ? 'pointer' : 'default',
+                  transition: 'all 0.2s',
+                  ...(badge.isUnlocked
+                    ? {
+                        backgroundColor: rarityColors.bg,
+                        borderColor: `${rarityColors.color}40`,
+                        ...(theme?.cardBackground && { backgroundColor: theme.cardBackground }),
+                        ...(theme?.cardBorder && { borderColor: theme.cardBorder }),
+                      }
+                    : {
+                        backgroundColor: 'rgba(0, 0, 0, 0.03)',
+                        borderColor: '#e9ecef',
+                        opacity: 0.6,
+                      }),
                 }}
+                onClick={() => onBadgeClick?.(badge)}
+                onKeyDown={(e) => e.key === 'Enter' && onBadgeClick?.(badge)}
+                role={onBadgeClick ? 'button' : undefined}
+                tabIndex={onBadgeClick ? 0 : undefined}
               >
-                {badge.rarity}
-              </span>
-            </div>
-          );
-        })}
+                {/* Checkmark for unlocked */}
+                {badge.isUnlocked && (
+                  <div style={defaultStyles.badgeCheckmark}>✓</div>
+                )}
+
+                {/* Badge Icon */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <div
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: badge.isUnlocked ? `${rarityColors.color}20` : '#f8f9fa',
+                    }}
+                  >
+                    {badge.iconUrl ? (
+                      <img
+                        src={badge.iconUrl}
+                        alt={badge.name}
+                        style={{ width: '16px', height: '16px', objectFit: 'contain' }}
+                      />
+                    ) : badge.isUnlocked ? (
+                      <span style={{ color: rarityColors.color }}>🏅</span>
+                    ) : (
+                      <span style={{ color: '#6c757d' }}>🔒</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Badge Info */}
+                <h4 style={{ fontSize: '14px', fontWeight: '500', marginBottom: '4px', color: '#212529' }}>
+                  {badge.name}
+                </h4>
+                {badge.description && (
+                  <p style={{ fontSize: '12px', color: '#6c757d', marginBottom: '8px', lineHeight: 1.4 }}>
+                    {badge.description}
+                  </p>
+                )}
+
+                {/* Rarity Badge */}
+                <span
+                  style={{
+                    fontSize: '10px',
+                    padding: '2px 6px',
+                    borderRadius: '9999px',
+                    fontWeight: '500',
+                    backgroundColor: `${rarityColors.color}20`,
+                    color: rarityColors.color,
+                  }}
+                >
+                  {badge.rarity}
+                </span>
+
+              </div>
+            );
+
+            // Wrap with motion if available
+            if (MotionDiv !== 'div') {
+              const Motion = MotionDiv as MotionComponent;
+              return (
+                <Motion
+                  key={badge.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                >
+                  {badgeContent}
+                </Motion>
+              );
+            }
+
+            return <div key={badge.id}>{badgeContent}</div>;
+          })}
+        </AnimatePresenceWrapper>
       </div>
+
+      {/* Empty State */}
+      {displayBadges.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '24px', color: '#6c757d' }}>
+          <span style={{ fontSize: '40px', display: 'block', marginBottom: '8px', opacity: 0.5 }}>🏅</span>
+          <p>No badges found</p>
+        </div>
+      )}
     </div>
   );
 }
