@@ -69,17 +69,48 @@ export class EndUserRepository {
     externalId: string,
     metadata?: Record<string, unknown>,
   ): Promise<EndUser> {
+    // First try to find existing user
     let user = await this.findByExternalId(projectId, externalId);
-
-    if (!user) {
-      user = await this.create({
-        projectId,
-        externalId,
-        metadata,
-      });
+    if (user) {
+      return user;
     }
 
-    return user;
+    // Try to insert with ON CONFLICT DO NOTHING to handle race conditions
+    try {
+      const result = await this.db
+        .insert(endUsers)
+        .values({
+          projectId,
+          externalId,
+          metadata,
+          loyaltyPoints: 0,
+        })
+        .onConflictDoNothing({
+          target: [endUsers.projectId, endUsers.externalId],
+        })
+        .returning();
+
+      if (result[0]) {
+        return result[0];
+      }
+
+      // Insert returned nothing (conflict occurred), fetch the existing user
+      user = await this.findByExternalId(projectId, externalId);
+      if (user) {
+        return user;
+      }
+
+      throw new Error('Failed to find or create end user');
+    } catch (error) {
+      // Handle unique constraint violation (fallback for race condition)
+      if ((error as { code?: string }).code === '23505') {
+        user = await this.findByExternalId(projectId, externalId);
+        if (user) {
+          return user;
+        }
+      }
+      throw error;
+    }
   }
 
   async findByProjectId(projectId: string): Promise<EndUser[]> {
