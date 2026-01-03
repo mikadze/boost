@@ -10,7 +10,7 @@ function getAuthClient() {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { createAuthClient } = require('better-auth/react');
     authClient = createAuthClient({
-      baseURL: 'http://localhost:3000',
+      baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000',
     });
   }
   return authClient;
