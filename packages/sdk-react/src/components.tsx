@@ -1186,15 +1186,11 @@ function ReferralLinkInner({
 }: ReferralLinkProps) {
   const globalTheme = useGamifyTheme();
   const themedStyles = createThemedStyles(globalTheme);
-  const { stats } = useAffiliateStats({ autoRefresh: true });
+  const { stats, loading } = useAffiliateStats({ autoRefresh: true });
   const [copied, setCopied] = useState(false);
   const [referrerInput, setReferrerInput] = useState('');
 
   const userReferralCode = stats?.referralCode;
-
-  if (!userReferralCode) {
-    return null;
-  }
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const referralLink = `${baseUrl ?? origin}?ref=${userReferralCode}`;
@@ -1254,6 +1250,36 @@ function ReferralLinkInner({
     padding: '16px',
     ...style,
   };
+
+  // Show loading or empty state when no referral code
+  if (loading || !userReferralCode) {
+    return (
+      <div className={className} style={containerStyle}>
+        <div style={{ marginBottom: '8px' }}>
+          <p style={{ fontSize: '14px', color: globalTheme.foregroundSecondary, marginBottom: '8px' }}>
+            Your unique referral link:
+          </p>
+          <div style={themedStyles.referralContainer}>
+            <input
+              type="text"
+              readOnly
+              value={loading ? 'Loading...' : 'No referral code assigned'}
+              disabled
+              style={{ ...inputStyle, fontFamily: 'monospace', fontSize: '12px', opacity: 0.6 }}
+            />
+            <button type="button" disabled style={{ ...buttonStyle, opacity: 0.5, cursor: 'not-allowed' }}>
+              📋
+            </button>
+          </div>
+          {!loading && !userReferralCode && (
+            <p style={{ fontSize: '12px', color: globalTheme.foregroundSecondary, marginTop: '8px' }}>
+              Complete a referral action to get your unique code.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={className} style={containerStyle}>

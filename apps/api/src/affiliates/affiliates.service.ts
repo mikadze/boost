@@ -308,12 +308,47 @@ export class AffiliatesService {
   // Customer/SDK Endpoints
   // ============================================
 
+  /**
+   * Generate a unique referral code
+   * Format: 6 characters alphanumeric (e.g., "ABC123")
+   */
+  private generateReferralCode(): string {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude confusing chars: I, O, 0, 1
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  }
+
+  /**
+   * Generate a unique referral code, retrying if collision
+   */
+  private async generateUniqueReferralCode(projectId: string, maxAttempts = 5): Promise<string> {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const code = this.generateReferralCode();
+      const existing = await this.endUserRepository.findByReferralCode(projectId, code);
+      if (!existing) {
+        return code;
+      }
+    }
+    // Fallback: use timestamp-based code
+    return `${this.generateReferralCode()}${Date.now().toString(36).slice(-2).toUpperCase()}`;
+  }
+
   async getAffiliateProfile(
     projectId: string,
     userId: string,
   ): Promise<AffiliateStatsResponse> {
     // Find or create end user
     const endUser = await this.endUserRepository.findOrCreate(projectId, userId);
+
+    // Guard: Generate referral code if not set (fallback for users created before auto-gen)
+    let referralCode = endUser.referralCode;
+    if (!referralCode) {
+      referralCode = await this.generateUniqueReferralCode(projectId);
+      await this.endUserRepository.update(endUser.id, { referralCode });
+    }
 
     // Get commission plan if assigned (used as tier)
     let commissionPlan: CommissionPlan | null = null;
@@ -334,7 +369,7 @@ export class AffiliatesService {
     return {
       stats: {
         userId,
-        referralCode: endUser.referralCode,
+        referralCode,
         referralCount,
         earnings: {
           totalEarned: summary.totalEarned,
