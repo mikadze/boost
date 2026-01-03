@@ -21,20 +21,28 @@ import {
   RecordCommissionDto,
 } from './dto/affiliate.dto';
 
-export interface AffiliateProfile {
-  userId: string;
-  referralCode: string | null;
-  commissionPlan: {
-    id: string;
-    name: string;
-    type: string;
-    value: number;
-  } | null;
+/**
+ * SDK-compatible affiliate stats response
+ * Matches @gamifyio/core AffiliateStatsResponse type
+ */
+export interface AffiliateStatsResponse {
   stats: {
-    totalEarned: number;
-    totalPending: number;
-    totalPaid: number;
+    userId: string;
+    referralCode: string | null;
     referralCount: number;
+    earnings: {
+      totalEarned: number;
+      totalPending: number;
+      totalPaid: number;
+      transactionCount: number;
+      currency: string;
+    };
+    tier: {
+      id: string;
+      name: string;
+      type: 'PERCENTAGE' | 'FIXED';
+      value: number;
+    } | null;
   };
 }
 
@@ -303,11 +311,11 @@ export class AffiliatesService {
   async getAffiliateProfile(
     projectId: string,
     userId: string,
-  ): Promise<AffiliateProfile> {
+  ): Promise<AffiliateStatsResponse> {
     // Find or create end user
     const endUser = await this.endUserRepository.findOrCreate(projectId, userId);
 
-    // Get commission plan if assigned
+    // Get commission plan if assigned (used as tier)
     let commissionPlan: CommissionPlan | null = null;
     if (endUser.commissionPlanId) {
       commissionPlan = await this.commissionPlanRepository.findById(endUser.commissionPlanId);
@@ -316,28 +324,33 @@ export class AffiliatesService {
       commissionPlan = await this.commissionPlanRepository.findDefaultForProject(projectId);
     }
 
-    // Get commission summary
+    // Get commission summary (includes transactionCount)
     const summary = await this.commissionLedgerRepository.getSummaryByEndUser(endUser.id);
 
     // Get referral count
     const referralCount = await this.referralTrackingRepository.countByReferrerId(endUser.id);
 
+    // Return SDK-compatible format
     return {
-      userId,
-      referralCode: endUser.referralCode,
-      commissionPlan: commissionPlan
-        ? {
-            id: commissionPlan.id,
-            name: commissionPlan.name,
-            type: commissionPlan.type,
-            value: commissionPlan.value,
-          }
-        : null,
       stats: {
-        totalEarned: summary.totalEarned,
-        totalPending: summary.totalPending,
-        totalPaid: summary.totalPaid,
+        userId,
+        referralCode: endUser.referralCode,
         referralCount,
+        earnings: {
+          totalEarned: summary.totalEarned,
+          totalPending: summary.totalPending,
+          totalPaid: summary.totalPaid,
+          transactionCount: summary.transactionCount,
+          currency: 'USD', // Default currency
+        },
+        tier: commissionPlan
+          ? {
+              id: commissionPlan.id,
+              name: commissionPlan.name,
+              type: commissionPlan.type as 'PERCENTAGE' | 'FIXED',
+              value: commissionPlan.value,
+            }
+          : null,
       },
     };
   }
