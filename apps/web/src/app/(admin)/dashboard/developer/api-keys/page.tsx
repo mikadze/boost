@@ -33,23 +33,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useOrganization } from '@/hooks/use-organization';
-
-type ApiKeyType = 'publishable' | 'secret';
 
 export default function ApiKeysPage() {
   const { apiKeys, projects, createApiKey, revokeApiKey } = useOrganization();
   const currentProject = projects[0];
 
   const [keyName, setKeyName] = React.useState('');
-  const [keyType, setKeyType] = React.useState<ApiKeyType>('publishable');
   const [isCreating, setIsCreating] = React.useState(false);
   const [newSecret, setNewSecret] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState(false);
@@ -86,7 +76,6 @@ export default function ApiKeysPage() {
     setDialogOpen(false);
     setNewSecret(null);
     setKeyName('');
-    setKeyType('publishable');
   };
 
   return (
@@ -162,41 +151,6 @@ export default function ApiKeysPage() {
                       onChange={(e) => setKeyName(e.target.value)}
                       className="bg-surface-1"
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="key-type">Key Type</Label>
-                    <Select value={keyType} onValueChange={(v) => setKeyType(v as ApiKeyType)}>
-                      <SelectTrigger className="bg-surface-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="publishable">
-                          <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-blue-400" />
-                            <span>Publishable (pk_live_*)</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="secret">
-                          <div className="flex items-center gap-2">
-                            <Server className="h-4 w-4 text-purple-400" />
-                            <span>Secret (sk_live_*)</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {keyType === 'publishable' ? (
-                        <>
-                          <Globe className="inline h-3 w-3 mr-1" />
-                          Safe for browser/client-side. Can track page views, clicks, cart updates.
-                        </>
-                      ) : (
-                        <>
-                          <Server className="inline h-3 w-3 mr-1" />
-                          Server-side only. Can track purchases, commissions, and all events.
-                        </>
-                      )}
-                    </p>
                   </div>
                 </div>
                 <DialogFooter>
