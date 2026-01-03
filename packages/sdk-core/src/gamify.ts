@@ -22,7 +22,7 @@ import { LoyaltyManager } from './loyalty/index.js';
 import { ReferralManager } from './referral/index.js';
 import { AffiliateManager } from './affiliate/index.js';
 
-const DEFAULT_ENDPOINT = 'https://api.gamify.io';
+const DEFAULT_ENDPOINT = 'https://boostapi-production.up.railway.app';
 const DEFAULT_FLUSH_INTERVAL = 10000; // 10 seconds
 const DEFAULT_MAX_BATCH_SIZE = 10;
 const DEFAULT_STORAGE_PREFIX = 'gamify_';

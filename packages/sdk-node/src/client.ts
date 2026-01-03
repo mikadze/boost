@@ -7,7 +7,7 @@ import type {
   ApiResponse,
 } from './types.js';
 
-const DEFAULT_BASE_URL = 'https://api.gamify.io';
+const DEFAULT_BASE_URL = 'https://boostapi-production.up.railway.app';
 const DEFAULT_TIMEOUT = 30000;
 const DEFAULT_RETRIES = 3;
 
