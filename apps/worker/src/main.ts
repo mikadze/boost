@@ -1,41 +1,57 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
-import { AppConfig, validateConfig } from '@boost/common';
+import { validateConfig } from '@boost/common';
 
 async function bootstrap() {
   // Validate config at startup to fail fast
   const config = validateConfig(process.env);
+  const brokers = [config.KAFKA_BROKER];
 
-  // Build Kafka client config with optional SASL for cloud providers
-  const kafkaClientConfig: Record<string, unknown> = {
-    clientId: 'worker-consumer',
-    brokers: [config.KAFKA_BROKER],
-  };
+  // Build microservice options with optional SASL for cloud providers
+  let microserviceOptions: MicroserviceOptions;
 
-  // Add SSL + SASL if credentials are provided (Confluent Cloud, etc.)
   if (config.KAFKA_API_KEY && config.KAFKA_API_SECRET) {
-    kafkaClientConfig.ssl = true;
-    kafkaClientConfig.sasl = {
-      mechanism: 'plain',
-      username: config.KAFKA_API_KEY,
-      password: config.KAFKA_API_SECRET,
-    };
-  }
-
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
-    {
+    // Confluent Cloud / managed Kafka with SASL auth
+    microserviceOptions = {
       transport: Transport.KAFKA,
       options: {
-        client: kafkaClientConfig,
+        client: {
+          clientId: 'worker-consumer',
+          brokers,
+          ssl: true,
+          sasl: {
+            mechanism: 'plain' as const,
+            username: config.KAFKA_API_KEY,
+            password: config.KAFKA_API_SECRET,
+          },
+        },
         consumer: {
           groupId: 'boost-worker-group',
           allowAutoTopicCreation: true,
         },
       },
-    },
+    };
+  } else {
+    // Local Kafka without auth
+    microserviceOptions = {
+      transport: Transport.KAFKA,
+      options: {
+        client: {
+          clientId: 'worker-consumer',
+          brokers,
+        },
+        consumer: {
+          groupId: 'boost-worker-group',
+          allowAutoTopicCreation: true,
+        },
+      },
+    };
+  }
+
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+    AppModule,
+    microserviceOptions,
   );
 
   await app.listen();
