@@ -36,7 +36,7 @@ import {
 import { useOrganization } from '@/hooks/use-organization';
 
 export default function ApiKeysPage() {
-  const { apiKeys, projects, createApiKey, revokeApiKey, createProject, currentOrg } = useOrganization();
+  const { apiKeys, projects, createApiKey, revokeApiKey } = useOrganization();
   const currentProject = projects[0];
 
   const [keyName, setKeyName] = React.useState('');
@@ -47,24 +47,13 @@ export default function ApiKeysPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   const handleCreateKey = async () => {
-    if (!keyName.trim()) return;
-    if (!currentOrg) {
-      setError('No organization found. Please refresh the page.');
-      return;
-    }
+    if (!keyName.trim() || !currentProject) return;
 
     setIsCreating(true);
     setError(null);
 
     try {
-      // Auto-create a default project if none exists
-      let projectId = currentProject?.id;
-      if (!projectId) {
-        const newProject = await createProject('Default Project');
-        projectId = newProject.id;
-      }
-
-      const result = await createApiKey(projectId, keyName);
+      const result = await createApiKey(currentProject.id, keyName);
       setNewSecret(result.secret);
     } catch (error) {
       console.error('Failed to create API key:', error);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,12 +28,26 @@ type Step = 'organization' | 'project' | 'api-key' | 'complete';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { createOrganization, createProject, createApiKey, currentOrg, projects } = useOrganization();
+  const { createOrganization, createProject, createApiKey, currentOrg, projects, apiKeys } = useOrganization();
 
   const [step, setStep] = useState<Step>('organization');
   const [isLoading, setIsLoading] = useState(false);
   const [apiKeySecret, setApiKeySecret] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Skip completed steps on mount
+  useEffect(() => {
+    if (currentOrg && projects.length > 0 && apiKeys.length > 0) {
+      // Already fully onboarded, redirect to dashboard
+      router.push('/dashboard');
+    } else if (currentOrg && projects.length > 0) {
+      // Has org + project, just needs API key
+      setStep('api-key');
+    } else if (currentOrg) {
+      // Has org, needs project
+      setStep('project');
+    }
+  }, [currentOrg, projects, apiKeys, router]);
 
   const orgForm = useForm<OrgForm>({
     resolver: zodResolver(orgSchema),

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   DollarSign,
@@ -398,7 +399,8 @@ function DashboardLoading() {
 }
 
 export default function AdminDashboard() {
-  const { projects, isLoading: isOrgLoading } = useOrganization();
+  const router = useRouter();
+  const { projects, organizations, isLoading: isOrgLoading } = useOrganization();
   const currentProject = projects[0];
   const [showSetupGuide, setShowSetupGuide] = React.useState<boolean | null>(null);
 
@@ -412,12 +414,24 @@ export default function AdminDashboard() {
     }
   }, [stats]);
 
+  // Redirect to onboarding if user has no organization
+  React.useEffect(() => {
+    if (!isOrgLoading && organizations.length === 0) {
+      router.push('/onboarding');
+    }
+  }, [isOrgLoading, organizations, router]);
+
   const handleSetupComplete = () => {
     setShowSetupGuide(false);
   };
 
   // Loading state - wait for organizations to load
   if (isOrgLoading) {
+    return <DashboardLoading />;
+  }
+
+  // Redirecting to onboarding
+  if (organizations.length === 0) {
     return <DashboardLoading />;
   }
 

@@ -82,7 +82,7 @@ export default function SignUpPage() {
         return;
       }
 
-      router.push('/dashboard');
+      router.push('/onboarding');
     } catch {
       setError('An unexpected error occurred');
     } finally {
