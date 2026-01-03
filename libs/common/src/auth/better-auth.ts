@@ -1,6 +1,3 @@
-import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { organization } from 'better-auth/plugins';
 import * as schema from '@boost/database';
 import { randomUUID } from 'crypto';
 
@@ -8,9 +5,12 @@ import { randomUUID } from 'crypto';
  * Better-Auth Configuration
  * Handles human authentication for dashboard access
  * Uses Drizzle adapter with PostgreSQL
+ *
+ * Uses dynamic imports for ESM compatibility with CommonJS NestJS build
  */
 
-let authInstance: ReturnType<typeof betterAuth> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let authInstance: any | null = null;
 
 export interface BetterAuthConfig {
   secret: string;
@@ -22,9 +22,15 @@ export interface BetterAuthConfig {
 /**
  * Initialize or get the Better-Auth instance
  * Receives the database client from the module to ensure proper initialization order
+ * Uses dynamic imports for ESM module compatibility
  */
-export function getBetterAuth(config: BetterAuthConfig) {
+export async function getBetterAuth(config: BetterAuthConfig) {
   if (!authInstance) {
+    // Dynamic imports for ESM modules in CommonJS context
+    const { betterAuth } = await import('better-auth');
+    const { drizzleAdapter } = await import('better-auth/adapters/drizzle');
+    const { organization } = await import('better-auth/plugins');
+
     authInstance = betterAuth({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       database: drizzleAdapter(config.db as any, {

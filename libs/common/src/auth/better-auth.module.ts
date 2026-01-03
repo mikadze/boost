@@ -11,8 +11,8 @@ export const BETTER_AUTH = 'BETTER_AUTH';
     {
       provide: BETTER_AUTH,
       inject: [ConfigService, 'DRIZZLE_CONNECTION'],
-      useFactory: (config: ConfigService<AppConfig>, db: unknown) => {
-        return getBetterAuth({
+      useFactory: async (config: ConfigService<AppConfig>, db: unknown) => {
+        return await getBetterAuth({
           secret: config.get('BETTER_AUTH_SECRET', { infer: true })!,
           baseURL: config.get('BETTER_AUTH_URL', { infer: true })!,
           trustedOrigins: config.get('TRUSTED_ORIGINS', { infer: true })!,
