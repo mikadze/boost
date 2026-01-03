@@ -12,6 +12,7 @@ import {
   Zap,
   Server,
   Monitor,
+  Key,
 } from 'lucide-react';
 import { useOrganization } from '@/hooks/use-organization';
 import { useRecentEvents, type RecentEvent } from '@/hooks/use-project-stats';
@@ -251,27 +252,36 @@ export function SetupGuide({ onComplete }: SetupGuideProps) {
     setTimeout(() => refetch(), 500);
   };
 
+  const hasApiKey = !!projectApiKey;
+
   const steps: SetupStep[] = [
     {
       number: 1,
-      title: 'Install the SDK',
-      description: 'Add the Boost SDK to your project',
-      isComplete: false,
-      isActive: true,
+      title: 'Generate API Key',
+      description: 'Create an API key for your project',
+      isComplete: hasApiKey,
+      isActive: !hasApiKey,
     },
     {
       number: 2,
-      title: 'Initialize the Provider',
+      title: 'Install the SDK',
+      description: 'Add the Boost SDK to your project',
+      isComplete: false,
+      isActive: hasApiKey,
+    },
+    {
+      number: 3,
+      title: 'Initialize',
       description: 'Configure the SDK with your API key',
       isComplete: false,
       isActive: false,
     },
     {
-      number: 3,
-      title: 'Verify Integration',
-      description: 'Send your first event to confirm everything works',
+      number: 4,
+      title: 'Verify',
+      description: 'Send your first event',
       isComplete: hasReceivedEvent,
-      isActive: isListening && !hasReceivedEvent,
+      isActive: hasApiKey && isListening && !hasReceivedEvent,
     },
   ];
 
@@ -379,20 +389,72 @@ await gamify.track({
           </GlassCard>
         </motion.div>
 
-        {/* Step 1: Install */}
+        {/* Step 1: Generate API Key */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <GlassCard>
+          <GlassCard glow={!hasApiKey}>
+            <GlassCardHeader>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${hasApiKey ? 'bg-green-500/10' : 'bg-primary/10'}`}>
+                  {hasApiKey ? (
+                    <Check className="h-5 w-5 text-green-400" />
+                  ) : (
+                    <Key className="h-5 w-5 text-primary" />
+                  )}
+                </div>
+                <div>
+                  <GlassCardTitle>Step 1: Generate API Key</GlassCardTitle>
+                  <GlassCardDescription>
+                    Create an API key to authenticate your SDK
+                  </GlassCardDescription>
+                </div>
+              </div>
+            </GlassCardHeader>
+            <GlassCardContent>
+              {hasApiKey ? (
+                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <div className="flex items-center gap-3">
+                    <Check className="h-5 w-5 text-green-400" />
+                    <div>
+                      <p className="font-medium text-green-400">API Key Created</p>
+                      <code className="text-sm text-green-400/80">{projectApiKey?.keyPrefix}...</code>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    You need an API key to connect your app to Boost. Create one to get started.
+                  </p>
+                  <GlowButton variant="glow" asChild>
+                    <a href="/dashboard/developer/api-keys">
+                      <Key className="mr-2 h-4 w-4" />
+                      Create API Key
+                    </a>
+                  </GlowButton>
+                </div>
+              )}
+            </GlassCardContent>
+          </GlassCard>
+        </motion.div>
+
+        {/* Step 2: Install */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <GlassCard className={cn(!hasApiKey && 'opacity-50 pointer-events-none')}>
             <GlassCardHeader>
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <Terminal className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <GlassCardTitle>Step 1: Install the SDK</GlassCardTitle>
+                  <GlassCardTitle>Step 2: Install the SDK</GlassCardTitle>
                   <GlassCardDescription>
                     Choose your SDK based on where you want to track events
                   </GlassCardDescription>
@@ -464,13 +526,13 @@ await gamify.track({
           </GlassCard>
         </motion.div>
 
-        {/* Step 2: Initialize */}
+        {/* Step 3: Initialize */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.4 }}
         >
-          <GlassCard>
+          <GlassCard className={cn(!hasApiKey && 'opacity-50 pointer-events-none')}>
             <GlassCardHeader>
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-primary/10">
@@ -478,7 +540,7 @@ await gamify.track({
                 </div>
                 <div>
                   <GlassCardTitle>
-                    Step 2: {sdkType === 'frontend' ? 'Initialize the Provider' : 'Initialize the Client'}
+                    Step 3: {sdkType === 'frontend' ? 'Initialize Provider' : 'Initialize Client'}
                   </GlassCardTitle>
                   <GlassCardDescription>
                     {sdkType === 'frontend'
@@ -509,13 +571,13 @@ await gamify.track({
           </GlassCard>
         </motion.div>
 
-        {/* Step 3: Verify */}
+        {/* Step 4: Verify */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.5 }}
         >
-          <GlassCard glow={hasReceivedEvent}>
+          <GlassCard glow={hasReceivedEvent} className={cn(!hasApiKey && 'opacity-50 pointer-events-none')}>
             <GlassCardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -527,7 +589,7 @@ await gamify.track({
                     )}
                   </div>
                   <div>
-                    <GlassCardTitle>Step 3: Verify Integration</GlassCardTitle>
+                    <GlassCardTitle>Step 4: Verify Integration</GlassCardTitle>
                     <GlassCardDescription>
                       {hasReceivedEvent
                         ? 'Your integration is working perfectly!'
@@ -586,15 +648,9 @@ await gamify.track({
                     <SendTestEventButton
                       projectId={currentProject?.id ?? ''}
                       onSuccess={handleTestEventSuccess}
-                      disabled={!currentProject}
+                      disabled={!currentProject || !hasApiKey}
                     />
                   </div>
-                  {!projectApiKey && (
-                    <p className="text-sm text-yellow-400">
-                      No API key found for this project. Please create one in the API Keys
-                      settings.
-                    </p>
-                  )}
                 </div>
               )}
             </GlassCardContent>
@@ -605,7 +661,7 @@ await gamify.track({
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.6 }}
           className="flex items-center justify-center gap-4"
         >
           <Button variant="ghost" asChild>
