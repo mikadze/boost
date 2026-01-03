@@ -416,14 +416,19 @@ export default function AdminDashboard() {
     setShowSetupGuide(false);
   };
 
-  // Loading state
-  if (isOrgLoading || isStatsLoading || showSetupGuide === null) {
+  // Loading state - wait for organizations to load
+  if (isOrgLoading) {
     return <DashboardLoading />;
   }
 
-  // No project yet - show setup guide
+  // No project yet - show setup guide immediately (don't wait for stats)
   if (!currentProject) {
     return <SetupGuide onComplete={handleSetupComplete} />;
+  }
+
+  // Wait for stats to load when we have a project
+  if (isStatsLoading || showSetupGuide === null) {
+    return <DashboardLoading />;
   }
 
   // Show setup guide for new users with no events
