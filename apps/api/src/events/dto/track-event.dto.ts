@@ -45,5 +45,15 @@ const TrackEventSchema = z
 
 export class TrackEventDto extends createZodDto(TrackEventSchema) {}
 
+/**
+ * Batch Event Schema
+ * Validates and transforms an array of events
+ */
+const BatchEventSchema = z.object({
+  events: z.array(TrackEventSchema),
+});
+
+export class BatchEventDto extends createZodDto(BatchEventSchema) {}
+
 // Export the schema for reuse
-export { TrackEventSchema };
+export { TrackEventSchema, BatchEventSchema };

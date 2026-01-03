@@ -19,7 +19,7 @@ import {
 } from '@boost/common';
 import { ApiKeyType } from '@boost/database';
 import { EventsService } from './events.service';
-import { TrackEventDto } from './dto/track-event.dto';
+import { TrackEventDto, BatchEventDto } from './dto/track-event.dto';
 
 /**
  * Events Ingestion Controller
@@ -72,7 +72,7 @@ export class EventsController {
   @Post('batch')
   @HttpCode(HttpStatus.ACCEPTED)
   async batch(
-    @Body() batchDto: { events: TrackEventDto[] },
+    @Body() batchDto: BatchEventDto,
     @CurrentProjectId() projectId: string,
     @CurrentApiKeyType() keyType: ApiKeyType,
   ) {
