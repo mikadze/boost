@@ -64,6 +64,13 @@ export async function getBetterAuth(config: BetterAuthConfig) {
         }),
       ],
       advanced: {
+        crossSubDomainCookies: {
+          enabled: true,
+        },
+        defaultCookieAttributes: {
+          sameSite: 'none',
+          secure: true,
+        },
         database: {
           generateId: () => randomUUID(),
         },
