@@ -1,6 +1,6 @@
 {
   "name": "@gamifyio/node",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Server-side Node.js SDK for Gamify - secure event tracking with secret keys",
   "type": "module",
   "main": "./dist/index.cjs",

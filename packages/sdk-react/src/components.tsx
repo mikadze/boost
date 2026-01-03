@@ -13,7 +13,6 @@ import {
   useLoyalty,
 } from './hooks.js';
 import type {
-  AffiliateStats,
   LeaderboardEntry,
   QuestWithProgress,
   QuestStep,
@@ -23,6 +22,66 @@ import type {
   RewardItem,
   RedemptionResult,
 } from '@gamifyio/core';
+
+// ============================================
+// Error Boundary for SDK Components
+// ============================================
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+}
+
+/**
+ * Error boundary component to prevent SDK components from crashing client sites
+ */
+class GamifyErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+      return (
+        <div style={{ padding: '16px', color: '#6c757d', fontSize: '14px', textAlign: 'center' }}>
+          Unable to load this section. Please try refreshing the page.
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+/**
+ * HOC to wrap components with error boundary
+ */
+function withErrorBoundary<P extends object>(
+  Component: React.ComponentType<P>,
+  fallback?: React.ReactNode
+): React.FC<P> {
+  const WrappedComponent: React.FC<P> = (props: P) => {
+    return (
+      <GamifyErrorBoundary fallback={fallback}>
+        <Component {...props} />
+      </GamifyErrorBoundary>
+    );
+  };
+  WrappedComponent.displayName = `WithErrorBoundary(${Component.displayName || Component.name || 'Component'})`;
+  return WrappedComponent;
+}
 
 /**
  * Props for GamifyPageView component
@@ -308,7 +367,7 @@ export interface AffiliateStatsProps {
  * />
  * ```
  */
-export function AffiliateStats({
+function AffiliateStatsInner({
   className,
   style,
   theme,
@@ -332,7 +391,7 @@ export function AffiliateStats({
     return renderError ? renderError(error) : <div style={{ color: 'red', padding: '16px' }}>{error}</div>;
   }
 
-  if (!stats) {
+  if (!stats || !stats.earnings) {
     return null;
   }
 
@@ -373,6 +432,8 @@ export function AffiliateStats({
     </div>
   );
 }
+
+export const AffiliateStats = withErrorBoundary(AffiliateStatsInner);
 
 /**
  * Props for Leaderboard component
@@ -423,7 +484,7 @@ export interface LeaderboardProps {
  * />
  * ```
  */
-export function Leaderboard({
+function LeaderboardInner({
   limit = 10,
   className,
   style,
@@ -494,6 +555,8 @@ export function Leaderboard({
   );
 }
 
+export const Leaderboard = withErrorBoundary(LeaderboardInner);
+
 /**
  * Props for ReferralLink component
  */
@@ -548,7 +611,7 @@ export interface ReferralLinkProps {
  * />
  * ```
  */
-export function ReferralLink({
+function ReferralLinkInner({
   baseUrl,
   className,
   style,
@@ -638,6 +701,8 @@ export function ReferralLink({
     </div>
   );
 }
+
+export const ReferralLink = withErrorBoundary(ReferralLinkInner);
 
 // ============================================
 // Issue #25-28: Quest Components
@@ -1124,7 +1189,7 @@ export interface QuestProgressProps {
  * <QuestProgress hideCompleted onComplete={(quest) => console.log('Completed:', quest.name)} />
  * ```
  */
-export function QuestProgress({
+function QuestProgressInner({
   questId,
   hideCompleted = false,
   className,
@@ -1267,6 +1332,8 @@ export function QuestProgress({
   );
 }
 
+export const QuestProgress = withErrorBoundary(QuestProgressInner);
+
 // ============================================
 // Issue #32: Streak Components
 // ============================================
@@ -1309,7 +1376,7 @@ export interface StreakFlameProps {
  * <StreakFlame showFreezeButton onFreeze={(id, remaining) => console.log('Freeze used')} />
  * ```
  */
-export function StreakFlame({
+function StreakFlameInner({
   ruleId,
   size = 'md',
   showFreezeButton = true,
@@ -1430,6 +1497,8 @@ export function StreakFlame({
   );
 }
 
+export const StreakFlame = withErrorBoundary(StreakFlameInner);
+
 // ============================================
 // Issue #33: Badge Components
 // ============================================
@@ -1475,7 +1544,7 @@ export interface BadgeGridProps {
  * <BadgeGrid showLocked showStats onBadgeClick={(badge) => showBadgeModal(badge)} />
  * ```
  */
-export function BadgeGrid({
+function BadgeGridInner({
   showLocked = true,
   category,
   columns = 4,
@@ -1582,6 +1651,8 @@ export function BadgeGrid({
   );
 }
 
+export const BadgeGrid = withErrorBoundary(BadgeGridInner);
+
 // ============================================
 // Issue #15: Level/Tier Components
 // ============================================
@@ -1620,7 +1691,7 @@ export interface LevelProgressProps {
  * <LevelProgress showNextTier showBenefits />
  * ```
  */
-export function LevelProgress({
+function LevelProgressInner({
   showNextTier = true,
   showBenefits = false,
   className,
@@ -1727,6 +1798,8 @@ export function LevelProgress({
   );
 }
 
+export const LevelProgress = withErrorBoundary(LevelProgressInner);
+
 // ============================================
 // Issue #34: Reward Components
 // ============================================
@@ -1773,7 +1846,7 @@ export interface RewardStoreProps {
  * />
  * ```
  */
-export function RewardStore({
+function RewardStoreInner({
   showUnavailable = true,
   className,
   style,
@@ -1889,3 +1962,5 @@ export function RewardStore({
     </div>
   );
 }
+
+export const RewardStore = withErrorBoundary(RewardStoreInner);
