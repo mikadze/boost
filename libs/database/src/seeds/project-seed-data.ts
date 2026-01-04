@@ -24,7 +24,7 @@ export interface SeedLoyaltyTier {
   minPoints: number;
   level: number;
   color: string;
-  benefits: string[];
+  benefits: { items: string[] };
 }
 
 export interface SeedCommissionPlan {
@@ -105,28 +105,28 @@ export const SEED_LOYALTY_TIERS: SeedLoyaltyTier[] = [
     minPoints: 0,
     level: 1,
     color: '#CD7F32',
-    benefits: ['5% back on purchases'],
+    benefits: { items: ['5% back on purchases'] },
   },
   {
     name: 'Silver',
     minPoints: 1000,
     level: 2,
     color: '#C0C0C0',
-    benefits: ['10% back on purchases', 'Free shipping'],
+    benefits: { items: ['10% back on purchases', 'Free shipping'] },
   },
   {
     name: 'Gold',
     minPoints: 5000,
     level: 3,
     color: '#FFD700',
-    benefits: ['15% back on purchases', 'Free shipping', 'Early access to sales'],
+    benefits: { items: ['15% back on purchases', 'Free shipping', 'Early access to sales'] },
   },
   {
     name: 'Platinum',
     minPoints: 10000,
     level: 4,
     color: '#E5E4E2',
-    benefits: ['20% back on purchases', 'Free shipping', 'Early access to sales', 'VIP support'],
+    benefits: { items: ['20% back on purchases', 'Free shipping', 'Early access to sales', 'VIP support'] },
   },
 ];
 
