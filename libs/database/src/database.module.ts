@@ -38,6 +38,8 @@ import { UserBadgeRepository } from './repositories/user-badge.repository';
 // Issue #34: Rewards Store Repositories
 import { RewardItemRepository } from './repositories/reward-item.repository';
 import { RedemptionTransactionRepository } from './repositories/redemption-transaction.repository';
+// Seeder Service
+import { ProjectSeederService } from './seeds/project-seeder.service';
 
 let pool: Pool;
 
@@ -104,6 +106,8 @@ export class DatabaseModule {
       // Issue #34
       RewardItemRepository,
       RedemptionTransactionRepository,
+      // Seeder
+      ProjectSeederService,
     ];
 
     return {
@@ -164,6 +168,8 @@ export class DatabaseModule {
       // Issue #34
       RewardItemRepository,
       RedemptionTransactionRepository,
+      // Seeder
+      ProjectSeederService,
     ];
 
     return {

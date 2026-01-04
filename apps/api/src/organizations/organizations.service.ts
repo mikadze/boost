@@ -1,5 +1,5 @@
 import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
-import { OrganizationRepository, ProjectRepository } from '@boost/database';
+import { OrganizationRepository, ProjectRepository, ProjectSeederService } from '@boost/database';
 
 @Injectable()
 export class OrganizationsService {
@@ -8,6 +8,7 @@ export class OrganizationsService {
   constructor(
     private readonly organizationRepo: OrganizationRepository,
     private readonly projectRepo: ProjectRepository,
+    private readonly projectSeeder: ProjectSeederService,
   ) {}
 
   /**
@@ -51,10 +52,16 @@ export class OrganizationsService {
    * Create a project in an organization
    */
   async createProject(orgId: string, data: { name: string; description?: string }) {
-    return this.projectRepo.create({
+    const project = await this.projectRepo.create({
       organizationId: orgId,
       name: data.name,
       description: data.description,
     });
+
+    // Seed sample data for new project
+    this.logger.log(`Seeding sample data for new project ${project.id}`);
+    await this.projectSeeder.seedProject(project.id);
+
+    return project;
   }
 }
