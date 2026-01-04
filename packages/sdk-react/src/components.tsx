@@ -67,6 +67,74 @@ try {
 const hasAnimations = MotionDiv !== 'div';
 
 // ============================================
+// Inline SVG Icons (lucide-react style)
+// ============================================
+
+interface IconProps {
+  size?: number;
+  color?: string;
+  style?: React.CSSProperties;
+}
+
+const SparklesIcon: React.FC<IconProps> = ({ size = 20, color = 'currentColor', style }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={style}
+  >
+    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+    <path d="M20 3v4" />
+    <path d="M22 5h-4" />
+    <path d="M4 17v2" />
+    <path d="M5 18H3" />
+  </svg>
+);
+
+const MedalIcon: React.FC<IconProps> = ({ size = 20, color = 'currentColor', style }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={style}
+  >
+    <path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" />
+    <path d="M11 12 5.12 2.2" />
+    <path d="m13 12 5.88-9.8" />
+    <path d="M8 7h8" />
+    <circle cx="12" cy="17" r="5" />
+    <path d="M12 18v-2h-.5" />
+  </svg>
+);
+
+const LockIcon: React.FC<IconProps> = ({ size = 20, color = 'currentColor', style }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={style}
+  >
+    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
+// ============================================
 // Error Boundary for SDK Components
 // ============================================
 
@@ -1031,7 +1099,7 @@ function LeaderboardInner({
                 {/* Rank / Medal */}
                 <div style={themedStyles.medalIcon}>
                   {medalColor ? (
-                    <span style={{ color: medalColor }}>🏅</span>
+                    <MedalIcon size={20} color={medalColor} />
                   ) : (
                     <span style={{ fontSize: '14px', fontFamily: 'monospace', color: globalTheme.foregroundSecondary }}>
                       #{entry.rank}
@@ -2516,7 +2584,7 @@ function BadgeGridInner({
       {shouldShowSummary && (
         <div style={themedStyles.progressSummary}>
           <div style={themedStyles.progressSummaryLeft}>
-            <div style={themedStyles.progressSummaryIcon}>✨</div>
+            <div style={themedStyles.progressSummaryIcon}><SparklesIcon size={20} /></div>
             <div>
               <div style={themedStyles.progressSummaryText}>{unlockedCount} / {totalCount}</div>
               <div style={themedStyles.progressSummarySubtext}>Badges Earned</div>
@@ -2611,9 +2679,9 @@ function BadgeGridInner({
                         style={{ width: '16px', height: '16px', objectFit: 'contain' }}
                       />
                     ) : badge.isUnlocked ? (
-                      <span style={{ color: rarityColors.color }}>🏅</span>
+                      <MedalIcon size={16} color={rarityColors.color} />
                     ) : (
-                      <span style={{ color: globalTheme.foregroundSecondary }}>🔒</span>
+                      <LockIcon size={16} color={globalTheme.foregroundSecondary} />
                     )}
                   </div>
                 </div>
@@ -2668,7 +2736,7 @@ function BadgeGridInner({
       {/* Empty State */}
       {displayBadges.length === 0 && (
         <div style={{ textAlign: 'center', padding: '24px', color: '#6c757d' }}>
-          <span style={{ fontSize: '40px', display: 'block', marginBottom: '8px', opacity: 0.5 }}>🏅</span>
+          <MedalIcon size={40} style={{ display: 'block', marginBottom: '8px', opacity: 0.5 }} />
           <p>No badges found</p>
         </div>
       )}

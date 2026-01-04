@@ -17,6 +17,15 @@ interface AffiliateTier {
   color: string;
 }
 
+// Default tier for new users
+const DEFAULT_TIER: AffiliateTier = {
+  id: 'starter',
+  name: 'Starter',
+  type: 'PERCENTAGE',
+  value: 5,
+  color: '#CD7F32',
+};
+
 interface AffiliateStats {
   userId: string;
   referralCode: string;
@@ -83,7 +92,7 @@ const mockAffiliateStats: Record<string, AffiliateStats> = {
       transactionCount: 0,
       currency: 'USD',
     },
-    tier: null,
+    tier: DEFAULT_TIER,
   },
 };
 
@@ -175,32 +184,25 @@ export function DemoAffiliateStats({ userId }: DemoAffiliateStatsProps) {
         </GlassCardHeader>
       <GlassCardContent className="space-y-4">
         {/* Tier Badge */}
-        {stats.tier ? (
-          <div
-            className="flex items-center gap-2 p-3 rounded-lg"
-            style={{ backgroundColor: `${stats.tier.color}20` }}
-          >
-            <Crown className="h-5 w-5" style={{ color: stats.tier.color }} />
-            <div>
-              <p className="font-medium" style={{ color: stats.tier.color }}>
-                {stats.tier.name} Affiliate
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {stats.tier.value}% commission rate
-              </p>
+        {(() => {
+          const tier = stats.tier ?? DEFAULT_TIER;
+          return (
+            <div
+              className="flex items-center gap-2 p-3 rounded-lg"
+              style={{ backgroundColor: `${tier.color}20` }}
+            >
+              <Crown className="h-5 w-5" style={{ color: tier.color }} />
+              <div>
+                <p className="font-medium" style={{ color: tier.color }}>
+                  {tier.name} Affiliate
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {tier.value}% commission rate
+                </p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-            <Crown className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <p className="font-medium text-muted-foreground">No Tier</p>
-              <p className="text-xs text-muted-foreground">
-                Refer users to unlock affiliate status
-              </p>
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Referral Code */}
         <div className="flex items-center justify-between p-3 rounded-lg bg-surface-1">
