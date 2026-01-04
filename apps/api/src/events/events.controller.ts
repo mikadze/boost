@@ -5,10 +5,8 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
-  UsePipes,
   ForbiddenException,
 } from '@nestjs/common';
-import { ZodValidationPipe } from 'nestjs-zod';
 import {
   ApiKeyGuard,
   CurrentProjectId,
@@ -32,7 +30,6 @@ import { TrackEventDto, BatchEventDto } from './dto/track-event.dto';
  */
 @Controller('events')
 @UseGuards(ApiKeyGuard)
-@UsePipes(ZodValidationPipe)
 export class EventsController {
   constructor(private eventsService: EventsService) {}
 
@@ -50,10 +47,12 @@ export class EventsController {
     @CurrentProjectId() projectId: string,
     @CurrentApiKeyType() keyType: ApiKeyType,
   ) {
+    const eventName = trackEventDto.getEventName();
+
     // Block trusted events from publishable keys
-    if (keyType === 'publishable' && isTrustedEvent(trackEventDto.event)) {
+    if (keyType === 'publishable' && isTrustedEvent(eventName)) {
       throw new ForbiddenException(
-        `Event "${trackEventDto.event}" requires a secret key (sk_live_*). ` +
+        `Event "${eventName}" requires a secret key (sk_live_*). ` +
           `Publishable keys can only send behavioral events like page_view, click, cart_update, etc.`,
       );
     }
@@ -81,9 +80,10 @@ export class EventsController {
     // Process each event, blocking trusted events from publishable keys
     const results = await Promise.allSettled(
       batchDto.events.map(async (event) => {
-        if (keyType === 'publishable' && isTrustedEvent(event.event)) {
+        const eventName = event.getEventName();
+        if (keyType === 'publishable' && isTrustedEvent(eventName)) {
           throw new ForbiddenException(
-            `Event "${event.event}" requires a secret key`,
+            `Event "${eventName}" requires a secret key`,
           );
         }
         await this.eventsService.trackEvent(projectId, event, source);

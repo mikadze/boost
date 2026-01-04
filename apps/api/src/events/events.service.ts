@@ -42,14 +42,15 @@ export class EventsService {
     source: EventSource,
   ): Promise<void> {
     const receivedAt = new Date().toISOString();
+    const eventName = dto.getEventName();
 
     // Build Kafka message
     const message: RawEventKafkaMessage = {
       projectId,
       userId: dto.userId,
-      event: dto.event,
-      properties: dto.traits || {},
-      timestamp: dto.timestamp || receivedAt,
+      event: eventName,
+      properties: dto.getTraits(),
+      timestamp: dto.getTimestamp(),
       receivedAt,
       _source: source,
     };
@@ -71,7 +72,7 @@ export class EventsService {
         ),
     );
 
-    this.logger.debug(`Event queued for project ${projectId}: ${dto.event}`);
+    this.logger.debug(`Event queued for project ${projectId}: ${eventName}`);
   }
 
   async onModuleInit() {

@@ -1,59 +1,93 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsObject,
+  ValidateNested,
+  IsArray,
+  ValidateIf,
+} from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 
 /**
- * Track Event Schema
+ * Track Event DTO
  * Validates incoming event data for the ingestion endpoint
  * Accepts either 'event' or 'type' for the event name (SDK sends 'type')
+ * Accepts either 'traits' or 'properties' for metadata (SDK sends 'properties')
  */
-const TrackEventSchema = z
-  .object({
-    // User ID - required identifier from the client system
-    userId: z.string().min(1, 'userId is required'),
+export class TrackEventDto {
+  // User ID - required identifier from the client system
+  @IsString()
+  @IsNotEmpty({ message: 'userId is required' })
+  userId!: string;
 
-    // Event name - accepts either 'event' or 'type' field
-    event: z.string().min(1).optional(),
-    type: z.string().min(1).optional(),
+  // Event name - accepts either 'event' or 'type' field
+  // At least one must be provided
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  event?: string;
 
-    // Traits/properties - optional metadata object
-    traits: z.record(z.unknown()).optional(),
-    properties: z.record(z.unknown()).optional(),
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  type?: string;
 
-    // Timestamp - optional, allows backdating events
-    // Accepts ISO 8601 strings or epoch milliseconds
-    timestamp: z
-      .union([z.string().datetime(), z.number()])
-      .optional()
-      .transform((val) => {
-        if (val === undefined) return new Date().toISOString();
-        if (typeof val === 'number') return new Date(val).toISOString();
-        return val;
-      }),
+  // Traits/properties - optional metadata object
+  // Accepts either 'traits' or 'properties'
+  @IsOptional()
+  @IsObject()
+  traits?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsObject()
+  properties?: Record<string, unknown>;
+
+  // Timestamp - optional, allows backdating events
+  // Accepts ISO 8601 strings or epoch milliseconds
+  // Transforms to ISO 8601 string
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null) return new Date().toISOString();
+    if (typeof value === 'number') return new Date(value).toISOString();
+    return value;
   })
-  .transform((data) => ({
-    userId: data.userId,
-    // Prefer 'event' over 'type', but accept both
-    event: data.event || data.type || '',
-    // Prefer 'traits' over 'properties', but accept both
-    traits: data.traits || data.properties || {},
-    timestamp: data.timestamp,
-  }))
-  .refine((data) => data.event.length > 0, {
-    message: 'event or type is required',
-    path: ['event'],
-  });
+  timestamp?: string;
 
-export class TrackEventDto extends createZodDto(TrackEventSchema) {}
+  // Anonymous ID - optional, used by SDK for anonymous tracking
+  @IsOptional()
+  @IsString()
+  anonymousId?: string;
+
+  /**
+   * Get the normalized event name (prefers 'event' over 'type')
+   */
+  getEventName(): string {
+    return this.event || this.type || '';
+  }
+
+  /**
+   * Get the normalized traits (prefers 'traits' over 'properties')
+   */
+  getTraits(): Record<string, unknown> {
+    return this.traits || this.properties || {};
+  }
+
+  /**
+   * Get the timestamp, defaulting to now if not provided
+   */
+  getTimestamp(): string {
+    return this.timestamp || new Date().toISOString();
+  }
+}
 
 /**
- * Batch Event Schema
- * Validates and transforms an array of events
+ * Batch Event DTO
+ * Validates an array of events for batch ingestion
  */
-const BatchEventSchema = z.object({
-  events: z.array(TrackEventSchema),
-});
-
-export class BatchEventDto extends createZodDto(BatchEventSchema) {}
-
-// Export the schema for reuse
-export { TrackEventSchema, BatchEventSchema };
+export class BatchEventDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TrackEventDto)
+  events!: TrackEventDto[];
+}
