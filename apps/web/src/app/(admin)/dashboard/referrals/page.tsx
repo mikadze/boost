@@ -73,6 +73,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { useCurrentProjectSettings, type ReferralSettings, type IncentiveSettings } from '@/hooks/use-project-settings';
+import { Loader2, Save } from 'lucide-react';
 
 // Types
 interface CommissionTier {
@@ -96,7 +98,7 @@ interface ProgramSettings {
 interface ReferralIncentive {
   type: 'percentage' | 'fixed' | 'points';
   value: number;
-  description: string;
+  description?: string;
 }
 
 interface AffiliateStats {
@@ -139,20 +141,6 @@ const mockTiers: CommissionTier[] = [
   { id: '3', name: 'Elite', type: 'PERCENTAGE', value: 15, minReferrals: 50, color: '#FFD700' },
 ];
 
-const mockSettings: ProgramSettings = {
-  enabled: true,
-  referralLinkBase: 'https://yourstore.com',
-  cookieDuration: 30,
-  commissionTrigger: 'purchase',
-  minPayout: 50,
-  autoApprove: true,
-};
-
-const mockIncentive: ReferralIncentive = {
-  type: 'percentage',
-  value: 10,
-  description: '10% off first purchase',
-};
 
 const mockStats: AffiliateStats = {
   activeAffiliates: 247,
@@ -725,17 +713,95 @@ const activityColumns: ColumnDef<ReferralActivity>[] = [
   },
 ];
 
+// Default settings for when API returns empty
+const defaultSettings: ProgramSettings = {
+  enabled: true,
+  referralLinkBase: 'https://yourstore.com',
+  cookieDuration: 30,
+  commissionTrigger: 'purchase',
+  minPayout: 50,
+  autoApprove: true,
+};
+
+const defaultIncentive: ReferralIncentive = {
+  type: 'percentage',
+  value: 10,
+  description: '10% off first purchase',
+};
+
 // Main Page Component
 export default function ReferralsPage() {
+  // API data
+  const {
+    settings: apiSettings,
+    isLoading,
+    updateSettings,
+    isUpdating,
+  } = useCurrentProjectSettings();
+
+  // Local state for form editing (initialized from API)
   const [tiers, setTiers] = React.useState<CommissionTier[]>(mockTiers);
-  const [settings, setSettings] = React.useState<ProgramSettings>(mockSettings);
-  const [incentive, setIncentive] = React.useState<ReferralIncentive>(mockIncentive);
+  const [settings, setSettings] = React.useState<ProgramSettings>(defaultSettings);
+  const [incentive, setIncentive] = React.useState<ReferralIncentive>(defaultIncentive);
   const [stats] = React.useState<AffiliateStats>(mockStats);
   const [affiliates] = React.useState<Affiliate[]>(mockAffiliates);
   const [activity] = React.useState<ReferralActivity[]>(mockActivity);
   const [editingTier, setEditingTier] = React.useState<CommissionTier | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [affiliateSearch, setAffiliateSearch] = React.useState('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
+
+  // Sync API data to local state when loaded
+  React.useEffect(() => {
+    if (apiSettings?.referral) {
+      setSettings({
+        enabled: apiSettings.referral.enabled,
+        referralLinkBase: apiSettings.referral.referralLinkBase,
+        cookieDuration: apiSettings.referral.cookieDuration,
+        commissionTrigger: apiSettings.referral.commissionTrigger,
+        minPayout: apiSettings.referral.minPayout,
+        autoApprove: apiSettings.referral.autoApprove,
+      });
+    }
+    if (apiSettings?.incentive) {
+      setIncentive({
+        type: apiSettings.incentive.type,
+        value: apiSettings.incentive.value,
+        description: apiSettings.incentive.description,
+      });
+    }
+  }, [apiSettings]);
+
+  // Handle saving settings
+  const handleSaveSettings = () => {
+    updateSettings({
+      referral: {
+        enabled: settings.enabled,
+        referralLinkBase: settings.referralLinkBase,
+        cookieDuration: settings.cookieDuration,
+        commissionTrigger: settings.commissionTrigger,
+        minPayout: settings.minPayout,
+        autoApprove: settings.autoApprove,
+      },
+      incentive: {
+        type: incentive.type,
+        value: incentive.value,
+        description: incentive.description,
+      },
+    });
+    setHasUnsavedChanges(false);
+  };
+
+  // Track changes
+  const handleSettingsChange = (newSettings: Partial<ProgramSettings>) => {
+    setSettings((prev) => ({ ...prev, ...newSettings }));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleIncentiveChange = (newIncentive: Partial<ReferralIncentive>) => {
+    setIncentive((prev) => ({ ...prev, ...newIncentive }));
+    setHasUnsavedChanges(true);
+  };
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -793,6 +859,15 @@ export default function ReferralsPage() {
   emptyMessage="Be the first to join!"
 />`;
 
+  // Show loading state while fetching settings
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -813,7 +888,7 @@ export default function ReferralsPage() {
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
-            onClick={() => setSettings((s) => ({ ...s, enabled: !s.enabled }))}
+            onClick={() => handleSettingsChange({ enabled: !settings.enabled })}
           >
             {settings.enabled ? (
               <>
@@ -949,11 +1024,24 @@ export default function ReferralsPage() {
           {/* Program Settings Tab */}
           <TabsContent value="settings">
             <GlassCard>
-              <GlassCardHeader>
-                <GlassCardTitle>Program Settings</GlassCardTitle>
-                <GlassCardDescription>
-                  Configure how your referral program operates
-                </GlassCardDescription>
+              <GlassCardHeader className="flex-row items-center justify-between">
+                <div>
+                  <GlassCardTitle>Program Settings</GlassCardTitle>
+                  <GlassCardDescription>
+                    Configure how your referral program operates
+                  </GlassCardDescription>
+                </div>
+                <Button
+                  onClick={handleSaveSettings}
+                  disabled={isUpdating || !hasUnsavedChanges}
+                >
+                  {isUpdating ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  {isUpdating ? 'Saving...' : 'Save Settings'}
+                </Button>
               </GlassCardHeader>
               <GlassCardContent className="space-y-6">
                 <div className="grid gap-6 md:grid-cols-2">
@@ -964,7 +1052,7 @@ export default function ReferralsPage() {
                         id="referral-base"
                         value={settings.referralLinkBase}
                         onChange={(e) =>
-                          setSettings((s) => ({ ...s, referralLinkBase: e.target.value }))
+                          handleSettingsChange({ referralLinkBase: e.target.value })
                         }
                         placeholder="https://yourstore.com"
                       />
@@ -982,7 +1070,7 @@ export default function ReferralsPage() {
                     <Select
                       value={String(settings.cookieDuration)}
                       onValueChange={(value) =>
-                        setSettings((s) => ({ ...s, cookieDuration: Number(value) }))
+                        handleSettingsChange({ cookieDuration: Number(value) })
                       }
                     >
                       <SelectTrigger>
@@ -1006,10 +1094,9 @@ export default function ReferralsPage() {
                     <Select
                       value={settings.commissionTrigger}
                       onValueChange={(value) =>
-                        setSettings((s) => ({
-                          ...s,
+                        handleSettingsChange({
                           commissionTrigger: value as 'purchase' | 'signup' | 'subscription',
-                        }))
+                        })
                       }
                     >
                       <SelectTrigger>
@@ -1031,7 +1118,7 @@ export default function ReferralsPage() {
                     <Select
                       value={String(settings.minPayout)}
                       onValueChange={(value) =>
-                        setSettings((s) => ({ ...s, minPayout: Number(value) }))
+                        handleSettingsChange({ minPayout: Number(value) })
                       }
                     >
                       <SelectTrigger>
@@ -1059,7 +1146,7 @@ export default function ReferralsPage() {
                   </div>
                   <Button
                     variant="outline"
-                    onClick={() => setSettings((s) => ({ ...s, autoApprove: !s.autoApprove }))}
+                    onClick={() => handleSettingsChange({ autoApprove: !settings.autoApprove })}
                   >
                     {settings.autoApprove ? (
                       <>
@@ -1081,11 +1168,24 @@ export default function ReferralsPage() {
           {/* Referral Incentives Tab */}
           <TabsContent value="incentives">
             <GlassCard>
-              <GlassCardHeader>
-                <GlassCardTitle>Referral Incentives</GlassCardTitle>
-                <GlassCardDescription>
-                  What referred users receive when they sign up
-                </GlassCardDescription>
+              <GlassCardHeader className="flex-row items-center justify-between">
+                <div>
+                  <GlassCardTitle>Referral Incentives</GlassCardTitle>
+                  <GlassCardDescription>
+                    What referred users receive when they sign up
+                  </GlassCardDescription>
+                </div>
+                <Button
+                  onClick={handleSaveSettings}
+                  disabled={isUpdating || !hasUnsavedChanges}
+                >
+                  {isUpdating ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  {isUpdating ? 'Saving...' : 'Save Settings'}
+                </Button>
               </GlassCardHeader>
               <GlassCardContent className="space-y-6">
                 <div className="grid gap-4 md:grid-cols-3">
@@ -1096,7 +1196,7 @@ export default function ReferralsPage() {
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50'
                     )}
-                    onClick={() => setIncentive((i) => ({ ...i, type: 'percentage' }))}
+                    onClick={() => handleIncentiveChange({ type: 'percentage' })}
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <Percent className="h-5 w-5 text-primary" />
@@ -1114,7 +1214,7 @@ export default function ReferralsPage() {
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50'
                     )}
-                    onClick={() => setIncentive((i) => ({ ...i, type: 'fixed' }))}
+                    onClick={() => handleIncentiveChange({ type: 'fixed' })}
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <DollarSign className="h-5 w-5 text-green-400" />
@@ -1132,7 +1232,7 @@ export default function ReferralsPage() {
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50'
                     )}
-                    onClick={() => setIncentive((i) => ({ ...i, type: 'points' }))}
+                    onClick={() => handleIncentiveChange({ type: 'points' })}
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <Gift className="h-5 w-5 text-yellow-400" />
@@ -1156,7 +1256,7 @@ export default function ReferralsPage() {
                     id="incentive-value"
                     type="number"
                     value={incentive.value}
-                    onChange={(e) => setIncentive((i) => ({ ...i, value: Number(e.target.value) }))}
+                    onChange={(e) => handleIncentiveChange({ value: Number(e.target.value) })}
                     className="max-w-xs"
                   />
                 </div>

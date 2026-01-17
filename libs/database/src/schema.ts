@@ -153,6 +153,8 @@ export const projects = pgTable('project', {
   organizationId: uuid('organization_id').notNull(),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
+  // Project-level settings (referral program, incentives, etc.)
+  settings: jsonb('settings').default({}).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => ({
@@ -726,6 +728,27 @@ export type NewInvitation = typeof invitations.$inferInsert;
 
 export type Project = typeof projects.$inferSelect;
 export type NewProject = typeof projects.$inferInsert;
+
+// Project settings JSONB structure
+export interface ReferralSettings {
+  enabled: boolean;
+  referralLinkBase: string;
+  cookieDuration: number; // days
+  commissionTrigger: 'purchase' | 'signup' | 'subscription';
+  minPayout: number; // cents
+  autoApprove: boolean;
+}
+
+export interface IncentiveSettings {
+  type: 'percentage' | 'fixed' | 'points';
+  value: number;
+  description?: string;
+}
+
+export interface ProjectSettings {
+  referral?: ReferralSettings;
+  incentive?: IncentiveSettings;
+}
 
 export type ApiKey = typeof apiKeys.$inferSelect;
 export type NewApiKey = typeof apiKeys.$inferInsert;

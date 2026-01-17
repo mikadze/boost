@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Delete,
   Body,
   Param,
@@ -11,6 +12,7 @@ import {
 import { SessionGuard, CurrentUser } from '@boost/common';
 import { ProjectsService } from './projects.service';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
+import { UpdateProjectSettingsDto } from './dto/project-settings.dto';
 
 @Controller('projects')
 @UseGuards(SessionGuard)
@@ -94,6 +96,33 @@ export class ProjectsController {
     // Verify user has access to this project
     await this.projectsService.verifyProjectAccess(user.id, projectId);
     return this.projectsService.createApiKey(projectId, dto.name, dto.scopes, dto.type);
+  }
+
+  /**
+   * GET /projects/:projectId/settings
+   * Get project settings (referral program, incentives, etc.)
+   */
+  @Get(':projectId/settings')
+  async getSettings(
+    @CurrentUser() user: { id: string },
+    @Param('projectId') projectId: string,
+  ) {
+    await this.projectsService.verifyProjectAccess(user.id, projectId);
+    return this.projectsService.getSettings(projectId);
+  }
+
+  /**
+   * PUT /projects/:projectId/settings
+   * Update project settings (referral program, incentives, etc.)
+   */
+  @Put(':projectId/settings')
+  async updateSettings(
+    @CurrentUser() user: { id: string },
+    @Param('projectId') projectId: string,
+    @Body() dto: UpdateProjectSettingsDto,
+  ) {
+    await this.projectsService.verifyProjectAccess(user.id, projectId);
+    return this.projectsService.updateSettings(projectId, dto);
   }
 }
 

@@ -2,13 +2,14 @@ import { Injectable, Inject } from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../schema';
-import { projects } from '../schema';
+import { projects, ProjectSettings } from '../schema';
 
 export interface ProjectRecord {
   id: string;
   organizationId: string;
   name: string;
   description: string | null;
+  settings: ProjectSettings;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,7 +28,11 @@ export class ProjectRepository {
     const result = await this.db.query.projects.findFirst({
       where: eq(projects.id, projectId),
     });
-    return result || null;
+    if (!result) return null;
+    return {
+      ...result,
+      settings: (result.settings as ProjectSettings) || {},
+    };
   }
 
   /**
@@ -44,16 +49,24 @@ export class ProjectRepository {
         eq(projects.organizationId, organizationId),
       ),
     });
-    return result || null;
+    if (!result) return null;
+    return {
+      ...result,
+      settings: (result.settings as ProjectSettings) || {},
+    };
   }
 
   /**
    * List all projects for an organization
    */
   async findByOrganizationId(organizationId: string): Promise<ProjectRecord[]> {
-    return this.db.query.projects.findMany({
+    const results = await this.db.query.projects.findMany({
       where: eq(projects.organizationId, organizationId),
     });
+    return results.map((result) => ({
+      ...result,
+      settings: (result.settings as ProjectSettings) || {},
+    }));
   }
 
   /**
@@ -78,5 +91,51 @@ export class ProjectRepository {
       throw new Error('Failed to insert project');
     }
     return inserted;
+  }
+
+  /**
+   * Get project settings
+   */
+  async getSettings(projectId: string): Promise<ProjectSettings> {
+    const result = await this.db.query.projects.findFirst({
+      where: eq(projects.id, projectId),
+      columns: { settings: true },
+    });
+    return (result?.settings as ProjectSettings) || {};
+  }
+
+  /**
+   * Update project settings (deep merge)
+   */
+  async updateSettings(
+    projectId: string,
+    settings: Partial<ProjectSettings>,
+  ): Promise<ProjectSettings> {
+    // First get current settings
+    const current = await this.getSettings(projectId);
+
+    // Deep merge the settings
+    const merged: ProjectSettings = {
+      ...current,
+      ...settings,
+      // Explicitly merge nested objects
+      referral: settings.referral
+        ? { ...current.referral, ...settings.referral }
+        : current.referral,
+      incentive: settings.incentive
+        ? { ...current.incentive, ...settings.incentive }
+        : current.incentive,
+    };
+
+    // Update in database
+    await this.db
+      .update(projects)
+      .set({
+        settings: merged,
+        updatedAt: new Date(),
+      })
+      .where(eq(projects.id, projectId));
+
+    return merged;
   }
 }

@@ -6,8 +6,10 @@ import {
   ApiKeyType,
   EventRepository,
   CampaignRepository,
+  ProjectSettings,
 } from '@boost/database';
 import { ApiKeyService } from '@boost/common';
+import { UpdateProjectSettingsDto } from './dto/project-settings.dto';
 
 export interface ProjectStatsSummary {
   totalEvents: number;
@@ -184,5 +186,22 @@ export class ProjectsService {
       eventType,
       createdAt: createdAt.toISOString(),
     };
+  }
+
+  /**
+   * Get project settings
+   */
+  async getSettings(projectId: string): Promise<ProjectSettings> {
+    return this.projectRepo.getSettings(projectId);
+  }
+
+  /**
+   * Update project settings
+   */
+  async updateSettings(
+    projectId: string,
+    dto: UpdateProjectSettingsDto,
+  ): Promise<ProjectSettings> {
+    return this.projectRepo.updateSettings(projectId, dto);
   }
 }
