@@ -705,6 +705,140 @@ function createThemedStyles(theme: Theme) {
       right: '8px',
       color: theme.success,
     } as React.CSSProperties,
+    // Quest accordion styles (themed)
+    questAccordion: {
+      borderRadius: '8px',
+      overflow: 'hidden',
+      marginBottom: '8px',
+      backgroundColor: theme.cardBackground ?? theme.background,
+      border: `1px solid ${theme.cardBorder ?? theme.border}`,
+    } as React.CSSProperties,
+    questAccordionHeader: {
+      width: '100%',
+      padding: '12px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      background: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
+      textAlign: 'left' as const,
+    } as React.CSSProperties,
+    questAccordionIcon: {
+      width: '40px',
+      height: '40px',
+      borderRadius: '10px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '18px',
+      flexShrink: 0,
+      backgroundColor: theme.backgroundSecondary,
+    } as React.CSSProperties,
+    questAccordionInfo: {
+      flex: 1,
+      minWidth: 0,
+    } as React.CSSProperties,
+    questAccordionTitle: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      marginBottom: '4px',
+    } as React.CSSProperties,
+    questAccordionName: {
+      fontWeight: '500',
+      fontSize: '14px',
+      color: theme.foreground,
+    } as React.CSSProperties,
+    questAccordionStatusBadge: {
+      fontSize: '11px',
+      padding: '2px 8px',
+      borderRadius: '9999px',
+      fontWeight: '500',
+    } as React.CSSProperties,
+    questAccordionMeta: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px',
+      fontSize: '12px',
+      color: theme.foregroundSecondary,
+    } as React.CSSProperties,
+    questAccordionChevron: {
+      color: theme.foregroundSecondary,
+      transition: 'transform 0.2s',
+      flexShrink: 0,
+    } as React.CSSProperties,
+    questAccordionContent: {
+      padding: '0 12px 12px',
+      overflow: 'hidden',
+    } as React.CSSProperties,
+    questProgressBar: {
+      width: '100%',
+      height: '8px',
+      backgroundColor: theme.border,
+      borderRadius: '4px',
+      overflow: 'hidden',
+      marginBottom: '12px',
+    } as React.CSSProperties,
+    questProgressFill: {
+      height: '100%',
+      backgroundColor: theme.primary,
+      borderRadius: '4px',
+      transition: 'width 0.3s ease',
+    } as React.CSSProperties,
+    questStepItem: {
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '8px',
+      padding: '8px',
+      borderRadius: '6px',
+    } as React.CSSProperties,
+    questStepNumber: {
+      width: '20px',
+      height: '20px',
+      borderRadius: '50%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '12px',
+      fontWeight: 'bold',
+      flexShrink: 0,
+      backgroundColor: theme.backgroundSecondary,
+      color: theme.foregroundSecondary,
+    } as React.CSSProperties,
+    questStepNumberCompleted: {
+      width: '20px',
+      height: '20px',
+      borderRadius: '50%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '12px',
+      fontWeight: 'bold',
+      flexShrink: 0,
+      backgroundColor: `${theme.success}20`,
+      color: theme.success,
+    } as React.CSSProperties,
+    questStepName: {
+      fontSize: '14px',
+      fontWeight: '500',
+      color: theme.foreground,
+    } as React.CSSProperties,
+    questStepNameCompleted: {
+      fontSize: '14px',
+      fontWeight: '500',
+      color: theme.foregroundSecondary,
+      textDecoration: 'line-through',
+    } as React.CSSProperties,
+    questStepCount: {
+      fontSize: '12px',
+      color: theme.foregroundSecondary,
+    } as React.CSSProperties,
+    questEmpty: {
+      textAlign: 'center' as const,
+      padding: '24px',
+      color: theme.foregroundSecondary,
+    } as React.CSSProperties,
   };
 }
 
@@ -2017,6 +2151,8 @@ function QuestProgressInner({
   renderError,
   renderQuest,
 }: QuestProgressProps) {
+  const globalTheme = useGamifyTheme();
+  const themedStyles = createThemedStyles(globalTheme);
   const { quests, loading, error, refresh } = useQuests({ autoRefresh: true });
   const previousQuests = useRef<Map<string, QuestWithProgress>>(new Map());
   const [expandedQuestId, setExpandedQuestId] = useState<string | null>(null);
@@ -2054,11 +2190,11 @@ function QuestProgressInner({
   }, [quests, defaultExpandedId, expandedQuestId]);
 
   if (loading) {
-    return renderLoading ? renderLoading() : <div style={{ textAlign: 'center', padding: '16px' }}>Loading...</div>;
+    return renderLoading ? renderLoading() : <div style={{ textAlign: 'center', padding: '16px', color: globalTheme.foregroundSecondary }}>Loading...</div>;
   }
 
   if (error) {
-    return renderError ? renderError(error) : <div style={{ color: 'red', padding: '16px' }}>{error}</div>;
+    return renderError ? renderError(error) : <div style={{ color: globalTheme.error, padding: '16px' }}>{error}</div>;
   }
 
   let filteredQuests = quests;
@@ -2071,7 +2207,7 @@ function QuestProgressInner({
 
   if (filteredQuests.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '24px', color: '#6c757d' }}>
+      <div style={themedStyles.questEmpty}>
         <span style={{ fontSize: '40px', display: 'block', marginBottom: '8px', opacity: 0.5 }}>🎯</span>
         <p>No quests available</p>
       </div>
@@ -2081,22 +2217,22 @@ function QuestProgressInner({
   const getStatusBadgeStyle = (status: string): React.CSSProperties => {
     switch (status) {
       case 'completed':
-        return { backgroundColor: 'rgba(40, 167, 69, 0.2)', color: '#28a745' };
+        return { backgroundColor: `${globalTheme.success}20`, color: globalTheme.success };
       case 'in_progress':
-        return { backgroundColor: 'rgba(13, 110, 253, 0.2)', color: '#0d6efd' };
+        return { backgroundColor: `${globalTheme.primary}20`, color: globalTheme.primary };
       default:
-        return { backgroundColor: '#f8f9fa', color: '#6c757d' };
+        return { backgroundColor: globalTheme.backgroundSecondary, color: globalTheme.foregroundSecondary };
     }
   };
 
   const getQuestBgStyle = (status: string): React.CSSProperties => {
     switch (status) {
       case 'completed':
-        return { backgroundColor: 'rgba(40, 167, 69, 0.05)', borderColor: 'rgba(40, 167, 69, 0.2)' };
+        return { backgroundColor: `${globalTheme.success}08`, borderColor: `${globalTheme.success}30` };
       case 'in_progress':
-        return { backgroundColor: 'rgba(13, 110, 253, 0.05)', borderColor: 'rgba(13, 110, 253, 0.2)' };
+        return { backgroundColor: `${globalTheme.primary}08`, borderColor: `${globalTheme.primary}30` };
       default:
-        return { backgroundColor: '#f8f9fa', borderColor: '#e9ecef' };
+        return { backgroundColor: globalTheme.backgroundSecondary, borderColor: globalTheme.border };
     }
   };
 
@@ -2120,8 +2256,7 @@ function QuestProgressInner({
           const questContent = (
             <div
               style={{
-                ...gamificationStyles.questAccordion,
-                border: '1px solid',
+                ...themedStyles.questAccordion,
                 ...questBgStyle,
                 ...(theme?.cardBackground && { backgroundColor: theme.cardBackground }),
                 ...(theme?.cardBorder && { borderColor: theme.cardBorder }),
@@ -2132,33 +2267,33 @@ function QuestProgressInner({
                 type="button"
                 onClick={() => toggleExpand(quest.id)}
                 style={{
-                  ...gamificationStyles.questAccordionHeader,
+                  ...themedStyles.questAccordionHeader,
                   cursor: expandable ? 'pointer' : 'default',
                 }}
               >
                 {/* Icon */}
                 <div
                   style={{
-                    ...gamificationStyles.questAccordionIcon,
-                    backgroundColor: quest.status === 'completed' ? 'rgba(40, 167, 69, 0.2)' : 'rgba(13, 110, 253, 0.2)',
+                    ...themedStyles.questAccordionIcon,
+                    backgroundColor: quest.status === 'completed' ? `${globalTheme.success}20` : `${globalTheme.primary}20`,
                   }}
                 >
                   {quest.status === 'completed' ? (
-                    <span style={{ color: '#28a745' }}>✓</span>
+                    <span style={{ color: globalTheme.success }}>✓</span>
                   ) : (
-                    <span style={{ color: '#0d6efd' }}>🎯</span>
+                    <span style={{ color: globalTheme.primary }}>🎯</span>
                   )}
                 </div>
 
                 {/* Title & Meta */}
-                <div style={gamificationStyles.questAccordionInfo}>
-                  <div style={gamificationStyles.questAccordionTitle}>
-                    <span style={{ ...gamificationStyles.questAccordionName, ...(theme?.textColor && { color: theme.textColor }) }}>
+                <div style={themedStyles.questAccordionInfo}>
+                  <div style={themedStyles.questAccordionTitle}>
+                    <span style={{ ...themedStyles.questAccordionName, ...(theme?.textColor && { color: theme.textColor }) }}>
                       {quest.name}
                     </span>
                     <span
                       style={{
-                        ...gamificationStyles.questAccordionStatusBadge,
+                        ...themedStyles.questAccordionStatusBadge,
                         ...statusBadgeStyle,
                       }}
                     >
@@ -2169,12 +2304,12 @@ function QuestProgressInner({
                         : 'Not Started'}
                     </span>
                   </div>
-                  <div style={gamificationStyles.questAccordionMeta}>
+                  <div style={themedStyles.questAccordionMeta}>
                     {showXpReward && quest.xpReward > 0 && (
                       <>
                         <span>⭐</span>
                         <span>+{quest.xpReward} XP</span>
-                        <span style={{ color: '#e9ecef' }}>|</span>
+                        <span style={{ color: globalTheme.border }}>|</span>
                       </>
                     )}
                     <span>{quest.steps.length} steps</span>
@@ -2185,7 +2320,7 @@ function QuestProgressInner({
                 {expandable && (
                   <span
                     style={{
-                      ...gamificationStyles.questAccordionChevron,
+                      ...themedStyles.questAccordionChevron,
                       transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
                     }}
                   >
@@ -2196,13 +2331,13 @@ function QuestProgressInner({
 
               {/* Expandable Content */}
               {isExpanded && (
-                <div style={gamificationStyles.questAccordionContent}>
+                <div style={themedStyles.questAccordionContent}>
                   {/* Progress Bar */}
                   {quest.status !== 'completed' && (
-                    <div style={{ ...gamificationStyles.questProgressBar, marginBottom: '12px', height: '6px' }}>
+                    <div style={{ ...themedStyles.questProgressBar, height: '6px' }}>
                       <div
                         style={{
-                          ...gamificationStyles.questProgressFill,
+                          ...themedStyles.questProgressFill,
                           width: `${quest.percentComplete}%`,
                           ...(theme?.progressColor && { backgroundColor: theme.progressColor }),
                         }}
@@ -2216,43 +2351,22 @@ function QuestProgressInner({
                       <div
                         key={step.id}
                         style={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '8px',
-                          padding: '8px',
-                          borderRadius: '6px',
+                          ...themedStyles.questStepItem,
                           opacity: step.completed ? 0.6 : 1,
                         }}
                       >
                         <div
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            flexShrink: 0,
-                            backgroundColor: step.completed ? 'rgba(40, 167, 69, 0.2)' : '#f8f9fa',
-                            color: step.completed ? '#28a745' : '#6c757d',
-                          }}
+                          style={step.completed ? themedStyles.questStepNumberCompleted : themedStyles.questStepNumber}
                         >
                           {step.completed ? '✓' : index + 1}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div
-                            style={{
-                              fontSize: '14px',
-                              fontWeight: '500',
-                              textDecoration: step.completed ? 'line-through' : 'none',
-                              color: step.completed ? '#6c757d' : '#212529',
-                            }}
+                            style={step.completed ? themedStyles.questStepNameCompleted : themedStyles.questStepName}
                           >
                             {step.name}
                           </div>
-                          <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                          <div style={themedStyles.questStepCount}>
                             {step.currentCount}/{step.requiredCount}
                             {step.requiredCount > 1 && !step.completed && (
                               <span style={{ marginLeft: '8px' }}>
